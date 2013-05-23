@@ -119,6 +119,7 @@ def command_line_interface(*args,**kw):
     parser = argparse.ArgumentParser(description='A script for converting redundant/binned amplicon counts to mpileup format')
     parser.add_argument('--reference',
                         type=argparse.FileType('r'),
+                        default=None,
                         help='a fasta format reference sequence')
     parser.add_argument('--query',
                         type=argparse.FileType('r'),
@@ -129,7 +130,14 @@ def command_line_interface(*args,**kw):
 if __name__ == '__main__':
     args = command_line_interface()
     #python mpileup.py --reference='BRAF_amplicon.fasta' --query='TGx120044_S6_L001_R1_001_fastq_fna_1_num_grp_flanked_positive_r_92_BRAF1_locus_1_num_grp_srt.txt',
-    refname,ref_seq = fasta(args.reference).next()
+    if args.reference:
+        refname,ref_seq = fasta(args.reference).next()
+    else:
+        try:
+            refname,ref_seq,ref_count = args.query.readline().strip('\n').split('\t')
+        except:
+            print("Could not read first sequence of query as reference",file=sys.stderr)
+            args.print_help()
     maxcount = 0
     threshold = 0
     for name,seq,count in (x.strip('\n').split('\t') for x in args.query):
@@ -142,12 +150,10 @@ if __name__ == '__main__':
             continue
         outfile = open(name[1:].replace(' ','_')+'_mpileup','w')
         aligned_ref_seq, aligned_sample_seq = nw_align(ref_seq,seq)
-        chromosome = name.split()[1]
-        start = int(name.split()[-1].split('-')[0])
+        chromosome = name.split()[2].split(':')[0]
+        start = int(name.split()[2].split(':')[1].split('-')[0])
         print(mpileup_from_redudndant_alignment(chromosome,  start, aligned_ref_seq, aligned_sample_seq, count),file=outfile)
-        outfile.close()
-        #for line in 
-        
+        outfile.close()        
         
         
 

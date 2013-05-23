@@ -27,11 +27,9 @@ from __future__ import print_function
 import sys
 import os
 import itertools
-from bz2 import BZ2File
-from gzip import GzipFile
 from collections import defaultdict
-from StringIO import StringIO
-from cogent.align.algorithm import (nw_align, sw_align)
+from cogent.align.algorithm import nw_align, sw_align
+from sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment
 
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
@@ -42,104 +40,6 @@ __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
-def open_compressed(filename, mode='r'):
-    extention = os.path.splitext(filename)
-    if extention == 'bz2':
-        return BZ2File(filename, mode)
-    elif extention == 'gz':
-        return GzipFile(filename, mode)
-    else:
-        return open(filename, mode)
-
-
-def parse_fastq(filename):
-    with open_compressed(filename) as fastqfile:
-        name = True
-        while name:
-            name = fastqfile.readline().strip('\n')
-            seq = fastqfile.readline().strip('\n')
-            fastqfile.readline()
-            qual = fastqfile.readline().strip('\n')
-            if name:
-                yield name[1:], seq, qual
-
-def parse_fasta(filename, token='>'):
-    """fasta and multi-fasta file parser
-    Usage: for name,seq in fasta(open(filename)):"""
-    with open_compressed(filename) as f:
-        seq = None
-        name = None   
-        for line in f:
-            line = line.strip()
-            if line.startswith(token):
-                if name:
-                    yield (name, seq)
-                seq = ''
-                name = line[1:]
-            elif seq != None:
-                seq += line
-        if name:
-            yield (name, seq)
-
-
-def reverse_complement(seqstring):
-    """Case sensitive IUPAC complement
-        Arguments:
-        o seqstring - an iterable object of characters (eg a string)
-        o reverse   - optional boolean flag for reversing order of returned result default=False
-        
-        Returns a string
-    """
-    result=[]
-    complement={'a':'t', 'c':'g', 'g':'c', 't':'a',
-                'A':'T', 'C':'G', 'G':'C', 'T':'A',
-                '-':'-', '.':'.', 'n':'n', 'N':'N',
-                'U':'A', 'M':'K', 'R':'Y', 'W':'W',
-                'S':'S', 'Y':'R', 'K':'M', 'V':'B',
-                'H':'D', 'D':'H', 'B':'V',
-                'u':'a', 'm':'k', 'r':'y', 'w':'w',
-                's':'s', 'y':'r', 'k':'m', 'v':'b',
-                'h':'d', 'd':'h', 'b':'v',
-                }
-    for base in seqstring:
-        try:
-            result.append(complement[base])
-        except KeyError:
-            result.append('n')
-    return ''.join(result[::-1])
-
-def flatten_paired_alignment(seq1,seq2,gap='-'):
-    result = []
-    for base1,base2 in itertools.izip(seq1,seq2):
-        if base1 == gap:
-            result.append(base2)
-        else:
-            result.append(base1)
-    return ''.join(result)
-
-def make_blocklist(seqstring, block_size=80):
-    """format sequence into a list of blocks"""
-    blocklist = []
-    seqlength = len(seqstring)
-    for block in range(0, seqlength, block_size):
-        if block + block_size < seqlength:
-            blocklist.append(seqstring[block: block + block_size])
-        else:
-            blocklist.append(seqstring[block:])
-    return blocklist
-
-def format_alignment(sequences):
-    align={}
-    result = ''
-    for (name, seq) in sequences:
-        align[name]=make_blocklist(seq, block_size=50)
-    for i in range(len(align.values()[0])):
-        for key in align:
-            result +='%30s\t' % key
-            if align[key][i]:
-                result += align[key][i]+'\n'
-        result += '\n'
-    return result
 
 def smith_waterman(seq1,seq2):
     align_seq1, align_seq2 = sw_align(seq1,seq2)
@@ -248,7 +148,6 @@ def main(forward_file, reverse_file, threshold=1):
         print('Smith Waterman Aligned Pairs:')
         fwd = amplicons.data[key][0][0][1]
         rev = reverse_complement(amplicons.data[key][0][1][1])
-        overlapped = get_overlap(fwd,rev)
         fwd_aligned, rev_aligned, fwd_start, rev_start = smith_waterman(fwd,rev)
         print('Forward ',' '*max((rev_start-fwd_start),0)+fwd[:fwd_start]+fwd_aligned+fwd[fwd_start+len(fwd_aligned.replace('-','')):])
         print('Reverse ',' '*max((fwd_start-rev_start),0)+rev[:rev_start]+rev_aligned+rev[rev_start+len(rev_aligned.replace('-','')):])
