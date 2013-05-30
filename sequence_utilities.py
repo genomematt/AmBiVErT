@@ -88,7 +88,7 @@ def reverse_complement(seqstring):
     return ''.join(result[::-1])
 
 def encode_ambiguous(bases):
-    bases = tuple(set([x.upper() for x in bases]))
+    bases = tuple(sorted(set([x.upper() for x in bases])))
     iupac = {('A','G'):'R',
             ('C','T'):'Y',
             ('C','G'):'S',
@@ -100,7 +100,10 @@ def encode_ambiguous(bases):
             ('A','C','T'):'H',
             ('A','C','G'):'V',
             ('A','C','G','T'):'N',}
-    return iupac[bases]
+    if 'N' in bases:
+        return 'N'
+    else:
+        return iupac[bases]
 
 def flatten_paired_alignment(seq1,seq2,gap='-'):
     result = []
@@ -112,7 +115,7 @@ def flatten_paired_alignment(seq1,seq2,gap='-'):
         elif base1 == base2:
             result.append(base1)
         else:
-            result.append(encode_ambiguous(base1,base2))
+            result.append(encode_ambiguous((base1,base2)))
     return ''.join(result)
 
 def make_blocklist(seqstring, block_size=80):
