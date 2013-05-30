@@ -47,11 +47,13 @@ def parse_trueseq_manifest(inputfile):
         column_names = ['TargetA', 'TargetB', 'Target Number', 'Chromosome', 'Start Position', 'End Position', 'Probe Strand', 'Sequence', 'Species', 'Build ID']
         TargetRecord = namedtuple('TargetRecord', [ x.replace(' ','_') for x in column_names])
         line = infile.readline().strip('\n').split('\t')
-        assert line == column_names
-        line = infile.readline().strip('\n').split('\t')
+        assert line[:10] == column_names #ignore extra columns that may have been added by excel
+        if len(line) > 10:
+            print('WARNING Extra columns in mainifest file being ignored:',line[10:],file=sys.stderr)
+        line = infile.readline().strip('\n').split('\t')[:10]
         while line[0] != '':
             targets.append(TargetRecord._make(line))
-            line = infile.readline().strip('\n').split('\t')
+            line = infile.readline().strip('\n').split('\t')[:10]
         return targets
     
     with inputfile as infile:
