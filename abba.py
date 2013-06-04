@@ -135,23 +135,8 @@ class AmpliconData(object):
                     best_hit = ref_key
             return best_hit,score
         
-        def match_by_find(merged_key,ref_keys):
-            hits = []
-            for ref_key in ref_keys:
-                if self.merged[merged_key].count(self.reference_sequences[ref_key]):
-                    hits.append(ref_key)
-            if len(hits) > 1:
-                print(hits)
-                return match_by_edit(merged_key,hits)[0]
-            else:
-                return None
-        
         print('Matching read bins to references',file=sys.stderr)
         for merged_key in self.merged:
-            #found = match_by_find(merged_key, self.reference_sequences)
-            #if found:
-            #    self.reference[merged_key]= found
-            #    continue
             if merged_key in self.reference:
                 continue
             best_hit,best_score = match_by_edit(merged_key,self.reference_sequences)
