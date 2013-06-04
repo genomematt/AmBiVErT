@@ -24,11 +24,10 @@ Created by Matthew Wakefield and Graham Taylor.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
 from __future__ import print_function
-import sys
-import os
-import itertools
-import difflib
-from collections import defaultdict, Counter
+import sys, os
+import itertools, difflib, argparse
+import hashlib, cPickle
+from collections import defaultdict
 from cogent.align.algorithm import nw_align, sw_align
 from sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment
 from trueseq import parse_trueseq_manifest
@@ -124,18 +123,40 @@ class AmpliconData(object):
             self.reference_sequences[key] = target.Sequence
         pass
     
-    def match_to_reference(self, min_score = 0.8):
-        print('Matching read bins to references',file=sys.stderr)
-        for merged_key in self.merged:
+    def match_to_reference(self, min_score = 0.1):
+        def match_by_edit(merged_key,ref_keys):
             best_score = 0
             best_hit = ''
-            for ref_key in self.reference_sequences:
+            for ref_key in ref_keys:
                 score = difflib.SequenceMatcher(None, self.merged[merged_key], self.reference_sequences[ref_key]).ratio()
                 #print(ref_key, score, best_hit, best_score)
-                if score > best_score and score >= min_score:
+                if score > best_score:
                     best_score = score
                     best_hit = ref_key
-            if best_hit:
+            return best_hit,score
+        
+        def match_by_find(merged_key,ref_keys):
+            hits = []
+            for ref_key in ref_keys:
+                if self.merged[merged_key].count(self.reference_sequences[ref_key]):
+                    hits.append(ref_key)
+            if len(hits) > 1:
+                print(hits)
+                return match_by_edit(merged_key,hits)[0]
+            else:
+                return None
+        
+        print('Matching read bins to references',file=sys.stderr)
+        for merged_key in self.merged:
+            #found = match_by_find(merged_key, self.reference_sequences)
+            #if found:
+            #    self.reference[merged_key]= found
+            #    continue
+            if merged_key in self.reference:
+                continue
+            best_hit,best_score = match_by_edit(merged_key,self.reference_sequences)
+            print(best_hit,best_score)
+            if best_hit and best_score > min_score:
                 self.reference[merged_key]= best_hit
                 print('.',end='',file=sys.stderr)
                 #print("Matched", self.merged[merged_key], 'to', best_hit)
@@ -163,13 +184,67 @@ class AmpliconData(object):
         for merged_key in self.reference:
             amplicon_counts[self.reference[merged_key]] += len(self.data[merged_key])
         return amplicon_counts
+    
+    def save_hash_table(self,newhashfile):
+        reference_sha224 = hashlib.sha224(repr(self.reference_sequences)).hexdigest()
+        with newhashfile as outfile:
+            cPickle.dump((reference_sha224,self.reference),outfile)
+        pass
+    
+    def load_hash_table(self,hashfile):
+        with hashfile as infile:
+            reference_sha224,refdict = cPickle.load(infile)
+            if reference_sha224 == hashlib.sha224(repr(self.reference_sequences)).hexdigest():
+                self.reference = refdict
+            else:
+                print('WARNING: loaded read to reference hash library does not match reference sequences\n\
+                    I really hope you know what you are doing... Check and if in doubt use --newhashfile\n \
+                    without specifying an existing hash file.',file=sys.stderr)
+        pass
+    
+        
             
     
 
-def process_commandline_args():
-    pass
+def process_commandline_args(*args,**kw):
+    parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
+    AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
+    Due to sequencing errors occuring with a more random distribution than low frequency variants this approach
+    reduces the number of amplicon products that must be assigned to target regions & assessed for variant calls.
+    AmBiVErT overlaps forward and reverse reads from the same amplicon and preserves local phasing information.""")
+    parser.add_argument('--manifest',
+                        type=argparse.FileType('U'),
+                        help='an Illumina TrueSeq Amplicon manifest file.')
+    parser.add_argument('--fasta',
+                        type=argparse.FileType('U'),
+                        help='an fasta amplicon manifest file. \
+                            Sequences should be limited to the regions to be called and exclude primers & adaptors. \
+                            This file can be provided in addition to an Illumina manifest to specify additional off target regions.')
+    parser.add_argument('--output',
+                        type=argparse.FileType('w'),
+                        default=sys.stdout,
+                        help='output of alignments with variants. Default: stdout')    
+    parser.add_argument('--countfile',
+                        type=argparse.FileType('w'),
+                        default=sys.stdout,
+                        help='output of occurance counts per amplicon.  Includes all counts that map to the reference amplicon.\
+                             This count does not include reads that occured at frequencies below --threshold <default=20>')    
+    #parser.add_argument('--mpileup',
+    #                    type=argparse.FileType('w'),
+    #                    help='output mpileup files with filenames of the format "<name_provided_as_argument>_<amplicon_name>.mpileup"')    
+    parser.add_argument('--threshold',
+                        type=int,
+                        default=20,
+                        help='the minimum occurance threshold.  Amplicons that occur fewer than threshold times are ignored.')    
+    parser.add_argument('--hashtable',
+                        type=argparse.FileType('U'),
+                        help='Filename for a precomputed hash table that matches amplicons to references.  Generate with --savehashtable')    
+    parser.add_argument('--savehashtable',
+                        type=argparse.FileType('w'),
+                        help='Output a precomputed hash table that matches amplicons to references.  Use to speed up matching with --hashtable')    
+    return parser.parse_args(*args,**kw)
 
-def process_amplicon_data(forward_file, reverse_file, threshold=1000):
+def process_amplicon_data(forward_file, reverse_file, threshold=900, savehashtable=None, hashtable=None):
     amplicons = AmpliconData()
     amplicons.process_twofile_readpairs(forward_file, reverse_file)
     amplicons.merge_overlaps(minimum_overlap=20, threshold=threshold)
@@ -177,7 +252,11 @@ def process_amplicon_data(forward_file, reverse_file, threshold=1000):
     amplicons.add_references_from_manifest(open('/Users/wakefield/Software/abba/TruSeq_CAT_Manifest_Allocate-CAT.txt','U'))
     #amplicons.add_references_from_manifest(open('/Users/wakefield/Software/abba/TruSeq_CAT_Manifest_TC0019069-CAT.txt','U'))
     #amplicons.add_references_from_manifest(open('/Users/wakefield/Software/abba/TruSeq_CAT_Manifest_TC0019072-CAT.txt','U'))
+    if hashtable:
+        amplicons.load_hash_table(hashtable)
     amplicons.match_to_reference()
+    if savehashtable:
+        amplicons.save_hash_table(savehashtable)
     amplicons.align_to_reference()
     #amplicons.to_mpileup(filename=sys.stdout)
     print(amplicons.get_amplicon_counts())
@@ -198,8 +277,13 @@ if __name__ == '__main__':
     #args = {'forward_file':'/Users/wakefield/Software/Allocate/testdata_halo_FFPE_BRCA1_3481_R1.fastq',
     #        'reverse_file':'/Users/wakefield/Software/Allocate/testdata_halo_FFPE_BRCA1_3481_R2.fastq'}
     
+    args = {'forward_file':open('/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R1.fastq','U'),
+            'reverse_file':open('/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq','U')}
     args = {'forward_file':'/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R1.fastq',
-            'reverse_file':'/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq'}
+            'reverse_file':'/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq',
+            'hashtable':open('/Users/wakefield/Software/ABBA/cached_read_to_reference_table','r'),
+            'savehashtable':open('/Users/wakefield/Software/ABBA/new_cached_read_to_reference_table','w'),
+            }
     
     #print(repr({(x[0].split()[0],'unknown',1):x[1] for x in parse_fasta('/Users/wakefield/Software/Allocate/brca1.fasta')}))
     amplicons = process_amplicon_data(**args)
