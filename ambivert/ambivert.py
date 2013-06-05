@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-abba.py
+ambivert.py
 
 Amplicon Batching Before Alignment - ABBA
 
@@ -41,8 +41,15 @@ __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
+logfile = sys.stderr
 
 def smith_waterman(seq1,seq2):
+    #this currently uses the clunky pycogent pure python implementation
+    # slow but readable and trustworthy.
+    #should be replaced with something else to 
+    # - provide better gap extension penalties
+    # - faster
+    # - return start and end of alignment without this hack.
     align_seq1, align_seq2 = sw_align(seq1,seq2)
     start_seq1 = seq1.find(align_seq1.replace('-',''))
     start_seq2 = seq2.find(align_seq2.replace('-',''))
@@ -96,20 +103,18 @@ class AmpliconData(object):
         self.threshold = threshold #record in object data
         total = len(self.get_above_threshold(threshold))
         completed = 0
-        print('Merging overlaps for {0} Pairs'.format(total),file=sys.stderr)
+        print('Merging overlaps for {0} Pairs'.format(total),file=logfile)
         for key in self.get_above_threshold(threshold):
-            print(completed,end=' ',file=sys.stderr)
+            print(completed,end=' ',file=logfile)
             fwd = self.data[key][0][0][1]
             rev = reverse_complement(self.data[key][0][1][1])
             fwd_aligned, rev_aligned, fwd_start, rev_start = smith_waterman(fwd,rev)
-            #print(fwd,rev,fwd_aligned, rev_aligned, fwd_start, rev_start, sep='\n')
             if len(fwd_aligned) < minimum_overlap:
                 self.unmergable.append(key)
             else:
                 self.merged[key] = fwd[:fwd_start]+flatten_paired_alignment(fwd_aligned,rev_aligned)+rev[rev_start+len(rev_aligned.replace('-','')):]
-                #print(self.merged[key])
             completed += 1
-        print("\nSuccessfully merged {0} reads. {1} reads could not be merged".format(len(self.merged),len(self.unmergable)),file=sys.stderr)
+        print("\nSuccessfully merged {0} reads. {1} reads could not be merged".format(len(self.merged),len(self.unmergable)),file=logfile)
         pass
     
     def add_references_from_fasta(self, fastafile):
@@ -123,42 +128,47 @@ class AmpliconData(object):
             self.reference_sequences[key] = target.Sequence
         pass
     
-    def match_to_reference(self, min_score = 0.1):
+    def match_to_reference(self, min_score = 0.1, trim_primers=15):
         def match_by_edit(merged_key,ref_keys):
             best_score = 0
             best_hit = ''
             for ref_key in ref_keys:
-                score = difflib.SequenceMatcher(None, self.merged[merged_key], self.reference_sequences[ref_key]).ratio()
-                #print(ref_key, score, best_hit, best_score)
+                if trim_primers:
+                    #if smith waterman was fast enough could use here instead of diflib to reduce gappy misassignments
+                    score = difflib.SequenceMatcher(None, self.merged[merged_key][trim_primers:-trim_primers], self.reference_sequences[ref_key]).ratio()
+                else:
+                    score = difflib.SequenceMatcher(None, self.merged[merged_key], self.reference_sequences[ref_key]).ratio()
                 if score > best_score:
                     best_score = score
                     best_hit = ref_key
             return best_hit,score
         
-        print('Matching read bins to references',file=sys.stderr)
+        print('Matching read bins to references',file=logfile)
         for merged_key in self.merged:
             if merged_key in self.reference:
+                print(',',end='',file=logfile)
                 continue
             best_hit,best_score = match_by_edit(merged_key,self.reference_sequences)
-            print(best_hit,best_score)
             if best_hit and best_score > min_score:
                 self.reference[merged_key]= best_hit
-                print('.',end='',file=sys.stderr)
+                print('.',end='',file=logfile)
                 #print("Matched", self.merged[merged_key], 'to', best_hit)
                 #print(self.reference_sequences[best_hit])
             else:
-                print("\nWARNING NO MATCH FOR ", self.merged[merged_key], file=sys.stderr)
-        print(file=sys.stderr)        
+                print("\nWARNING NO MATCH FOR ", self.merged[merged_key], file=logfile)
+        print(file=logfile)        
         pass
     
     def align_to_reference(self):
-        for merged_key in self.reference:
+        for merged_key in self.reference: #use reference to restrict to matched merged pairs
+            if not merged_key in self.merged:
+                continue #occurs when matched in cached file but not present in data set
             aligned_ref_seq, aligned_sample_seq = sw_align(self.reference_sequences[self.reference[merged_key]],self.merged[merged_key])
-            print(self.reference[merged_key], file=sys.stderr)
+            print(self.reference[merged_key], file=logfile)
             if aligned_ref_seq != aligned_sample_seq:
                 self.potential_variants.append(merged_key)
-                print(aligned_ref_seq, file=sys.stderr)
-                print(aligned_sample_seq, file=sys.stderr)
+                print(aligned_ref_seq, file=logfile)
+                print(aligned_sample_seq, file=logfile)
             self.aligned[merged_key] = (aligned_ref_seq, aligned_sample_seq)
         pass
     
@@ -167,7 +177,9 @@ class AmpliconData(object):
         if not self.reference:
             self.align_to_reference()
         for merged_key in self.reference:
-            amplicon_counts[self.reference[merged_key]] += len(self.data[merged_key])
+            counts = len(self.data[merged_key])
+            if counts > self.threshold:
+                amplicon_counts[self.reference[merged_key]] += len(self.data[merged_key])
         return amplicon_counts
     
     def save_hash_table(self,newhashfile):
@@ -184,20 +196,26 @@ class AmpliconData(object):
             else:
                 print('WARNING: loaded read to reference hash library does not match reference sequences\n\
                     I really hope you know what you are doing... Check and if in doubt use --newhashfile\n \
-                    without specifying an existing hash file.',file=sys.stderr)
+                    without specifying an existing hash file.',file=logfile)
         pass
     
-        
-            
-    
-
 def process_commandline_args(*args,**kw):
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
-    AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
-    Due to sequencing errors occuring with a more random distribution than low frequency variants this approach
-    reduces the number of amplicon products that must be assigned to target regions & assessed for variant calls.
-    AmBiVErT overlaps forward and reverse reads from the same amplicon and preserves local phasing information.""")
-    parser.add_argument('--manifest',
+        AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
+        Due to sequencing errors occuring with a more random distribution than low frequency variants this approach
+        reduces the number of amplicon products that must be assigned to target regions & assessed for variant calls.
+        AmBiVErT overlaps forward and reverse reads from the same amplicon and preserves local phasing information.
+        Typical running time for first use is several hours, which reduces to less than 10 minutes when the
+        hash table calculated on a previous run is supplied for analysis of subsequent samples with the same amplicons.""")
+    parser.add_argument('-f','--forward',
+                        type=str,
+                        help='a fastq format file of forward direction amplicon reads. \
+                             May be compressed with gzip or bzip2 with the appropriate suffix (.gz/.bz2)')
+    parser.add_argument('-r','--reverse',
+                        type=str,
+                        help='a fastq format file of reverse direction amplicon reads. \
+                             May be compressed with gzip or bzip2 with the appropriate suffix (.gz/.bz2)')
+    parser.add_argument('-m','--manifest',
                         type=argparse.FileType('U'),
                         help='an Illumina TrueSeq Amplicon manifest file.')
     parser.add_argument('--fasta',
@@ -211,7 +229,6 @@ def process_commandline_args(*args,**kw):
                         help='output of alignments with variants. Default: stdout')    
     parser.add_argument('--countfile',
                         type=argparse.FileType('w'),
-                        default=sys.stdout,
                         help='output of occurance counts per amplicon.  Includes all counts that map to the reference amplicon.\
                              This count does not include reads that occured at frequencies below --threshold <default=20>')    
     #parser.add_argument('--mpileup',
@@ -221,6 +238,15 @@ def process_commandline_args(*args,**kw):
                         type=int,
                         default=20,
                         help='the minimum occurance threshold.  Amplicons that occur fewer than threshold times are ignored.')    
+    parser.add_argument('--overlap',
+                        type=int,
+                        default=20,
+                        help='The minimum overlap required between forward and reverse sequences to merge')    
+    parser.add_argument('--primer',
+                        type=int,
+                        default=15,
+                        help='The size of the smallest primer.  This number of bases is trimmed from the end of the merged sequences \
+                             to reduce the possibility that small amplicons will fail to match due to primer mismatch')    
     parser.add_argument('--hashtable',
                         type=argparse.FileType('U'),
                         help='Filename for a precomputed hash table that matches amplicons to references.  Generate with --savehashtable')    
@@ -229,48 +255,60 @@ def process_commandline_args(*args,**kw):
                         help='Output a precomputed hash table that matches amplicons to references.  Use to speed up matching with --hashtable')    
     return parser.parse_args(*args,**kw)
 
-def process_amplicon_data(forward_file, reverse_file, threshold=900, savehashtable=None, hashtable=None):
+def process_amplicon_data(forward_file, reverse_file,
+                          manifest=None, fasta=None,
+                          threshold=50, overlap=20, primer=15, 
+                          savehashtable=None, hashtable=None,
+                          ):
     amplicons = AmpliconData()
     amplicons.process_twofile_readpairs(forward_file, reverse_file)
     amplicons.merge_overlaps(minimum_overlap=20, threshold=threshold)
-    #amplicons.add_references_from_fasta(fastafile='/Users/wakefield/Software/Allocate/brca1.fasta')
-    amplicons.add_references_from_manifest(open('/Users/wakefield/Software/abba/TruSeq_CAT_Manifest_Allocate-CAT.txt','U'))
-    #amplicons.add_references_from_manifest(open('/Users/wakefield/Software/abba/TruSeq_CAT_Manifest_TC0019069-CAT.txt','U'))
-    #amplicons.add_references_from_manifest(open('/Users/wakefield/Software/abba/TruSeq_CAT_Manifest_TC0019072-CAT.txt','U'))
+    if manifest:
+        amplicons.add_references_from_manifest(manifest)
+    if fasta:
+        amplicons.add_references_from_fasta(fasta)
     if hashtable:
         amplicons.load_hash_table(hashtable)
     amplicons.match_to_reference()
     if savehashtable:
         amplicons.save_hash_table(savehashtable)
     amplicons.align_to_reference()
-    #amplicons.to_mpileup(filename=sys.stdout)
-    print(amplicons.get_amplicon_counts())
-    
-    #print(amplicons)
     return amplicons
-    
-
-#test data around region BRCA1 c.3481_3491del AGTATCTTCCT/-
-#
-#>17 dna:chromosome chromosome:GRCh37:17:41244007:41244117:1 
-#CGCTTTTGCTAAAAACAGCAGAACTTTCCTTAATGTCATTTTCAGCAAAACTagtatcttcctTTATTTCACCATCATCTAACAGGTCATCAGGTGTCTCAGAACAAACCT
-#
-## Test data from HaloSeq FFPE run.  First 20 reads including BRCA1 c.3481 and their reverse
 
 if __name__ == '__main__':
-    args = process_commandline_args()
-    #args = {'forward_file':'/Users/wakefield/Software/Allocate/testdata_halo_FFPE_BRCA1_3481_R1.fastq',
-    #        'reverse_file':'/Users/wakefield/Software/Allocate/testdata_halo_FFPE_BRCA1_3481_R2.fastq'}
+    testargs = ['--forward','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R1.fastq',
+                '--reverse','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq',
+                '--manifest','/Users/wakefield/Software/ABBA/TruSeq_CAT_Manifest_Allocate-CAT.txt',
+                #'--hashtable','/Users/wakefield/Software/ABBA/cached_read_to_reference_table',
+                '--savehashtable','/Users/wakefield/Software/ABBA/new_cached_read_to_reference_table',
+                '--threshold','20',
+                '--overlap','20',
+                '--primer','15',
+                '--countfile','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_AmpliconCounts',
+                ]
+    args = process_commandline_args(testargs)
+    #args = process_commandline_args()
+    amplicons = process_amplicon_data(args.forward,args.reverse,
+                                      args.manifest,args.fasta,
+                                      args.threshold,args.overlap,args.primer,
+                                      args.savehashtable,args.hashtable,
+                                      )
+    if args.countfile:
+        with args.countfile as outfile:
+            amplicon_counts = amplicons.get_amplicon_counts()
+            for key in sorted(amplicon_counts.keys()):
+                outfile.write('{0}\t{1}\n'.format(key,amplicon_counts[key]))
     
-    args = {'forward_file':open('/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R1.fastq','U'),
-            'reverse_file':open('/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq','U')}
-    args = {'forward_file':'/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R1.fastq',
-            'reverse_file':'/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq',
-            'hashtable':open('/Users/wakefield/Software/ABBA/cached_read_to_reference_table','r'),
-            'savehashtable':open('/Users/wakefield/Software/ABBA/new_cached_read_to_reference_table','w'),
-            }
-    
-    #print(repr({(x[0].split()[0],'unknown',1):x[1] for x in parse_fasta('/Users/wakefield/Software/Allocate/brca1.fasta')}))
-    amplicons = process_amplicon_data(**args)
-    #print(amplicons.reference_sequences)
-
+    for key in amplicons.potential_variants:
+            aligned_ref_seq, aligned_sample_seq = amplicons.aligned[key]
+            print(amplicons.reference[key],file=args.output)
+            print(aligned_ref_seq,file=args.output)
+            print(aligned_sample_seq,file=args.output)
+            matches = ''
+            for a,b in itertools.izip(aligned_ref_seq, aligned_sample_seq):
+                if a == b:
+                    matches += '.'
+                else:
+                    matches += b
+            print(matches,file=args.output)
+        
