@@ -9,7 +9,11 @@ setup(
     author_email='matthew.wakefield@unimelb.edu.au',
     packages=['ambivert'],
     url='https://git@bitbucket.org/genomematt/ambivert.git',
-    license='LICENSE.txt',
+    license='GPL',
+    entry_points={
+        'console_scripts': ['ambivert = ambivert.ambivert:main']
+    },
+
     description='AmBiVErT - AMplicon BInning Variant caller with ERror Truncation.\
                  For calling variants in amplicon based sequencing experiments',
     long_description=open('README.txt').read(),
