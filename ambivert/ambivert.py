@@ -275,7 +275,7 @@ def process_amplicon_data(forward_file, reverse_file,
     amplicons.align_to_reference()
     return amplicons
 
-if __name__ == '__main__':
+def main():
     #testargs = ['--forward','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R1.fastq',
     #            '--reverse','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq',
     #            '--manifest','/Users/wakefield/Software/ABBA/TruSeq_CAT_Manifest_Allocate-CAT.txt',
@@ -311,4 +311,7 @@ if __name__ == '__main__':
                 else:
                     matches += b
             print(matches,file=args.output)
-        
+    pass
+
+if __name__ == '__main__':
+    main()
