@@ -276,18 +276,18 @@ def process_amplicon_data(forward_file, reverse_file,
     return amplicons
 
 if __name__ == '__main__':
-    testargs = ['--forward','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R1.fastq',
-                '--reverse','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq',
-                '--manifest','/Users/wakefield/Software/ABBA/TruSeq_CAT_Manifest_Allocate-CAT.txt',
-                #'--hashtable','/Users/wakefield/Software/ABBA/cached_read_to_reference_table',
-                '--savehashtable','/Users/wakefield/Software/ABBA/new_cached_read_to_reference_table',
-                '--threshold','20',
-                '--overlap','20',
-                '--primer','15',
-                '--countfile','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_AmpliconCounts',
-                ]
-    args = process_commandline_args(testargs)
-    #args = process_commandline_args()
+    #testargs = ['--forward','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R1.fastq',
+    #            '--reverse','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq',
+    #            '--manifest','/Users/wakefield/Software/ABBA/TruSeq_CAT_Manifest_Allocate-CAT.txt',
+    #            #'--hashtable','/Users/wakefield/Software/ABBA/cached_read_to_reference_table',
+    #            '--savehashtable','/Users/wakefield/Software/ABBA/new_cached_read_to_reference_table',
+    #            '--threshold','20',
+    #            '--overlap','20',
+    #            '--primer','15',
+    #            '--countfile','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_AmpliconCounts',
+    #            ]
+    #args = process_commandline_args(testargs)
+    args = process_commandline_args()
     amplicons = process_amplicon_data(args.forward,args.reverse,
                                       args.manifest,args.fasta,
                                       args.threshold,args.overlap,args.primer,
