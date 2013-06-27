@@ -37,9 +37,15 @@ def parse_trueseq_manifest(inputfile):
     
     def parse_probes(infile):
         probes = []
+        column_names = ['Target Region Name', 'Target Region ID', 'Target ID', 'Species', 'Build ID', 'Chromosome', 'Start Position', 'End Position',
+                        'Submitted Target Region Strand', 'ULSO Sequence', 'ULSO Genomic Hits', 'DLSO Sequence', 'DLSO Genomic Hits', 'Probe Strand',
+                        'Designer', 'Design Score', 'Expected Amplifed Region Size', 'SNP Masking', 'Labels']
+        ProbeRecord = namedtuple('TargetRecord', [ x.replace(' ','_') for x in column_names])
         line = infile.readline().strip('\n').split('\t')
+        assert line == column_names
         while line[0] != '[Targets]':
             line = infile.readline().strip('\n').split('\t')
+            probes.append(ProbeRecord._make(line))
         return probes
     
     def parse_targets(infile):
@@ -71,13 +77,29 @@ def command_line_interface(*args,**kw):
     parser.add_argument('--output',
                         type=argparse.FileType('w'),
                         default=sys.stdout,
-                        help='a multi fasta output file of sequence targets. Default: stdout')    
+                        help='a multi fasta output file of sequence targets. Default: stdout')
+    parser.add_argument('--probes',
+                        action="store_true",
+                        help='output only the primer sequences')
     return parser.parse_args(*args,**kw)
 
-if __name__ == '__main__':
+def main():
     args = command_line_interface()
     header, probes, targets = parse_trueseq_manifest(args.manifest)
-    with args.output as outfile:
-        for target in targets:
-            name = '{0} {1} {2}-{3}'.format(target.TargetA.split()[0],target.Chromosome,target.Start_Position,target.End_Position)
-            outfile.write(format_fasta(name,target.Sequence))
+    if args.probes:
+        print('in probes')
+        with args.output as outfile:
+            print(probes)
+            for probe in probes:
+                if probe.Target_ID:
+                    outfile.write(format_fasta(probe.Target_ID+' ULSO',probe.ULSO_Sequence))
+                    outfile.write(format_fasta(probe.Target_ID+' DLSO',probe.DLSO_Sequence))
+    else:
+        with args.output as outfile:
+            for target in targets:
+                name = '{0} {1} {2}-{3}'.format(target.TargetA.split()[0],target.Chromosome,target.Start_Position,target.End_Position)
+                outfile.write(format_fasta(name,target.Sequence))
+    
+    
+if __name__ == '__main__':
+    main()
