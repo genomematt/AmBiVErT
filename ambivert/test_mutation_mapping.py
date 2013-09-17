@@ -7,10 +7,12 @@ Created by Matthew Wakefield on 2013-05-03.
 Copyright (c) 2013  Matthew Wakefield and The Walter and Eliza Hall Institute. All rights reserved.
 """
 from __future__ import print_function
-import sys
-import os
+import os, sys
 import re
+import argparse
 from sequence_utilities import *
+from trueseq import parse_trueseq_manifest
+
 
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The Walter and Eliza Hall Institute"
@@ -195,7 +197,60 @@ def mutated_amplicon_to_paired_reads(sequence,chromosome,start,cigar,mdtag,quali
     return ((forward_sequence, forward_quality, chromosome, forward_start, forward_cigar, forward_mdtag),
             (reverse_sequence, reverse_quality, chromosome, reverse_start, reverse_cigar, reverse_mdtag))
 
+def sequence_from_fasta_file(infile):
+    for name,sequence in process_fasta(infile):
+        name, chromosome, start, end = name.split()
+        yield chromosome, start, sequence
+
+def sequence_from_manifest_file(infile):
+    targets = parse_trueseq_manifest(infile)[2]
+    for target in targets:
+        yield target.Chromosome, target.Start_Position, target.Sequence
+
+def amplicons_to_mutated_reads(forward_outfile=sys.stdout,reverse_outfile=sys.stderr,sequences=sequence_from_fasta_file(sys.stdin)):
+    for chromosome, start, sequence in sequences:
+        for mutant_name, mutant_sequence in list(make_all_point_mutations(sequence,chromosome=chromosome,one_based_start=start)):
+                mutant_chromosome,mutant_start,cigar,mdtag = mutant_name.split('_')
+                reads = mutated_amplicon_to_paired_reads(mutant_sequence,mutant_chromosome,mutant_start,cigar,mdtag)
+                readname = "_".join(reads[0][2:]+reads[1][2:])
+                print(format_fastq_entry(readname,reads[0][0]),end='',file=forward_outfile)
+                print(format_fastq_entry(readname,reads[1][0]),end='',file=reverse_outfile)
+    pass
+
+def command_line_interface(*args,**kw):
+    parser = argparse.ArgumentParser(description='A script for simulating paired end reads with mutations\
+                                                 from an amplicon target file')
+    parser.add_argument('--manifest',
+                        type=argparse.FileType('U'),
+                        default=None,
+                        help='an Illumina TrueSeq Amplicon manifest file. Default: None')
+    parser.add_argument('--fasta',
+                        type=argparse.FileType('U'),
+                        default=None,
+                        help='a fasta file of amplicons with description lines ">name chromosome start end" Default: stdin')
+    parser.add_argument('--read1',
+                        type=argparse.FileType('w'),
+                        default=sys.stdout,
+                        help='a fastq output file of forward reads. Default: stdout')
+    parser.add_argument('--read2',
+                        type=argparse.FileType('w'),
+                        default=sys.stdout,
+                        help='a fastq output file of reverse reads. Default: stdout')
+    return parser.parse_args(*args,**kw)
+
+
 if __name__ == '__main__':
+    args = command_line_interface()
+    if args.manifest:
+        amplicons_to_mutated_reads(args.read1,args.read2,sequence_from_manifest_file(args.manifest))
+    elif args.fasta:
+        amplicons_to_mutated_reads(args.read1,args.read2,sequence_from_fasta_file(args.fasta))
+    else:
+        print("You must supply a manifest or fasta file")
+    
+    #print(mutation_detection_tag_trimmer('140G9',trim_from_start=50,trim_from_end=0))
+        
+        
     #seq = "ATCAGAGATGTAGTACAACGTCGTTTCAGTCTGAGATAATCTTCTGAACTGGTGGGAGCAGTCCTAGTGGATTCACTGACAGATATAAATTGTTTTTCTCCTGTTGAACCAGACAAAA"
     #chromosome = "13"
     #one_based_start = "32972677"
@@ -205,10 +260,10 @@ if __name__ == '__main__':
     #    
 
 
-    print(cigar_trimmer('20M'))
-    print(cigar_trimmer('20M',trim_from_start=1 ))
-    print(cigar_trimmer('25M5D5M4I6M', trim_from_start=7, trim_from_end=6))
-    #[print(x) for x in point_mutate_sequence('GATC')]
+    #print(cigar_trimmer('20M'))
+    #print(cigar_trimmer('20M',trim_from_start=1 ))
+    #print(cigar_trimmer('25M5D5M4I6M', trim_from_start=7, trim_from_end=6))
+    ##[print(x) for x in point_mutate_sequence('GATC')]
     #print()
     #[print(x) for x in point_mutate_sequence('GATC',chromosome='test',one_based_start='1230789',one_based_site=2)]
     #print()
