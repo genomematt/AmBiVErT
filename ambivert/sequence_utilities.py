@@ -21,6 +21,8 @@ __status__ = "Development"
 
 
 def open_compressed(filename, mode='r'):
+    if type(filename) == file:
+        return filename
     extention = os.path.splitext(filename)
     if extention == 'bz2':
         return BZ2File(filename, mode)
