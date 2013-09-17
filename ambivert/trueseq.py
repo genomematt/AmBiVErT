@@ -69,7 +69,9 @@ def parse_trueseq_manifest(inputfile):
     return header, probes, targets
 
 def command_line_interface(*args,**kw):
-    parser = argparse.ArgumentParser(description='A script for converting Illumina TrueSeq Amplicon manifest files to fasta target files')
+    parser = argparse.ArgumentParser(description='A script for converting Illumina TrueSeq Amplicon manifest files to fasta files\
+                                                    Produces either a fasta file of target sequences without primers or a file\
+                                                    of primer sequences suitable for use by a trimming program (eg Nesoni clip)')
     parser.add_argument('--manifest',
                         type=argparse.FileType('U'),
                         default=sys.stdin,
@@ -81,6 +83,9 @@ def command_line_interface(*args,**kw):
     parser.add_argument('--probes',
                         action="store_true",
                         help='output only the primer sequences')
+    parser.add_argument('--adaptors',
+                        action="store_true",
+                        help='append Illumina adaptor sequences to the primer sequences')
     return parser.parse_args(*args,**kw)
 
 def main():
@@ -88,12 +93,25 @@ def main():
     header, probes, targets = parse_trueseq_manifest(args.manifest)
     if args.probes:
         print('in probes')
+        if args.adaptors:
+            #Trueseq custom amplicon is P7-index1-adaptor-ULSO-target-DLSO-index2-P5
+            #Oligonucleotide sequences copyright 2007-2012 Illumina Inc.  All rights reserved
+            ULSOadaptor = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT' # P7 end
+            #DLSOadaptor = 'ACACTCTTTCCCTACACGACGCTCTTCCGATCT'
+            DLSOadaptorRC = 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT'# Reverse complemented P5 end
+            #The read 1 sequencing primer reads into the reverse complement of the DLSO
+            #To generate a clipping sequence we RC the seq primer and append at end of DLSO
+            #Stop at the index sequence as it is unlikely to be included and is variable
+            #end copyrighted sequences
+        else:
+            ULSOadaptor = ''
+            DLSOadaptor = ''
         with args.output as outfile:
             print(probes)
             for probe in probes:
                 if probe.Target_ID:
-                    outfile.write(format_fasta(probe.Target_ID+' ULSO',probe.ULSO_Sequence))
-                    outfile.write(format_fasta(probe.Target_ID+' DLSO',probe.DLSO_Sequence))
+                    outfile.write(format_fasta(probe.Target_ID+' ULSO',ULSOadaptor+probe.ULSO_Sequence))
+                    outfile.write(format_fasta(probe.Target_ID+' DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
     else:
         with args.output as outfile:
             for target in targets:
