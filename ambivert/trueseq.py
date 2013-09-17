@@ -115,7 +115,7 @@ def main():
     else:
         with args.output as outfile:
             for target in targets:
-                name = '{0} {1} {2}-{3}'.format(target.TargetA.split()[0],target.Chromosome,target.Start_Position,target.End_Position)
+                name = '{0} {1} {2} {3}'.format(target.TargetA.split()[0],target.Chromosome,target.Start_Position,target.End_Position)
                 outfile.write(format_fasta(name,target.Sequence))
     
     
