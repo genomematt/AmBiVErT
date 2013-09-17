@@ -174,8 +174,10 @@ def mutation_detection_tag_trimmer(mdtag,trim_from_start=0,trim_from_end=0):
     #    new_last_token = str(int(mdtag_tokens[-1])-trim_from_end)
     #    return "".join([new_first_token,]+mdtag_tokens[1:-1]+[new_last_token,])
     xmdtag_tokens = expand_mdtag_tokens(mdtag_tokens)
-    print(len(xmdtag_tokens),trim_from_start,trim_from_end,xmdtag_tokens[trim_from_start:-trim_from_end])
-    return compact_expanded_mdtag_tokens(xmdtag_tokens[trim_from_start:-trim_from_end])
+    if trim_from_end:
+        return compact_expanded_mdtag_tokens(xmdtag_tokens[trim_from_start:-trim_from_end])
+    else:
+        return compact_expanded_mdtag_tokens(xmdtag_tokens[trim_from_start:])
 
 def mutated_amplicon_to_paired_reads(sequence,chromosome,start,cigar,mdtag,quality='',readlength=150):
     #needs to work even when len(sequence) < readlength and return trimmed reads
