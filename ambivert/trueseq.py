@@ -88,36 +88,45 @@ def command_line_interface(*args,**kw):
                         help='append Illumina adaptor sequences to the primer sequences')
     return parser.parse_args(*args,**kw)
 
+def make_probes(adaptors=False, output=sys.stdout):
+    header, probes, targets = parse_trueseq_manifest(args.manifest)
+    if adaptors:
+        #Trueseq custom amplicon is P7-index1-adaptor-ULSO-target-DLSO-index2-P5
+        #Oligonucleotide sequences copyright 2007-2012 Illumina Inc.  All rights reserved
+        ULSOadaptor = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT' # P7 end
+        #DLSOadaptor = 'ACACTCTTTCCCTACACGACGCTCTTCCGATCT'
+        DLSOadaptorRC = 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT'# Reverse complemented P5 end
+        #The read 1 sequencing primer reads into the reverse complement of the DLSO
+        #To generate a clipping sequence we RC the seq primer and append at end of DLSO
+        #Stop at the index sequence as it is unlikely to be included and is variable
+        #end copyrighted sequences
+    else:
+        ULSOadaptor = ''
+        DLSOadaptor = ''
+    with output as outfile:
+        print(probes)
+        for probe in probes:
+            if probe.Target_ID:
+                outfile.write(format_fasta(probe.Target_ID+' ULSO',ULSOadaptor+probe.ULSO_Sequence))
+                outfile.write(format_fasta(probe.Target_ID+' DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
+    pass
+
+def make_fasta(output=sys.stdout,with_probes=False):
+    header, probes, targets = parse_trueseq_manifest(args.manifest)
+    with args.output as outfile:
+        for target in targets:
+            name = '{0} {1} {2} {3}'.format(target.TargetA.split()[0],target.Chromosome,target.Start_Position,target.End_Position)
+            outfile.write(format_fasta(name,target.Sequence))
+    pass
+
 def main():
     args = command_line_interface()
-    header, probes, targets = parse_trueseq_manifest(args.manifest)
     if args.probes:
-        print('in probes')
-        if args.adaptors:
-            #Trueseq custom amplicon is P7-index1-adaptor-ULSO-target-DLSO-index2-P5
-            #Oligonucleotide sequences copyright 2007-2012 Illumina Inc.  All rights reserved
-            ULSOadaptor = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT' # P7 end
-            #DLSOadaptor = 'ACACTCTTTCCCTACACGACGCTCTTCCGATCT'
-            DLSOadaptorRC = 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT'# Reverse complemented P5 end
-            #The read 1 sequencing primer reads into the reverse complement of the DLSO
-            #To generate a clipping sequence we RC the seq primer and append at end of DLSO
-            #Stop at the index sequence as it is unlikely to be included and is variable
-            #end copyrighted sequences
-        else:
-            ULSOadaptor = ''
-            DLSOadaptor = ''
-        with args.output as outfile:
-            print(probes)
-            for probe in probes:
-                if probe.Target_ID:
-                    outfile.write(format_fasta(probe.Target_ID+' ULSO',ULSOadaptor+probe.ULSO_Sequence))
-                    outfile.write(format_fasta(probe.Target_ID+' DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
+        make_probes(adaptors=args.adaptors, output=args.output)
     else:
-        with args.output as outfile:
-            for target in targets:
-                name = '{0} {1} {2} {3}'.format(target.TargetA.split()[0],target.Chromosome,target.Start_Position,target.End_Position)
-                outfile.write(format_fasta(name,target.Sequence))
-    
+        make_fasta(output=args.output)
+    pass
+
     
 if __name__ == '__main__':
     main()
