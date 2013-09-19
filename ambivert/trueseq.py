@@ -45,7 +45,8 @@ def parse_trueseq_manifest(inputfile):
         assert line == column_names
         while line[0] != '[Targets]':
             line = infile.readline().strip('\n').split('\t')
-            probes.append(ProbeRecord._make(line))
+            if len(line) == 19 and line[0] != '[Targets]':
+                probes.append(ProbeRecord._make(line))
         return probes
     
     def parse_targets(infile):
@@ -122,11 +123,14 @@ def make_fasta(manifest, output=sys.stdout, with_probes=False, softmask_probes=F
     probes_by_targetid = {probe.Target_ID:(probe.ULSO_Sequence,probe.DLSO_Sequence) for probe in probes}
     with output as outfile:
         for target in targets:
-            name = '{0} {1} {2} {3}'.format(target.TargetA.split()[0],target.Chromosome,target.Start_Position,target.End_Position)
+            name = '{0} {1} {2} {3}'.format(target.TargetB.replace(' ','_'),target.Chromosome,target.Start_Position,target.End_Position)
             if with_probes and softmask_probes:
-                outfile.write(format_fasta(name,probes_by_targetid[target.TargetA][0].lower()+target.Sequence+probes_by_targetid[target.TargetA][0].lower()))
+                # For on target sequences Submitted Target Region Strand == probe Probe Strand != target Probe Strand
+                # So for the order should be ULSO - Reverse complement of target - DLSO
+                # RC(DLSO)-target-RC(ULSO) is equivalent and puts the sequence in read_1 format
+                outfile.write(format_fasta(name,reverse_complement(probes_by_targetid[target.TargetA][1].lower())+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0].lower())))
             elif with_probes:
-                outfile.write(format_fasta(name,probes_by_targetid[target.TargetA][0]+target.Sequence+probes_by_targetid[target.TargetA][0]))
+                outfile.write(format_fasta(name,reverse_complement(probes_by_targetid[target.TargetA][1])+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0])))
             else:
                 outfile.write(format_fasta(name,target.Sequence))                
     pass
@@ -139,6 +143,5 @@ def main():
         make_fasta(args.manifest, output=args.output, with_probes=args.with_probes, softmask_probes=args.softmask_probes)
     pass
 
-    
 if __name__ == '__main__':
     main()
