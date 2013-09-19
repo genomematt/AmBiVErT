@@ -93,6 +93,9 @@ def command_line_interface(*args,**kw):
     parser.add_argument('--softmask_probes',
                         action="store_true",
                         help='append the ULSO and DLSO sequences to the fasta target sequences')
+    parser.add_argument('--all_plus',
+                        action="store_true",
+                        help='reorient target sequences so they are all presented on the plus strand')
     return parser.parse_args(*args,**kw)
 
 def make_probes(manifest, adaptors=False, output=sys.stdout):
@@ -118,29 +121,35 @@ def make_probes(manifest, adaptors=False, output=sys.stdout):
                 outfile.write(format_fasta(probe.Target_ID+' DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
     pass
 
-def make_fasta(manifest, output=sys.stdout, with_probes=False, softmask_probes=False):
+def make_fasta(manifest, output=sys.stdout, with_probes=False, softmask_probes=False, all_plus=True):
     header, probes, targets = parse_trueseq_manifest(manifest)
     probes_by_targetid = {probe.Target_ID:(probe.ULSO_Sequence,probe.DLSO_Sequence) for probe in probes}
     with output as outfile:
         for target in targets:
-            name = '{0} {1} {2} {3}'.format(target.TargetB.replace(' ','_'),target.Chromosome,target.Start_Position,target.End_Position)
+            name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'),target.Chromosome,target.Start_Position,target.End_Position)
             if with_probes and softmask_probes:
                 # For on target sequences Submitted Target Region Strand == probe Probe Strand != target Probe Strand
                 # So for the order should be ULSO - Reverse complement of target - DLSO
                 # RC(DLSO)-target-RC(ULSO) is equivalent and puts the sequence in read_1 format
-                outfile.write(format_fasta(name,reverse_complement(probes_by_targetid[target.TargetA][1].lower())+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0].lower())))
+                seq = reverse_complement(probes_by_targetid[target.TargetA][1].lower())+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0].lower())
             elif with_probes:
-                outfile.write(format_fasta(name,reverse_complement(probes_by_targetid[target.TargetA][1])+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0])))
+                seq = reverse_complement(probes_by_targetid[target.TargetA][1])+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0])
             else:
-                outfile.write(format_fasta(name,target.Sequence))                
+                seq = target.Sequence
+            if all_plus and (target.Probe_Strand == '-'):
+                #print('minus strand - rc ing',name,file=sys.stderr)
+                outfile.write(format_fasta(name,reverse_complement(seq)))
+            else:
+                outfile.write(format_fasta(name,seq))
     pass
 
 def main():
     args = command_line_interface()
+    # Probably should refactor these so functions just yeild (name,sequence) and format output here.
     if args.probes:
         make_probes(args.manifest, adaptors=args.adaptors, output=args.output)
     else:
-        make_fasta(args.manifest, output=args.output, with_probes=args.with_probes, softmask_probes=args.softmask_probes)
+        make_fasta(args.manifest, output=args.output, with_probes=args.with_probes, softmask_probes=args.softmask_probes, all_plus=args.all_plus)
     pass
 
 if __name__ == '__main__':
