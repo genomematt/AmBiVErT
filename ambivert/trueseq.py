@@ -82,14 +82,20 @@ def command_line_interface(*args,**kw):
                         help='a multi fasta output file of sequence targets. Default: stdout')
     parser.add_argument('--probes',
                         action="store_true",
-                        help='output only the primer sequences')
+                        help='output only the ULSO and DLSO primer sequences')
     parser.add_argument('--adaptors',
                         action="store_true",
                         help='append Illumina adaptor sequences to the primer sequences')
+    parser.add_argument('--with_probes',
+                        action="store_true",
+                        help='append the ULSO and DLSO sequences to the fasta target sequences')
+    parser.add_argument('--softmask_probes',
+                        action="store_true",
+                        help='append the ULSO and DLSO sequences to the fasta target sequences')
     return parser.parse_args(*args,**kw)
 
-def make_probes(adaptors=False, output=sys.stdout):
-    header, probes, targets = parse_trueseq_manifest(args.manifest)
+def make_probes(manifest, adaptors=False, output=sys.stdout):
+    header, probes, targets = parse_trueseq_manifest(manifest)
     if adaptors:
         #Trueseq custom amplicon is P7-index1-adaptor-ULSO-target-DLSO-index2-P5
         #Oligonucleotide sequences copyright 2007-2012 Illumina Inc.  All rights reserved
@@ -111,20 +117,26 @@ def make_probes(adaptors=False, output=sys.stdout):
                 outfile.write(format_fasta(probe.Target_ID+' DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
     pass
 
-def make_fasta(output=sys.stdout,with_probes=False):
-    header, probes, targets = parse_trueseq_manifest(args.manifest)
-    with args.output as outfile:
+def make_fasta(manifest, output=sys.stdout, with_probes=False, softmask_probes=False):
+    header, probes, targets = parse_trueseq_manifest(manifest)
+    probes_by_targetid = {probe.Target_ID:(probe.ULSO_Sequence,probe.DLSO_Sequence) for probe in probes}
+    with output as outfile:
         for target in targets:
             name = '{0} {1} {2} {3}'.format(target.TargetA.split()[0],target.Chromosome,target.Start_Position,target.End_Position)
-            outfile.write(format_fasta(name,target.Sequence))
+            if with_probes and softmask_probes:
+                outfile.write(format_fasta(name,probes_by_targetid[target.TargetA][0].lower()+target.Sequence+probes_by_targetid[target.TargetA][0].lower()))
+            elif with_probes:
+                outfile.write(format_fasta(name,probes_by_targetid[target.TargetA][0]+target.Sequence+probes_by_targetid[target.TargetA][0]))
+            else:
+                outfile.write(format_fasta(name,target.Sequence))                
     pass
 
 def main():
     args = command_line_interface()
     if args.probes:
-        make_probes(adaptors=args.adaptors, output=args.output)
+        make_probes(args.manifest, adaptors=args.adaptors, output=args.output)
     else:
-        make_fasta(output=args.output)
+        make_fasta(args.manifest, output=args.output, with_probes=args.with_probes, softmask_probes=args.softmask_probes)
     pass
 
     
