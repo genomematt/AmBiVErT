@@ -11,7 +11,9 @@ setup(
     url='https://git@bitbucket.org/genomematt/ambivert.git',
     license='GPL',
     entry_points={
-        'console_scripts': ['ambivert = ambivert.ambivert:main']
+        'console_scripts': ['ambivert = ambivert.ambivert:main',
+                            'trueseq_manifest = ambivert.trueseq_manifest:main',
+                           ]
     },
 
     description='AmBiVErT - AMplicon BInning Variant caller with ERror Truncation.\
