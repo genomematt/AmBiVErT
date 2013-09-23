@@ -11,7 +11,7 @@ import os, sys
 import re
 import argparse
 from sequence_utilities import *
-from trueseq import parse_trueseq_manifest
+from truseq import parse_truseq_manifest
 
 
 __author__ = "Matthew Wakefield"
@@ -204,7 +204,7 @@ def sequence_from_fasta_file(infile):
         yield chromosome, start, sequence
 
 def sequence_from_manifest_file(infile):
-    targets = parse_trueseq_manifest(infile)[2]
+    targets = parse_truseq_manifest(infile)[2]
     for target in targets:
         yield target.Chromosome, target.Start_Position, target.Sequence
 
