@@ -12,7 +12,7 @@ setup(
     license='GPL',
     entry_points={
         'console_scripts': ['ambivert = ambivert.ambivert:main',
-                            'trueseq_manifest = ambivert.trueseq_manifest:main',
+                            'truseq_manifest = ambivert.truseq_manifest:main',
                            ]
     },
 
