@@ -39,10 +39,11 @@ def point_mutate_sequence(sequence,chromosome=None,one_based_start=None,one_base
                                                                     mdz_tag=mdz_tag)
         yield name,sequence[:site]+base+sequence[site+1:]
 
-def make_all_point_mutations(sequence, chromosome=None, one_based_start=None, primer=0):
+def make_all_point_mutations(sequence, chromosome=None, one_based_start=None, primer=0, skip_softmasked=True):
     for i in range(primer,len(sequence)):
-        for x in point_mutate_sequence(sequence, chromosome, one_based_start, i+1):
-            yield x
+        if sequence[i] in ['A','C','G','T']:
+            for x in point_mutate_sequence(sequence, chromosome, one_based_start, i+1):
+                yield x
 
 def get_sam_header(samfile):
     line = "@"
