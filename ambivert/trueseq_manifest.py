@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-trueseq.py
+trueseq_manifest.py
 
 Utilities for handling Illumina TruSeq amplicon manifest files
 
