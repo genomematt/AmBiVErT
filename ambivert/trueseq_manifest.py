@@ -113,6 +113,7 @@ def make_probes(manifest, adaptors=False, output=sys.stdout):
     else:
         ULSOadaptor = ''
         DLSOadaptor = ''
+        DLSOadaptorRC = ''
     with output as outfile:
         print(probes)
         for probe in probes:
