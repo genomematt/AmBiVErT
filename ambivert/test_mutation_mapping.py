@@ -198,7 +198,7 @@ def mutated_amplicon_to_paired_reads(sequence,chromosome,start,cigar,mdtag,quali
             (reverse_sequence, reverse_quality, chromosome, reverse_start, reverse_cigar, reverse_mdtag))
 
 def sequence_from_fasta_file(infile):
-    for name,sequence in process_fasta(infile):
+    for name,sequence in parse_fasta(infile):
         name, chromosome, start, end = name.split()
         yield chromosome, start, sequence
 
