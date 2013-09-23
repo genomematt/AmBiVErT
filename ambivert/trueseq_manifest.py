@@ -98,8 +98,7 @@ def command_line_interface(*args,**kw):
                         help='reorient target sequences so they are all presented on the plus strand')
     return parser.parse_args(*args,**kw)
 
-def make_probes(manifest, adaptors=False, output=sys.stdout):
-    header, probes, targets = parse_trueseq_manifest(manifest)
+def make_probes(header, probes, targets, adaptors=False, output=sys.stdout):
     if adaptors:
         #Trueseq custom amplicon is P7-index1-adaptor-ULSO-target-DLSO-index2-P5
         #Oligonucleotide sequences copyright 2007-2012 Illumina Inc.  All rights reserved
@@ -112,22 +111,30 @@ def make_probes(manifest, adaptors=False, output=sys.stdout):
         #end copyrighted sequences
     else:
         ULSOadaptor = ''
-        DLSOadaptor = ''
         DLSOadaptorRC = ''
     with output as outfile:
-        print(probes)
+        #print(probes)
         for probe in probes:
             if probe.Target_ID:
-                outfile.write(format_fasta(probe.Target_ID+' ULSO',ULSOadaptor+probe.ULSO_Sequence))
-                outfile.write(format_fasta(probe.Target_ID+' DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
+                outfile.write(format_fasta(probe.Target_ID.replace(' ','_')+'_ULSO',ULSOadaptor+probe.ULSO_Sequence))
+                outfile.write(format_fasta(probe.Target_ID.replace(' ','_')+'_DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
     pass
 
-def make_fasta(manifest, output=sys.stdout, with_probes=False, softmask_probes=False, all_plus=True):
-    header, probes, targets = parse_trueseq_manifest(manifest)
+def make_fasta(header, probes, targets, output=sys.stdout, with_probes=False, softmask_probes=False, all_plus=True):
     probes_by_targetid = {probe.Target_ID:(probe.ULSO_Sequence,probe.DLSO_Sequence) for probe in probes}
     with output as outfile:
         for target in targets:
-            name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'),target.Chromosome,target.Start_Position,target.End_Position)
+            if with_probes:
+                name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'), target.Chromosome, target.Start_Position, target.End_Position)
+            else:
+                if all_plus and (target.Probe_Strand == '-'):
+                    start = int(target.Start_Position) + len(probes_by_targetid[target.TargetA][1]) # add ULSO length to start
+                    end = int(target.End_Position) - len(probes_by_targetid[target.TargetA][0]) # subtract DLSO length from end
+                else:
+                    start = int(target.Start_Position) + len(probes_by_targetid[target.TargetA][0]) # add DLSO length to start
+                    end = int(target.End_Position) - len(probes_by_targetid[target.TargetA][1]) # subtract ULSO length from end
+                name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'), target.Chromosome, start, end)
+            
             if with_probes and softmask_probes:
                 # For on target sequences Submitted Target Region Strand == probe Probe Strand != target Probe Strand
                 # So for the order should be ULSO - Reverse complement of target - DLSO
@@ -138,9 +145,10 @@ def make_fasta(manifest, output=sys.stdout, with_probes=False, softmask_probes=F
             else:
                 seq = target.Sequence
             if all_plus and (target.Probe_Strand == '-'):
-                #print('minus strand - rc ing',name,file=sys.stderr)
+                #print('minus strand - rc ing',name,target.Start_Position, target.End_Position, len(probes_by_targetid[target.TargetA][0]), len(probes_by_targetid[target.TargetA][1]))
                 outfile.write(format_fasta(name,reverse_complement(seq)))
             else:
+                #print('plus strand',name,target.Start_Position, target.End_Position, len(probes_by_targetid[target.TargetA][0]), len(probes_by_targetid[target.TargetA][1]))
                 outfile.write(format_fasta(name,seq))
     pass
 
@@ -148,9 +156,9 @@ def main():
     args = command_line_interface()
     # Probably should refactor these so functions just yeild (name,sequence) and format output here.
     if args.probes:
-        make_probes(args.manifest, adaptors=args.adaptors, output=args.output)
+        make_probes(*parse_trueseq_manifest(args.manifest), adaptors=args.adaptors, output=args.output)
     else:
-        make_fasta(args.manifest, output=args.output, with_probes=args.with_probes, softmask_probes=args.softmask_probes, all_plus=args.all_plus)
+        make_fasta(*parse_trueseq_manifest(args.manifest), output=args.output, with_probes=args.with_probes, softmask_probes=args.softmask_probes, all_plus=args.all_plus)
     pass
 
 if __name__ == '__main__':
