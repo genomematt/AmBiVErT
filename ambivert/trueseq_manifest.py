@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-trueseq_manifest.py
+truseq_manifest.py
 
 Utilities for handling Illumina TruSeq amplicon manifest files
 
@@ -24,7 +24,7 @@ __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
 
-def parse_trueseq_manifest(inputfile):
+def parse_truseq_manifest(inputfile):
     def parse_header(infile):
         line = infile.readline().strip('\n').split('\t')
         header = {}
@@ -70,13 +70,13 @@ def parse_trueseq_manifest(inputfile):
     return header, probes, targets
 
 def command_line_interface(*args,**kw):
-    parser = argparse.ArgumentParser(description='A script for converting Illumina TrueSeq Amplicon manifest files to fasta files\
+    parser = argparse.ArgumentParser(description='A script for converting Illumina TruSeq Amplicon manifest files to fasta files\
                                                     Produces either a fasta file of target sequences without primers or a file\
                                                     of primer sequences suitable for use by a trimming program (eg Nesoni clip)')
     parser.add_argument('--manifest',
                         type=argparse.FileType('U'),
                         default=sys.stdin,
-                        help='an Illumina TrueSeq Amplicon manifest file. Default: stdin')
+                        help='an Illumina TruSeq Amplicon manifest file. Default: stdin')
     parser.add_argument('--output',
                         type=argparse.FileType('w'),
                         default=sys.stdout,
@@ -100,7 +100,7 @@ def command_line_interface(*args,**kw):
 
 def make_probes(header, probes, targets, adaptors=False, output=sys.stdout):
     if adaptors:
-        #Trueseq custom amplicon is P7-index1-adaptor-ULSO-target-DLSO-index2-P5
+        #Truseq custom amplicon is P7-index1-adaptor-ULSO-target-DLSO-index2-P5
         #Oligonucleotide sequences copyright 2007-2012 Illumina Inc.  All rights reserved
         ULSOadaptor = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT' # P7 end
         #DLSOadaptor = 'ACACTCTTTCCCTACACGACGCTCTTCCGATCT'
@@ -156,9 +156,9 @@ def main():
     args = command_line_interface()
     # Probably should refactor these so functions just yeild (name,sequence) and format output here.
     if args.probes:
-        make_probes(*parse_trueseq_manifest(args.manifest), adaptors=args.adaptors, output=args.output)
+        make_probes(*parse_truseq_manifest(args.manifest), adaptors=args.adaptors, output=args.output)
     else:
-        make_fasta(*parse_trueseq_manifest(args.manifest), output=args.output, with_probes=args.with_probes, softmask_probes=args.softmask_probes, all_plus=args.all_plus)
+        make_fasta(*parse_truseq_manifest(args.manifest), output=args.output, with_probes=args.with_probes, softmask_probes=args.softmask_probes, all_plus=args.all_plus)
     pass
 
 if __name__ == '__main__':
