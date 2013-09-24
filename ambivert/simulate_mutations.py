@@ -24,25 +24,34 @@ __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
 
-def point_mutate_sequence(sequence,chromosome=None,one_based_start=None,one_based_site=1):
+def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_site=1, position_excludes_softmasked=True):
     site = one_based_site - 1
     reference = sequence[site]
     for base in ['A','C','G','T']:
-        if base == reference:
+        if base == reference.upper():
             continue
-        mdz_tag = '{pre}{mut}{post}'.format(pre = site if site else '',
+        if position_excludes_softmasked:
+            softmasked_start = re.findall(r'(^[acgt]+)',sequence)
+            softmasked_end = re.findall(r'([acgt]+$)',sequence)
+            start_offset = len(softmasked_start[0]) if softmasked_start else 0
+            end_offset = len(softmasked_end[0]) if softmasked_end else 0
+            assert one_based_site >= start_offset
+        else:
+            start_offset = 0
+            end_offset = 0
+        mdz_tag = '{pre}{mut}{post}'.format(pre = site - start_offset if site - start_offset else '',
                                             mut = base,
-                                            post = (len(sequence)-1)-site if (len(sequence)-1)-site else '')
-        name = '{chromosome}_{start}_{cigar_len}M_{mdz_tag}'.format(chromosome=chromosome,
-                                                                    start=one_based_start,
-                                                                    cigar_len=len(sequence),
-                                                                    mdz_tag=mdz_tag)
+                                            post = (len(sequence) - end_offset - 1) - site if (len(sequence)  - end_offset - 1) - site else '')
+        name = '{chromosome}_{start}_{cigar_len}M_{mdz_tag}'.format(chromosome = chromosome,
+                                                                    start = one_based_start + start_offset,
+                                                                    cigar_len = len(sequence) - end_offset - start_offset,
+                                                                    mdz_tag = mdz_tag)
         yield name,sequence[:site]+base+sequence[site+1:]
 
-def make_all_point_mutations(sequence, chromosome=None, one_based_start=None, primer=0, skip_softmasked=True):
+def make_all_point_mutations(sequence, chromosome=None, one_based_start=1, primer=0, skip_softmasked=True, **kw):
     for i in range(primer,len(sequence)):
-        if sequence[i] in ['A','C','G','T']:
-            for x in point_mutate_sequence(sequence, chromosome, one_based_start, i+1):
+        if (not skip_softmasked) or (sequence[i] in ['A','C','G','T']):
+            for x in point_mutate_sequence(sequence, chromosome, one_based_start, i+1, **kw):
                 yield x
 
 def get_sam_header(samfile):
@@ -228,7 +237,8 @@ def command_line_interface(*args,**kw):
     parser.add_argument('--fasta',
                         type=argparse.FileType('U'),
                         default=None,
-                        help='a fasta file of amplicons with description lines ">name chromosome start end" Default: stdin')
+                        help='a fasta file of amplicons with description lines \
+                             ">name chromosome start end" Default: None')
     parser.add_argument('--read1',
                         type=argparse.FileType('w'),
                         default=sys.stdout,
@@ -237,6 +247,13 @@ def command_line_interface(*args,**kw):
                         type=argparse.FileType('w'),
                         default=sys.stdout,
                         help='a fastq output file of reverse reads. Default: stdout')
+    parser.add_argument('--skip_softmasked',
+                        action="store_true",
+                        help='dont generate mutations in softmasked sequence. Default: True')
+    parser.add_argument('--position_excludes_softmasked',
+                        action="store_true",
+                        help='Exclude softmasked sequence when calculating start site of read,\
+                              cigar and mutation detection strings. Default: True')
     return parser.parse_args(*args,**kw)
 
 
