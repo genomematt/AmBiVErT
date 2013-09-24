@@ -1,26 +1,26 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-test_mutation_mapping.py
+simulate_mutations.py
 
 Created by Matthew Wakefield on 2013-05-03.
-Copyright (c) 2013  Matthew Wakefield and The Walter and Eliza Hall Institute. All rights reserved.
+Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
 from __future__ import print_function
 import os, sys
 import re
 import argparse
 from sequence_utilities import *
-from truseq import parse_truseq_manifest
+from truseq_manifest import parse_truseq_manifest
 
 
 __author__ = "Matthew Wakefield"
-__copyright__ = "Copyright 2013,  Matthew Wakefield and The Walter and Eliza Hall Institute"
+__copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield",]
 __license__ = "GPL"
 __version__ = "0.1"
 __maintainer__ = "Matthew Wakefield"
-__email__ = "wakefield@wehi.edu.au"
+__email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
 
