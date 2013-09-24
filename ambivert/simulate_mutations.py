@@ -25,6 +25,28 @@ __status__ = "Development"
 
 
 def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_site=1, position_excludes_softmasked=True):
+    """Yields sequences with a specific site mutated to the three alternative SNVs.
+    Returns a tuple of name and sequence.  The name is underscore separated and
+    consists of: chromosome, start (one based), cigar string, mutation detection tag.
+    These values will only be correct for plus strand sequences.
+    
+    Arguments:
+        sequence        - An IUPAC nucleotide iterable (string or list).
+                          Lowercase masking supported.
+        chromosome      - A string identifying the reference chromosome
+        one_based_start - An integer identifying the location of the first base
+                          of the string in the reference sequence
+        one_based_site  - An integer identifying the base to be mutated.
+                          First base in string is 1.
+        position_excludes_softmasked - A boolean indicating that the
+                          softmasked based should be ignored when
+                          constructing the cigar and mutation tags.
+                          Results in the first uppercase base being
+                          used as postition 1.
+    Yields:
+        name        -  string of format chromosome_startInRef_cigar_MD
+        sequence    -  an IUPAC sequence string
+    """
     site = one_based_site - 1
     reference = sequence[site]
     for base in ['A','C','G','T']:
@@ -46,16 +68,49 @@ def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_s
         yield name,sequence[:site]+base+sequence[site+1:]
 
 def get_softmasked_offsets(sequence):
+    """Returns the length of lowercase sequence at the start and end
+    This is the length of the softmasked sequences and the offset
+    between the start and end when unmasked and masked.
+    Treats internal soft masked bases (ie flanked by uppercase) as unmasked.
+    """
+    sequence = str(sequence)
     softmasked_start = re.findall(r'(^[acgt]+)',sequence)
     softmasked_end = re.findall(r'([acgt]+$)',sequence)
     start_offset = len(softmasked_start[0]) if softmasked_start else 0
     end_offset = len(softmasked_end[0]) if softmasked_end else 0
     return start_offset, end_offset
 
-def make_all_point_mutations(sequence, chromosome=None, one_based_start=1, primer=0, skip_softmasked=True, **kw):
-    for i in range(primer,len(sequence)):
+def make_all_point_mutations(sequence, skip_softmasked=True, **kw):
+    """Yields sequences mutated to the three alternative SNVs at all sites.
+    Returns a tuple of name and sequence.  The name is underscore separated and
+    consists of: chromosome, start (one based), cigar string, mutation detection tag.
+    These values will only be correct for plus strand sequences.
+    
+    Arguments:
+        sequence        - An IUPAC nucleotide iterable (string or list).
+                          Lowercase masking supported.
+        chromosome      - A string identifying the reference chromosome
+                          Default = None
+        one_based_start - An integer identifying the location of the first base
+                          of the string in the reference sequence
+                          Default = 1
+        skip_softmasked - A boolean indicating that masked bases should
+                          not be mutated.  Should only be set False if
+                          position_excludes_softmasked is False.
+                          Default = True
+        position_excludes_softmasked - A boolean indicating that the
+                          softmasked based should be ignored when
+                          constructing the cigar and mutation tags.
+                          Results in the first uppercase base being
+                          used as postition 1.
+                          Default = True
+    Returns:
+        name        -  string of format chromosome_startInRef_cigar_MD
+        sequence    -  an IUPAC sequence string
+    """
+    for i in range(len(sequence)):
         if (not skip_softmasked) or (sequence[i] in ['A','C','G','T']):
-            for x in point_mutate_sequence(sequence, chromosome, one_based_start, i+1, **kw):
+            for x in point_mutate_sequence(sequence, one_based_site=i+1, **kw):
                 yield x
 
 def get_sam_header(samfile):
@@ -183,20 +238,45 @@ def mutation_detection_tag_trimmer(mdtag,trim_from_start=0,trim_from_end=0):
     if len(mdtag_tokens) == 1:
         #no mutation states - just need to resize
         return str(int(mdtag_tokens[0])-(trim_from_start+trim_from_end))
-    #if (mdtag_tokens[-1][0] in '1234567890') and (int(mdtag_tokens[0]) > trim_from_start) and (int(mdtag_tokens[-1]) < trim_from_end):
-    #    #check that last entry is a number.  If so len(tokens) >= 3.
-    #    #trim does not include mutations - resize ends
-    #    new_first_token = str(int(mdtag_tokens[0])-trim_from_start)
-    #    new_last_token = str(int(mdtag_tokens[-1])-trim_from_end)
-    #    return "".join([new_first_token,]+mdtag_tokens[1:-1]+[new_last_token,])
     xmdtag_tokens = expand_mdtag_tokens(mdtag_tokens)
     if trim_from_end:
         return compact_expanded_mdtag_tokens(xmdtag_tokens[trim_from_start:-trim_from_end])
     else:
         return compact_expanded_mdtag_tokens(xmdtag_tokens[trim_from_start:])
 
-def mutated_amplicon_to_paired_reads(sequence,chromosome,start,cigar,mdtag,quality='',readlength=150, position_excludes_softmasked=False):
-    #needs to work even when len(sequence) < readlength and return trimmed reads
+def mutated_amplicon_to_paired_reads(sequence,chromosome,one_based_start,cigar,mdtag,quality='',readlength=150, position_excludes_softmasked=False):
+    """Convert a single sequence representing an amplicon
+    into two paired end reads, adjusting cigar string
+    and mutation detection tags to be correct for the
+    new read sequences.
+    Cigar and MD tag will only be valid for plus strand
+    amplicon sequences.
+    
+    Arguments:
+        sequence        - An IUPAC nucleotide iterable (string or list).
+                          Lowercase masking supported.
+        chromosome      - A string identifying the reference chromosome
+                          Default = None
+        one_based_start - An integer identifying the location of the first base
+                          of the string in the reference sequence
+                          Default = 1
+        cigar           - A cigar format string indicating indels
+        mdtag           - A SAM format mutation detection (MD) tag
+        quality         - An optional fastq quality string
+                          Default = ''
+        readlength      - The length of the sequence reads to generate.
+                          Default = 150
+        position_excludes_softmasked - A boolean indicating that the
+                          softmasked bases have been ignored when
+                          constructing the cigar and mutation tags.
+                          Results in the first uppercase base being
+                          used as postition 1.
+                          Default = True
+    Returns:
+        A tuple of tuples consisting of sequence, quality, chromosome, start, cigar, mdtag.
+        The reverse sequence is reverse complemented and quality reversed.
+        All cigar and mutation detection tags are presented in plus strand format
+    """
     forward_sequence = sequence[:readlength]
     reverse_sequence = reverse_complement(sequence[-readlength:])
     forward_quality = quality[:readlength]
@@ -204,8 +284,8 @@ def mutated_amplicon_to_paired_reads(sequence,chromosome,start,cigar,mdtag,quali
     trimsize = max(0,len(sequence)-readlength)
     
     if not position_excludes_softmasked:
-        reverse_start = str(int(start) + trimsize)
-        forward_start = start
+        reverse_start = str(int(one_based_start) + trimsize)
+        forward_start = one_based_start
         reverse_cigar = cigar_trimmer(cigar, trim_from_start=trimsize)
         reverse_mdtag = mutation_detection_tag_trimmer(mdtag, trim_from_start=trimsize)
         forward_cigar = cigar_trimmer(cigar, trim_from_end=trimsize)
@@ -214,8 +294,8 @@ def mutated_amplicon_to_paired_reads(sequence,chromosome,start,cigar,mdtag,quali
         # positions are described excluding the soft masked bases
         # need to modify keeping these offsets from either end
         start_offset, end_offset = get_softmasked_offsets(sequence)
-        reverse_start = str(int(start) - start_offset + trimsize) # start defined as position of first unmasked base
-        forward_start = start
+        reverse_start = str(int(one_based_start) - start_offset + trimsize) # start defined as position of first unmasked base
+        forward_start = one_based_start
         reverse_cigar = cigar_trimmer(cigar, trim_from_start=trimsize-end_offset)
         reverse_mdtag = mutation_detection_tag_trimmer(mdtag,trim_from_start=trimsize-end_offset)
         forward_cigar = cigar_trimmer(cigar, trim_from_end=trimsize-start_offset)
