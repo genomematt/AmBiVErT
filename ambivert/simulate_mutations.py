@@ -278,7 +278,7 @@ def command_line_interface(*args,**kw):
     return parser.parse_args(*args,**kw)
 
 
-if __name__ == '__main__':
+def main():
     args = command_line_interface()
     if args.manifest:
         amplicons_to_mutated_reads(forward_outfile = args.read1, reverse_outfile = args.read2,
@@ -292,31 +292,6 @@ if __name__ == '__main__':
                                    )
     else:
         print("You must supply a manifest or fasta file")
-    
-    #print(mutation_detection_tag_trimmer('140G9',trim_from_start=50,trim_from_end=0))
-        
-        
-    #seq = "ATCAGAGATGTAGTACAACGTCGTTTCAGTCTGAGATAATCTTCTGAACTGGTGGGAGCAGTCCTAGTGGATTCACTGACAGATATAAATTGTTTTTCTCCTGTTGAACCAGACAAAA"
-    #chromosome = "13"
-    #one_based_start = "32972677"
-    #for x in make_all_point_mutations(seq,"13","32972677"):
-    #    print(x[0].split('_')[0],x[0].split('_')[1],x[0].split('_')[2],x[0].split('_')[3])
-    #    print(mutated_amplicon_to_paired_reads(x[1],x[0].split('_')[0],x[0].split('_')[1],x[0].split('_')[2],x[0].split('_')[3], readlength=20))
-    #    
 
-
-    #print(cigar_trimmer('20M'))
-    #print(cigar_trimmer('20M',trim_from_start=1 ))
-    #print(cigar_trimmer('25M5D5M4I6M', trim_from_start=7, trim_from_end=6))
-    ##[print(x) for x in point_mutate_sequence('GATC')]
-    #print()
-    #[print(x) for x in point_mutate_sequence('GATC',chromosome='test',one_based_start='1230789',one_based_site=2)]
-    #print()
-    #[print(x) for x in point_mutate_sequence('GATC',chromosome='test',one_based_start='1230789',one_based_site=4)]
-    #print()
-    #[[print(y) for y in x] for x in make_all_point_mutations('GATC',chromosome='test',one_based_start='1230789')]
-    #print()
-    #[[print(y) for y in x] for x in make_all_point_mutations('GATC',chromosome='test',one_based_start='1230789', primer=2)]
-    #print()
-    #[[print(format_fastq_entry(*y),end='') for y in x] for x in make_all_point_mutations('GATC',chromosome='test',one_based_start='1230789', primer=2)]
-
+if __name__ == '__main__':
+    main()
