@@ -31,10 +31,7 @@ def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_s
         if base == reference.upper():
             continue
         if position_excludes_softmasked:
-            softmasked_start = re.findall(r'(^[acgt]+)',sequence)
-            softmasked_end = re.findall(r'([acgt]+$)',sequence)
-            start_offset = len(softmasked_start[0]) if softmasked_start else 0
-            end_offset = len(softmasked_end[0]) if softmasked_end else 0
+            start_offset, end_offset = get_softmasked_offsets(sequence)
             assert one_based_site >= start_offset
         else:
             start_offset = 0
@@ -47,6 +44,13 @@ def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_s
                                                                     cigar_len = len(sequence) - end_offset - start_offset,
                                                                     mdz_tag = mdz_tag)
         yield name,sequence[:site]+base+sequence[site+1:]
+
+def get_softmasked_offsets(sequence):
+    softmasked_start = re.findall(r'(^[acgt]+)',sequence)
+    softmasked_end = re.findall(r'([acgt]+$)',sequence)
+    start_offset = len(softmasked_start[0]) if softmasked_start else 0
+    end_offset = len(softmasked_end[0]) if softmasked_end else 0
+    return start_offset, end_offset
 
 def make_all_point_mutations(sequence, chromosome=None, one_based_start=1, primer=0, skip_softmasked=True, **kw):
     for i in range(primer,len(sequence)):
