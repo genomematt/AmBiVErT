@@ -195,19 +195,32 @@ def mutation_detection_tag_trimmer(mdtag,trim_from_start=0,trim_from_end=0):
     else:
         return compact_expanded_mdtag_tokens(xmdtag_tokens[trim_from_start:])
 
-def mutated_amplicon_to_paired_reads(sequence,chromosome,start,cigar,mdtag,quality='',readlength=150):
+def mutated_amplicon_to_paired_reads(sequence,chromosome,start,cigar,mdtag,quality='',readlength=150, position_excludes_softmasked=False):
     #needs to work even when len(sequence) < readlength and return trimmed reads
     forward_sequence = sequence[:readlength]
     reverse_sequence = reverse_complement(sequence[-readlength:])
     forward_quality = quality[:readlength]
     reverse_quality = "".join(reversed(quality[-readlength:]))
     trimsize = max(0,len(sequence)-readlength)
-    reverse_start = str(int(start) + trimsize)
-    reverse_cigar = cigar_trimmer(cigar,trim_from_start=trimsize)
-    reverse_mdtag = mutation_detection_tag_trimmer(mdtag,trim_from_start=trimsize)
-    forward_start = start
-    forward_cigar = cigar_trimmer(cigar,trim_from_end=trimsize)
-    forward_mdtag = mutation_detection_tag_trimmer(mdtag,trim_from_end=trimsize)
+    
+    if not position_excludes_softmasked:
+        reverse_start = str(int(start) + trimsize)
+        forward_start = start
+        reverse_cigar = cigar_trimmer(cigar, trim_from_start=trimsize)
+        reverse_mdtag = mutation_detection_tag_trimmer(mdtag, trim_from_start=trimsize)
+        forward_cigar = cigar_trimmer(cigar, trim_from_end=trimsize)
+        forward_mdtag = mutation_detection_tag_trimmer(mdtag, trim_from_end=trimsize)
+    else:
+        # positions are described excluding the soft masked bases
+        # need to modify keeping these offsets from either end
+        start_offset, end_offset = get_softmasked_offsets(sequence)
+        reverse_start = str(int(start) - start_offset + trimsize) # start defined as position of first unmasked base
+        forward_start = start
+        reverse_cigar = cigar_trimmer(cigar, trim_from_start=trimsize-end_offset)
+        reverse_mdtag = mutation_detection_tag_trimmer(mdtag,trim_from_start=trimsize-end_offset)
+        forward_cigar = cigar_trimmer(cigar, trim_from_end=trimsize-start_offset)
+        forward_mdtag = mutation_detection_tag_trimmer(mdtag, trim_from_end=trimsize-start_offset)
+
     return ((forward_sequence, forward_quality, chromosome, forward_start, forward_cigar, forward_mdtag),
             (reverse_sequence, reverse_quality, chromosome, reverse_start, reverse_cigar, reverse_mdtag))
 
