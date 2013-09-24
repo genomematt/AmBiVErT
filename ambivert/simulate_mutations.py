@@ -235,11 +235,14 @@ def sequence_from_manifest_file(infile):
     for target in targets:
         yield target.Chromosome, target.Start_Position, target.Sequence
 
-def amplicons_to_mutated_reads(forward_outfile=sys.stdout,reverse_outfile=sys.stderr,sequences=sequence_from_fasta_file(sys.stdin)):
+def amplicons_to_mutated_reads(forward_outfile = sys.stdout,
+                                reverse_outfile = sys.stderr,
+                                sequences = sequence_from_fasta_file(sys.stdin),
+                                **kw):
     for chromosome, start, sequence in sequences:
-        for mutant_name, mutant_sequence in list(make_all_point_mutations(sequence,chromosome=chromosome,one_based_start=start)):
+        for mutant_name, mutant_sequence in list(make_all_point_mutations(sequence,chromosome=chromosome,one_based_start=start, **kw)):
                 mutant_chromosome,mutant_start,cigar,mdtag = mutant_name.split('_')
-                reads = mutated_amplicon_to_paired_reads(mutant_sequence,mutant_chromosome,mutant_start,cigar,mdtag)
+                reads = mutated_amplicon_to_paired_reads(mutant_sequence,mutant_chromosome,mutant_start,cigar,mdtag, **kw)
                 readname = "_".join(reads[0][2:]+reads[1][2:])
                 print(format_fastq_entry(readname,reads[0][0]),end='',file=forward_outfile)
                 print(format_fastq_entry(readname,reads[1][0]),end='',file=reverse_outfile)
@@ -278,9 +281,15 @@ def command_line_interface(*args,**kw):
 if __name__ == '__main__':
     args = command_line_interface()
     if args.manifest:
-        amplicons_to_mutated_reads(args.read1,args.read2,sequence_from_manifest_file(args.manifest))
+        amplicons_to_mutated_reads(forward_outfile = args.read1, reverse_outfile = args.read2,
+                                   sequences = sequence_from_manifest_file(args.manifest),
+                                   position_excludes_softmasked = args.position_excludes_softmasked,
+                                   )
     elif args.fasta:
-        amplicons_to_mutated_reads(args.read1,args.read2,sequence_from_fasta_file(args.fasta))
+        amplicons_to_mutated_reads(forward_outfile = args.read1, reverse_outfile = args.read2,
+                                   sequences = sequence_from_fasta_file(args.fasta),
+                                   position_excludes_softmasked = args.position_excludes_softmasked,
+                                   )
     else:
         print("You must supply a manifest or fasta file")
     
