@@ -62,7 +62,7 @@ def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_s
                                             mut = base,
                                             post = (len(sequence) - end_offset - 1) - site if (len(sequence)  - end_offset - 1) - site else '')
         name = '{chromosome}_{start}_{cigar_len}M_{mdz_tag}'.format(chromosome = chromosome,
-                                                                    start = one_based_start + start_offset,
+                                                                    start = int(one_based_start) + start_offset,
                                                                     cigar_len = len(sequence) - end_offset - start_offset,
                                                                     mdz_tag = mdz_tag)
         yield name,sequence[:site]+base+sequence[site+1:]
@@ -164,9 +164,7 @@ def engap(seq, cigar, delete='D', insert='I', match='M', gap='-'):
     """
     gapped = []
     xcigar = expand_cigar(cigar)
-    if len(seq) != xcigar.count(match) + xcigar.count(insert):
-        raise AssertionError, "Sequence length mismatch Seq:{0} Cigar:{1}".format(
-                    len(seq),xcigar.count(match) + xcigar.count(insert))
+    assert len(seq) == xcigar.count(match) + xcigar.count(insert)
     seq = list(seq)
     for symbol in xcigar:
         if symbol == delete:

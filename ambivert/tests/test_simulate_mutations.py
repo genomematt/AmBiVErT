@@ -115,6 +115,7 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(['', '', '', '', '', '', '', 'A', '', '', '', '', '', '', '', ''],expand_mdtag_tokens('7A8'))
         self.assertEqual(['', '', 'G', '', '', 'A', '', ''],expand_mdtag_tokens('2G2A2'))
         self.assertEqual(['G', '', '', 'A'],expand_mdtag_tokens('G2A'))
+        self.assertEqual(['', '', '', '', '', '', '', '^' ,'C','A','T', '', '', '', '', '', '', '', ''],expand_mdtag_tokens('7^CAT8'))
         pass
         
     def test_compact_expanded_mdtag_tokens(self):
@@ -129,6 +130,7 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(mutation_detection_tag_trimmer('7A8',trim_from_start=0,trim_from_end=5),'7A3')
         self.assertEqual(mutation_detection_tag_trimmer('7A8',trim_from_start=3,trim_from_end=5),'4A3')
         self.assertEqual(mutation_detection_tag_trimmer('7A8G',trim_from_start=3,trim_from_end=5),'4A4')
+        self.assertEqual(mutation_detection_tag_trimmer('17',trim_from_start=3,trim_from_end=5),'9')
         pass
     
     def test_mutated_amplicon_to_paired_reads(self):
