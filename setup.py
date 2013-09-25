@@ -13,6 +13,7 @@ setup(
     entry_points={
         'console_scripts': ['ambivert = ambivert.ambivert:main',
                             'truseq_manifest = ambivert.truseq_manifest:main',
+                            'simulate_mutations = ambivert.simulate_mutations:main',
                            ]
     },
 
