@@ -113,7 +113,7 @@ def make_all_point_mutations(sequence, skip_softmasked=True, **kw):
             for x in point_mutate_sequence(sequence, one_based_site=i+1, **kw):
                 yield x
 
-def check_point_mutate_sequence(samfile, test_md=False, outfile=sys.stdout):
+def check_point_mutated_sequence(samfile, test_md=False, outfile=sys.stdout):
     header = get_sam_header(samfile)
     for line in samfile:
         line = line.split()
@@ -351,12 +351,18 @@ def command_line_interface(*args,**kw):
                         action="store_true",
                         help='Exclude softmasked sequence when calculating start site of read,\
                               cigar and mutation detection strings. Default: True')
+    parser.add_argument('--check_sam',
+                        type=argparse.FileType('U'),
+                        default=None,
+                        help='a sam file for parsing to identify entries where name does not \
+                              match the sam file mapping location and mutation strings')
     return parser.parse_args(*args,**kw)
-
 
 def main():
     args = command_line_interface()
-    if args.manifest:
+    if args.check_sam:
+        check_point_mutated_sequence(open(args.check_sam))
+    elif args.manifest:
         amplicons_to_mutated_reads(forward_outfile = args.read1, reverse_outfile = args.read2,
                                    sequences = sequence_from_manifest_file(args.manifest),
                                    position_excludes_softmasked = args.position_excludes_softmasked,
@@ -367,7 +373,7 @@ def main():
                                    position_excludes_softmasked = args.position_excludes_softmasked,
                                    )
     else:
-        print("You must supply a manifest or fasta file")
+        print("You must supply a manifest, fasta, or SAM file.  See --help for usage.")
 
 if __name__ == '__main__':
     main()

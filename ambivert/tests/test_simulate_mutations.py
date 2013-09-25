@@ -145,11 +145,11 @@ class test_simulate_mutations(unittest.TestCase):
                         (('cagtGATCGA', '', 'chrX', '12349', '6M', '3C2'), ('acgtGATCGA', '', 'chrX', '12351', '6M', '1C4')))
         pass
     
-    def test_check_point_mutate_sequence(self):
+    def test_check_point_mutated_sequence(self):
         samfile = io.StringIO(SAMFILE)
         outfile = io.StringIO()
-        check_point_mutate_sequence(samfile, outfile=outfile)
-        print(outfile.getvalue())
+        check_point_mutated_sequence(samfile, outfile=outfile)
+        #print(outfile.getvalue())
         self.assertEqual(md5(outfile.getvalue()).hexdigest(),'de119c1e94dbf6e1664b419f09500c07')
         pass
     
