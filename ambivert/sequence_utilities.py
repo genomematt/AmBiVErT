@@ -153,6 +153,31 @@ def format_alignment(sequences):
         result += '\n'
     return result
 
+def get_sam_header(samfile):
+    line = "@"
+    header = []
+    pointer = 0
+    while line[0] == '@':
+        pointer = samfile.tell()
+        line = samfile.readline().strip('\n')
+        if line[0] == '@':
+            header.append(line)
+    samfile.seek(pointer)
+    return header
+
+def process_sam_headers(input_file, outfiles):
+    header = "\n".join(get_sam_header(input_file))
+    for outfile in outfiles:
+        print(header, file=outfile)
+    pass
+
+def get_tag(read,tag):
+    for x in read[11:]:
+        if x.startswith(tag):
+            return x.split(':')[-1]
+    return None
+
+
 #if __name__ == '__main__':
 #	main()
 

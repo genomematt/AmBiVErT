@@ -113,34 +113,32 @@ def make_all_point_mutations(sequence, skip_softmasked=True, **kw):
             for x in point_mutate_sequence(sequence, one_based_site=i+1, **kw):
                 yield x
 
-def get_sam_header(samfile):
-    line = "@"
-    header = []
-    pointer = 0
-    while line[0] == '@':
-        pointer = samfile.tell()
-        line = samfile.readline().strip('\n')
-        if line[0] == '@':
-            header.append(line)
-    samfile.seek(pointer)
-    return header
-
-def check_point_mutate_sequence(samline):
-    line = samline.readline().strip('\n').split()
-    true_chromosome,true_start,true_cigar,true_mdz_tag = line[0].split('_')
-    tags = {x.split(":")[0]:x.split(":")[2] for x in line[11:]}
-    result = []
-    comparisons = [(line[2],true_chromosome),
-                  (line[3],true_start),
-                  (line[5],true_cigar),
-                  (tags['MD'],true_mdz_tag),]
-    for comparison in comparisons:
-        if comparison[0] != comparison[1]:
-            result.append(comparison)
-    if result:
-        return (result,comparisons)
-    else:
-        return None
+def check_point_mutate_sequence(samfile, test_md=False, outfile=sys.stdout):
+    header = get_sam_header(samfile)
+    for line in samfile:
+        line = line.split()
+        if len(line) >= 11:
+            (true_f_chromosome,true_f_start,true_f_cigar,true_f_mdz_tag,
+                true_r_chromosome,true_r_start,true_r_cigar,true_r_mdz_tag) = line[0].split('_')
+            tags = {x.split(":")[0]:x.split(":")[2] for x in line[11:]}
+            if line[1] == '99':
+                #correctly mapped forward read
+                if line[2] != true_f_chromosome or\
+                  line[3] != true_f_start or\
+                  line[5] != true_f_cigar or\
+                  test_md and (tags['MD'] != true_f_mdz_tag):
+                    print(u'\t'.join([true_f_chromosome,true_f_start,true_f_cigar,true_f_mdz_tag,str(line)]),file=outfile)
+            elif line[1] == '147':
+                #correctly mapped reverse read
+                if line[2] != true_r_chromosome or\
+                  line[3] != true_r_start or\
+                  line[5] != true_r_cigar or\
+                  test_md and (tags['MD'] != true_r_mdz_tag):
+                    print('\t'.join([true_r_chromosome,true_r_start,true_r_cigar,true_r_mdz_tag,str(line)]),file=outfile)
+            else:
+                #incorrectly mapped read
+                print('\t'.join([true_f_chromosome,true_f_start,true_f_cigar,true_f_mdz_tag,str(line)]),file=outfile)
+    pass
 
 def constant_quality(sequence, value="I"):
     return [value,]*len(sequence)
