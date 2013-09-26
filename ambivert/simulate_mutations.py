@@ -361,7 +361,7 @@ def command_line_interface(*args,**kw):
 def main():
     args = command_line_interface()
     if args.check_sam:
-        check_point_mutated_sequence(open(args.check_sam))
+        check_point_mutated_sequence(args.check_sam)
     elif args.manifest:
         amplicons_to_mutated_reads(forward_outfile = args.read1, reverse_outfile = args.read2,
                                    sequences = sequence_from_manifest_file(args.manifest),
