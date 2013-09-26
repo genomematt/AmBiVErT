@@ -292,10 +292,10 @@ def mutated_amplicon_to_paired_reads(sequence,chromosome,one_based_start,cigar,m
         start_offset, end_offset = get_softmasked_offsets(sequence)
         reverse_start = str(int(one_based_start) - start_offset + trimsize) # start defined as position of first unmasked base
         forward_start = one_based_start
-        reverse_cigar = cigar_trimmer(cigar, trim_from_start=trimsize-end_offset)
-        reverse_mdtag = mutation_detection_tag_trimmer(mdtag,trim_from_start=trimsize-end_offset)
-        forward_cigar = cigar_trimmer(cigar, trim_from_end=trimsize-start_offset)
-        forward_mdtag = mutation_detection_tag_trimmer(mdtag, trim_from_end=trimsize-start_offset)
+        reverse_cigar = cigar_trimmer(cigar, trim_from_start=trimsize-start_offset)
+        reverse_mdtag = mutation_detection_tag_trimmer(mdtag,trim_from_start=trimsize-start_offset)
+        forward_cigar = cigar_trimmer(cigar, trim_from_end=trimsize-end_offset)
+        forward_mdtag = mutation_detection_tag_trimmer(mdtag, trim_from_end=trimsize-end_offset)
 
     return ((forward_sequence, forward_quality, chromosome, forward_start, forward_cigar, forward_mdtag),
             (reverse_sequence, reverse_quality, chromosome, reverse_start, reverse_cigar, reverse_mdtag))

@@ -141,8 +141,8 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(mutated_amplicon_to_paired_reads('cagtGATCGATCacgt','chrX','12345','16M','7C8',quality='ABCGEFGHIJKLMNOP'),
                          (('cagtGATCGATCacgt', 'ABCGEFGHIJKLMNOP', 'chrX', '12345', '16M', '7C8'),
                           ('acgtGATCGATCactg', 'PONMLKJIHGFEGCBA', 'chrX', '12345', '16M', '7C8')))
-        self.assertEqual(mutated_amplicon_to_paired_reads('cagtGATCGATCacgt','chrX','12349','8M','3C4', readlength=10, position_excludes_softmasked=True),
-                        (('cagtGATCGA', '', 'chrX', '12349', '6M', '3C2'), ('acgtGATCGA', '', 'chrX', '12351', '6M', '1C4')))
+        self.assertEqual(mutated_amplicon_to_paired_reads('cagtGATCGATCacgtt','chrX','12349','8M','3C4', readlength=10, position_excludes_softmasked=True),
+                        (('cagtGATCGA', '', 'chrX', '12349', '6M', '3C2'), ('aacgtGATCG', '', 'chrX', '12352', '5M', 'C4')))
         pass
     
     def test_check_point_mutated_sequence(self):
