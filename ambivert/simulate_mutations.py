@@ -113,11 +113,14 @@ def make_all_point_mutations(sequence, skip_softmasked=True, **kw):
             for x in point_mutate_sequence(sequence, one_based_site=i+1, **kw):
                 yield x
 
-def check_point_mutated_sequence(samfile, test_md=False, outfile=sys.stdout):
+def check_point_mutated_sequence(samfile, test_md=False, outfile=sys.stdout, verbose=True):
     header = get_sam_header(samfile)
+    line_count = 0
+    mapping_error_count = 0
     for line in samfile:
         line = line.split()
         if len(line) >= 11:
+            line_count +=1
             (true_f_chromosome,true_f_start,true_f_cigar,true_f_mdz_tag,
                 true_r_chromosome,true_r_start,true_r_cigar,true_r_mdz_tag) = line[0].split('_')
             tags = {x.split(":")[0]:x.split(":")[2] for x in line[11:]}
@@ -127,6 +130,7 @@ def check_point_mutated_sequence(samfile, test_md=False, outfile=sys.stdout):
                   line[3] != true_f_start or\
                   line[5] != true_f_cigar or\
                   test_md and (tags['MD'] != true_f_mdz_tag):
+                    mapping_error_count += 1 
                     print(u'\t'.join([true_f_chromosome,true_f_start,true_f_cigar,true_f_mdz_tag,str(line)]),file=outfile)
             elif line[1] == '147':
                 #correctly mapped reverse read
@@ -134,10 +138,17 @@ def check_point_mutated_sequence(samfile, test_md=False, outfile=sys.stdout):
                   line[3] != true_r_start or\
                   line[5] != true_r_cigar or\
                   test_md and (tags['MD'] != true_r_mdz_tag):
+                    mapping_error_count += 1 
                     print('\t'.join([true_r_chromosome,true_r_start,true_r_cigar,true_r_mdz_tag,str(line)]),file=outfile)
             else:
                 #incorrectly mapped read
+                mapping_error_count += 1 
                 print('\t'.join([true_f_chromosome,true_f_start,true_f_cigar,true_f_mdz_tag,str(line)]),file=outfile)
+    if verbose:
+        print("Checked {line_count} reads and found {mapping_error_count} reads that dont map to predicted locations".format(
+                        line_count=line_count, mapping_error_count=mapping_error_count),
+                        file = sys.stderr,
+                        )
     pass
 
 def constant_quality(sequence, value="I"):

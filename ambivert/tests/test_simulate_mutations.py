@@ -148,7 +148,7 @@ class test_simulate_mutations(unittest.TestCase):
     def test_check_point_mutated_sequence(self):
         samfile = io.StringIO(SAMFILE)
         outfile = io.StringIO()
-        check_point_mutated_sequence(samfile, outfile=outfile)
+        check_point_mutated_sequence(samfile, outfile=outfile, verbose=False)
         #print(outfile.getvalue())
         self.assertEqual(md5(outfile.getvalue()).hexdigest(),'de119c1e94dbf6e1664b419f09500c07')
         pass
