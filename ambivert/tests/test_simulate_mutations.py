@@ -117,6 +117,13 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(['G', '', '', 'A'],expand_mdtag_tokens('G2A'))
         self.assertEqual(['', '', '', '', '', '', '', '^' ,'C','A','T', '', '', '', '', '', '', '', ''],expand_mdtag_tokens('7^CAT8'))
         pass
+    
+    def test_cigar_add_deletion(self):
+        self.assertEqual(cigar_add_deletion('10M',one_based_start=5),'4M1D5M')
+        self.assertEqual(cigar_add_deletion('10M',one_based_start=5, length=5),'4M5D1M')
+        self.assertEqual(cigar_add_deletion('2S4M5D2M2I10M',one_based_start=5),'2S4M6D1M2I10M')
+        self.assertRaises(AssertionError,cigar_add_deletion,'2S4M5D2M2I10M',one_based_start=6,length=3)
+        self.assertRaises(AssertionError,cigar_add_deletion,'10M',one_based_start=6,length=10)
         
     def test_compact_expanded_mdtag_tokens(self):
         self.assertEqual(compact_expanded_mdtag_tokens(['', '', '', '', '', '', '', 'A', '', '', '', '', '', '', '', '']),'7A8')

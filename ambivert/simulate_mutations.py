@@ -196,6 +196,29 @@ def cigar_trimmer(cigar,trim_from_start=0,trim_from_end=0):
             result.append(state)
     return compact_cigar(result)
 
+def cigar_add_deletion(cigar,one_based_start=1,length=1):
+    xcigar = expand_cigar(cigar)
+    result = []
+    sequence_length = len(xcigar) - xcigar.count('D')
+    if one_based_start > sequence_length:
+        return cigar
+    
+    position_in_sequence = 0
+    
+    for state in xcigar:
+        if not (state == 'D' or state == 'S'):
+            position_in_sequence +=1
+        if position_in_sequence >= one_based_start and position_in_sequence < one_based_start+length:
+            assert state != 'I'
+            result.append('D')
+        else:
+            result.append(state)
+    # TODO raise an exception if cigar invalid
+    # for now just fail and prevent calling functions
+    # returning invalid cigar strings.
+    assert result[0] != 'D' and result[-1] != 'D'
+    return compact_cigar(result)
+
 def compact_cigar(expanded_cigar):
     result = []
     last_state = expanded_cigar[0]
