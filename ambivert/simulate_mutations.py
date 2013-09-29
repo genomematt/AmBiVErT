@@ -67,6 +67,52 @@ def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_s
                                                                     mdz_tag = mdz_tag)
         yield name,sequence[:site]+base+sequence[site+1:]
 
+def deletion_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_site=1, length=1, position_excludes_softmasked=True):
+    """Returns a sequence with a specific site mutated to a deletion of a given length.
+    Returns a tuple of name and sequence.  The name is underscore separated and
+    consists of: chromosome, start (one based), cigar string, mutation detection tag.
+    These values will only be correct for plus strand sequences.
+    
+    Arguments:
+        sequence        - An IUPAC nucleotide iterable (string or list).
+                          Lowercase masking supported.
+        chromosome      - A string identifying the reference chromosome
+        one_based_start - An integer identifying the location of the first base
+                          of the string in the reference sequence
+        one_based_site  - An integer identifying the base to be mutated.
+                          First base in string is 1.
+        length  -         The number of bases to replace with a deletion
+                          If the deletion would extend past the end of the
+                          sequence (or non softmasked sequence if 
+                          position_excludes_softmasked is set True)
+                          the maximum valid deletion will be created
+        position_excludes_softmasked - A boolean indicating that the
+                          softmasked based should be ignored when
+                          constructing the cigar and mutation tags.
+                          Results in the first uppercase base being
+                          used as postition 1.
+    Returns:
+        name        -  string of format chromosome_startInRef_cigar_MD
+        sequence    -  an IUPAC sequence string
+    """
+    start_offset, end_offset = get_softmasked_offsets(sequence)
+    start = max(start_offset,(one_based_site-1))
+    end = min(len(sequence)-end_offset, one_based_site+length-1)
+    if end < start:
+        end=start
+    
+    pre = str(start - start_offset) if start - start_offset else ''
+    mut = '^'+str(sequence[start:end]) if end-start else ''
+    post = str(len(sequence)  - end_offset - end) if (len(sequence) - end_offset - end) else ''
+                                        
+    name = '{chromosome}_{start}_{cigar}_{mdz_tag}'.format(chromosome = chromosome,
+                                                                start = int(one_based_start) + start_offset,
+                                                                cigar = '{pre}{mutlen}{post}'.format(pre=pre+'M' if pre else '',
+                                                                                                    mutlen=str(len(mut)-1)+'D' if mut else '',
+                                                                                                    post=post+'M' if post else ''),
+                                                                mdz_tag = '{pre}{mut}{post}'.format(pre=pre, mut=mut, post=post))
+    return (name,sequence[:start]+sequence[end:])
+
 def get_softmasked_offsets(sequence):
     """Returns the length of lowercase sequence at the start and end
     This is the length of the softmasked sequences and the offset

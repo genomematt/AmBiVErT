@@ -140,6 +140,11 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(mutation_detection_tag_trimmer('17',trim_from_start=3,trim_from_end=5),'9')
         pass
     
+    def test_deletion_mutate_sequence(self):
+        #sequence,chromosome=None,one_based_start=1,one_based_site=1, length=1, position_excludes_softmasked=True
+        self.assertEqual(deletion_mutate_sequence('acgtCATGacgt',one_based_start=1,one_based_site=6, length=1),('None_5_1M1D2M_1^A2', 'acgtCTGacgt'))############# TODO WORKING ON THIS
+        pass
+    
     def test_mutated_amplicon_to_paired_reads(self):
         self.assertEqual(mutated_amplicon_to_paired_reads('cagtGATCGATCacgt','chrX','12345','16M','7C8',readlength=10),
                         (('cagtGATCGA', '', 'chrX', '12345', '10M', '7C2'), ('acgtGATCGA', '', 'chrX', '12351', '10M', '1C8')))
