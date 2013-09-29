@@ -460,14 +460,23 @@ def sequence_from_manifest_file(infile):
 def amplicons_to_mutated_reads(forward_outfile = sys.stdout,
                                 reverse_outfile = sys.stderr,
                                 sequences = sequence_from_fasta_file(sys.stdin),
+                                deletions = None,
                                 **kw):
     for chromosome, start, sequence in sequences:
-        for mutant_name, mutant_sequence in list(make_all_point_mutations(sequence,chromosome=chromosome,one_based_start=start, **kw)):
-                mutant_chromosome,mutant_start,cigar,mdtag = mutant_name.split('_')
-                reads = mutated_amplicon_to_paired_reads(mutant_sequence,mutant_chromosome,mutant_start,cigar,mdtag, **kw)
-                readname = "_".join(reads[0][2:]+reads[1][2:])
-                print(format_fastq_entry(readname,reads[0][0]),end='',file=forward_outfile)
-                print(format_fastq_entry(readname,reads[1][0]),end='',file=reverse_outfile)
+        if deletions:
+            for mutant_name, mutant_sequence in list(make_all_deletion_mutations(sequence,chromosome=chromosome,one_based_start=start,length=deletions, **kw)):
+                    mutant_chromosome,mutant_start,cigar,mdtag = mutant_name.split('_')
+                    reads = mutated_amplicon_to_paired_reads(mutant_sequence,mutant_chromosome,mutant_start,cigar,mdtag, **kw)
+                    readname = "_".join(reads[0][2:]+reads[1][2:])
+                    print(format_fastq_entry(readname,reads[0][0]),end='',file=forward_outfile)
+                    print(format_fastq_entry(readname,reads[1][0]),end='',file=reverse_outfile)
+        else:
+            for mutant_name, mutant_sequence in list(make_all_point_mutations(sequence,chromosome=chromosome,one_based_start=start, **kw)):
+                    mutant_chromosome,mutant_start,cigar,mdtag = mutant_name.split('_')
+                    reads = mutated_amplicon_to_paired_reads(mutant_sequence,mutant_chromosome,mutant_start,cigar,mdtag, **kw)
+                    readname = "_".join(reads[0][2:]+reads[1][2:])
+                    print(format_fastq_entry(readname,reads[0][0]),end='',file=forward_outfile)
+                    print(format_fastq_entry(readname,reads[1][0]),end='',file=reverse_outfile)
     pass
 
 def command_line_interface(*args,**kw):
@@ -480,7 +489,8 @@ def command_line_interface(*args,**kw):
     parser.add_argument('--fasta',
                         type=argparse.FileType('U'),
                         default=None,
-                        help='a fasta file of amplicons with description lines \
+                        help='a fasta file of amplicons all in the plus strand orientation \
+                              with description lines \
                              ">name chromosome start end" Default: None')
     parser.add_argument('--read1',
                         type=argparse.FileType('w'),
@@ -497,6 +507,10 @@ def command_line_interface(*args,**kw):
                         action="store_true",
                         help='Exclude softmasked sequence when calculating start site of read,\
                               cigar and mutation detection strings. Default: True')
+    parser.add_argument('--deletions',
+                        type = int,
+                        default=None,
+                        help='The size deletions to insert instead of point mutations. Default: None')
     parser.add_argument('--check_sam',
                         type=argparse.FileType('U'),
                         default=None,
@@ -512,11 +526,13 @@ def main():
         amplicons_to_mutated_reads(forward_outfile = args.read1, reverse_outfile = args.read2,
                                    sequences = sequence_from_manifest_file(args.manifest),
                                    position_excludes_softmasked = args.position_excludes_softmasked,
+                                   deletions = args.deletions
                                    )
     elif args.fasta:
         amplicons_to_mutated_reads(forward_outfile = args.read1, reverse_outfile = args.read2,
                                    sequences = sequence_from_fasta_file(args.fasta),
                                    position_excludes_softmasked = args.position_excludes_softmasked,
+                                   deletions = args.deletions
                                    )
     else:
         print("You must supply a manifest, fasta, or SAM file.  See --help for usage.")
