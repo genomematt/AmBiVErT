@@ -120,37 +120,41 @@ def make_probes(header, probes, targets, adaptors=False, output=sys.stdout):
                 outfile.write(format_fasta(probe.Target_ID.replace(' ','_')+'_DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
     pass
 
-def make_fasta(header, probes, targets, output=sys.stdout, with_probes=False, softmask_probes=False, all_plus=True):
-    probes_by_targetid = {probe.Target_ID:(probe.ULSO_Sequence,probe.DLSO_Sequence) for probe in probes}
+def make_fasta(header, probes, targets, output=sys.stdout, **kw):
     with output as outfile:
-        for target in targets:
-            if with_probes:
-                name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'), target.Chromosome, target.Start_Position, target.End_Position)
-            else:
-                if all_plus and (target.Probe_Strand == '-'):
-                    start = int(target.Start_Position) + len(probes_by_targetid[target.TargetA][1]) # add ULSO length to start
-                    end = int(target.End_Position) - len(probes_by_targetid[target.TargetA][0]) # subtract DLSO length from end
-                else:
-                    start = int(target.Start_Position) + len(probes_by_targetid[target.TargetA][0]) # add DLSO length to start
-                    end = int(target.End_Position) - len(probes_by_targetid[target.TargetA][1]) # subtract ULSO length from end
-                name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'), target.Chromosome, start, end)
+        for name,sequence in make_sequences(header, probes, targets, **kw):
+            outfile.write(format_fasta(name,sequence))
             
-            if with_probes and softmask_probes:
-                # For on target sequences Submitted Target Region Strand == probe Probe Strand != target Probe Strand
-                # So for the order should be ULSO - Reverse complement of target - DLSO
-                # RC(DLSO)-target-RC(ULSO) is equivalent and puts the sequence in read_1 format
-                seq = reverse_complement(probes_by_targetid[target.TargetA][1].lower())+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0].lower())
-            elif with_probes:
-                seq = reverse_complement(probes_by_targetid[target.TargetA][1])+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0])
-            else:
-                seq = target.Sequence
+    
+def make_sequences(header, probes, targets,  with_probes=False, softmask_probes=False, all_plus=True):
+    probes_by_targetid = {probe.Target_ID:(probe.ULSO_Sequence,probe.DLSO_Sequence) for probe in probes}
+    for target in targets:
+        if with_probes:
+            name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'), target.Chromosome, target.Start_Position, target.End_Position)
+        else:
             if all_plus and (target.Probe_Strand == '-'):
-                #print('minus strand - rc ing',name,target.Start_Position, target.End_Position, len(probes_by_targetid[target.TargetA][0]), len(probes_by_targetid[target.TargetA][1]))
-                outfile.write(format_fasta(name,reverse_complement(seq)))
+                start = int(target.Start_Position) + len(probes_by_targetid[target.TargetA][1]) # add ULSO length to start
+                end = int(target.End_Position) - len(probes_by_targetid[target.TargetA][0]) # subtract DLSO length from end
             else:
-                #print('plus strand',name,target.Start_Position, target.End_Position, len(probes_by_targetid[target.TargetA][0]), len(probes_by_targetid[target.TargetA][1]))
-                outfile.write(format_fasta(name,seq))
-    pass
+                start = int(target.Start_Position) + len(probes_by_targetid[target.TargetA][0]) # add DLSO length to start
+                end = int(target.End_Position) - len(probes_by_targetid[target.TargetA][1]) # subtract ULSO length from end
+            name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'), target.Chromosome, start, end)
+        
+        if with_probes and softmask_probes:
+            # For on target sequences Submitted Target Region Strand == probe Probe Strand != target Probe Strand
+            # So for the order should be ULSO - Reverse complement of target - DLSO
+            # RC(DLSO)-target-RC(ULSO) is equivalent and puts the sequence in read_1 format
+            seq = reverse_complement(probes_by_targetid[target.TargetA][1].lower())+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0].lower())
+        elif with_probes:
+            seq = reverse_complement(probes_by_targetid[target.TargetA][1])+target.Sequence+reverse_complement(probes_by_targetid[target.TargetA][0])
+        else:
+            seq = target.Sequence
+        if all_plus and (target.Probe_Strand == '-'):
+            #print('minus strand - rc ing',name,target.Start_Position, target.End_Position, len(probes_by_targetid[target.TargetA][0]), len(probes_by_targetid[target.TargetA][1]))
+            yield(name,reverse_complement(seq))
+        else:
+            #print('plus strand',name,target.Start_Position, target.End_Position, len(probes_by_targetid[target.TargetA][0]), len(probes_by_targetid[target.TargetA][1]))
+            yield(name,seq)
 
 def main():
     args = command_line_interface()
