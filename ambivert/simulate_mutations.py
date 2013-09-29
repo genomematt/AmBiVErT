@@ -11,7 +11,7 @@ import os, sys
 import re
 import argparse
 from sequence_utilities import *
-from truseq_manifest import parse_truseq_manifest
+from truseq_manifest import parse_truseq_manifest, make_sequences
 
 
 __author__ = "Matthew Wakefield"
@@ -453,9 +453,9 @@ def sequence_from_fasta_file(infile):
         yield chromosome, start, sequence
 
 def sequence_from_manifest_file(infile):
-    targets = parse_truseq_manifest(infile)[2]
-    for target in targets:
-        yield target.Chromosome, target.Start_Position, target.Sequence
+    for name,sequence in make_sequences(*parse_truseq_manifest(infile), with_probes=True, softmask_probes=True, all_plus=True):
+        targetname, chromosome, start, end = name.split()[:4]
+        yield chromosome, start, sequence
 
 def amplicons_to_mutated_reads(forward_outfile = sys.stdout,
                                 reverse_outfile = sys.stderr,
