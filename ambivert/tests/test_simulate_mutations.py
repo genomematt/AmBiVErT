@@ -111,11 +111,13 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual('2S4M5D2M2I10M',compact_cigar('SSMMMMDDDDDMMIIMMMMMMMMMM'))
         pass
     
-    def test_expand_mdtag_tokens(self):
-        self.assertEqual(['', '', '', '', '', '', '', 'A', '', '', '', '', '', '', '', ''],expand_mdtag_tokens('7A8'))
-        self.assertEqual(['', '', 'G', '', '', 'A', '', ''],expand_mdtag_tokens('2G2A2'))
-        self.assertEqual(['G', '', '', 'A'],expand_mdtag_tokens('G2A'))
-        self.assertEqual(['', '', '', '', '', '', '', '^' ,'C','A','T', '', '', '', '', '', '', '', ''],expand_mdtag_tokens('7^CAT8'))
+    def test_expand_mdtag(self):
+        self.assertEqual(['', '', '', '', '', '', '', 'A', '', '', '', '', '', '', '', ''],expand_mdtag('7A8'))
+        self.assertEqual(['', '', 'G', '', '', 'A', '', ''],expand_mdtag('2G2A2'))
+        self.assertEqual(['G', '', '', 'A'],expand_mdtag('G2A'))
+        self.assertEqual(['', '', '', '', '', '', '', '^' ,'c','a','t', '', '', '', '', '', '', '', ''],expand_mdtag('7^CAT8'))
+        self.assertEqual(['', '', '', '', '', '', '',],expand_mdtag('7'))
+        self.assertEqual(['', '', '', '', '', '', '', '^' ,'c','a','t', 'G', '', '', '', '', '', '', '', ''],expand_mdtag('7^CAT0G8'))
         pass
     
     def test_cigar_add_deletion(self):
@@ -129,6 +131,9 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(compact_expanded_mdtag_tokens(['', '', '', '', '', '', '', 'A', '', '', '', '', '', '', '', '']),'7A8')
         self.assertEqual(compact_expanded_mdtag_tokens(['', '', 'G', '', '', 'A', '', '']),'2G2A2')
         self.assertEqual(compact_expanded_mdtag_tokens(['G', '', '', 'A']),'G2A')
+        self.assertEqual(compact_expanded_mdtag_tokens(['', '', '', '', '', '', '',]),'7')
+        self.assertEqual(compact_expanded_mdtag_tokens(['', '', '', '', '', '', '', '^' ,'c','a','t', 'G', '', '', '', '', '', '', '']),'7^CAT0G7')
+        self.assertEqual(compact_expanded_mdtag_tokens(['', '', '', '', '', '', '', '^' ,'c','a','t', '^', 'g', '', '', '', '', '', '', '']),'7^CATG7')
         pass
         
     def test_mutation_detection_tag_trimmer(self):
@@ -138,6 +143,18 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(mutation_detection_tag_trimmer('7A8',trim_from_start=3,trim_from_end=5),'4A3')
         self.assertEqual(mutation_detection_tag_trimmer('7A8G',trim_from_start=3,trim_from_end=5),'4A4')
         self.assertEqual(mutation_detection_tag_trimmer('17',trim_from_start=3,trim_from_end=5),'9')
+        pass
+    
+    def test_mdtag_add_deletion(self):
+        self.assertEqual(mdtag_add_deletion('10',seq='GGGGGGGGGG',one_based_start=3,length=1),'2^G7')
+        self.assertEqual(mdtag_add_deletion('10',seq='GGTGGGGGGG',one_based_start=3,length=1),'2^T7')
+        self.assertEqual(mdtag_add_deletion('7A8G',seq='TTTTTTTTTTTTTTTTT',one_based_start=3,length=1),'2^T4A8G')
+        self.assertEqual(mdtag_add_deletion('7A8G',seq='TTTTTTTTTTTTTTTTT',one_based_start=7,length=1),'6^T0A8G')
+        self.assertEqual(mdtag_add_deletion('7A8G',seq='TTTTTTTTTTTTTTTTT',one_based_start=7,length=2),'6^TT8G')
+        self.assertEqual(mdtag_add_deletion('2^CAT8',seq='GGGGGGGGGG',one_based_start=8,length=1),'2^CAT5^G2')
+        self.assertEqual(mdtag_add_deletion('10',seq='GGGGGGGGGG',one_based_start=3,length=1),'2^G7')
+        self.assertEqual(mdtag_add_deletion('10',seq='GGGGGGGGGG',one_based_start=3,length=1),'2^G7')
+        self.assertEqual(mdtag_add_deletion('10',seq='GGGGGGGGGG',one_based_start=3,length=1),'2^G7')
         pass
     
     def test_deletion_mutate_sequence(self):

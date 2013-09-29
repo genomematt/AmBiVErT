@@ -302,6 +302,26 @@ def cigar_add_deletion(cigar,one_based_start=1,length=1):
     assert result[0] != 'D' and result[-1] != 'D'
     return compact_cigar(result)
 
+def mdtag_add_deletion(mdtag, seq, one_based_start=1, length=1):
+    #compact deletions deals with adjacent deletions and deletions adjacent to mutations
+    xmdtag_tokens = expand_mdtag(mdtag)
+    
+    position_in_sequence = 1
+    result = []
+    
+    for state in xmdtag_tokens:
+        if state in ['a','c','g','t','^']:
+            result.append(state)
+        elif (position_in_sequence >= one_based_start) and (position_in_sequence < one_based_start+length):
+            if position_in_sequence == one_based_start:
+                result.append('^')
+            result.append(seq[position_in_sequence-1].lower())
+            position_in_sequence += 1
+        else:
+            result.append(state)
+            position_in_sequence += 1
+    return compact_expanded_mdtag_tokens(result)
+
 def compact_cigar(expanded_cigar):
     result = []
     last_state = expanded_cigar[0]
@@ -316,13 +336,14 @@ def compact_cigar(expanded_cigar):
     result.append(str(count)+state)
     return "".join(result)
 
-def expand_mdtag_tokens(mdtag_tokens):
+def expand_mdtag(mdtag):
+    mdtag_tokens = re.findall(r'(\d+|\D+)',mdtag)
     result = []
     for x in mdtag_tokens:
         if x[0] in '1234567890':
             result.extend(['',]*int(x))
         elif x[0] == '^':
-            result.append(x)
+            result.extend(list(x.lower()))
         else:
             result.extend(list(x))
     return result
@@ -330,28 +351,36 @@ def expand_mdtag_tokens(mdtag_tokens):
 def compact_expanded_mdtag_tokens(expanded_mdtag_tokens):
     result = []
     count = 0
+    in_deletion = False
     for token in expanded_mdtag_tokens:
         if token == '':
             count += 1
-            continue
+            in_deletion = False
         elif count:
+            #exiting match
             result.append(str(count))
-            result.append(token)
             count = 0
+            if token == '^':
+                in_deletion = True
+            result.append(token)
         else:
+            #in mismatch or deletion states
+            if in_deletion and token == '^':
+                #adjacent deletions to be merged
+                continue
+            if in_deletion and (token in 'CAGTN'):
+                #have a mismatch adjacent to a deletion
+                result.append('0')
+                in_deletion = False
             result.append(token)
     if count: 
             result.append(str(count))
-    return "".join(result)
+    return "".join(result).upper()
 
 def mutation_detection_tag_trimmer(mdtag,trim_from_start=0,trim_from_end=0):
     #when trimming reads only non-standard state is deletions
     #mutations and insertions maintain 1 md token per string postition.
-    mdtag_tokens = re.findall(r'(\d+|\D+)',mdtag)
-    if len(mdtag_tokens) == 1:
-        #no mutation states - just need to resize
-        return str(int(mdtag_tokens[0])-(trim_from_start+trim_from_end))
-    xmdtag_tokens = expand_mdtag_tokens(mdtag_tokens)
+    xmdtag_tokens = expand_mdtag(mdtag)
     if trim_from_end:
         return compact_expanded_mdtag_tokens(xmdtag_tokens[trim_from_start:-trim_from_end])
     else:
