@@ -145,6 +145,13 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(deletion_mutate_sequence('acgtCATGacgt',one_based_start=1,one_based_site=6, length=1),('None_5_1M1D2M_1^A2', 'acgtCTGacgt'))############# TODO WORKING ON THIS
         pass
     
+    def test_make_all_deletion_mutations(self):
+        self.assertEqual(list(make_all_deletion_mutations('acgtCATGacgt',length=2)),[('None_5_2D2M_^CA2', 'acgtTGacgt'),
+                                                                                    ('None_5_1M2D1M_1^AT1', 'acgtCGacgt'),
+                                                                                    ('None_5_2M2D_2^TG', 'acgtCAacgt'),])
+        pass
+
+    
     def test_mutated_amplicon_to_paired_reads(self):
         self.assertEqual(mutated_amplicon_to_paired_reads('cagtGATCGATCacgt','chrX','12345','16M','7C8',readlength=10),
                         (('cagtGATCGA', '', 'chrX', '12345', '10M', '7C2'), ('acgtGATCGA', '', 'chrX', '12351', '10M', '1C8')))

@@ -159,6 +159,43 @@ def make_all_point_mutations(sequence, skip_softmasked=True, **kw):
             for x in point_mutate_sequence(sequence, one_based_site=i+1, **kw):
                 yield x
 
+def make_all_deletion_mutations(sequence, skip_softmasked=True,length=1, **kw):
+    """Yields sequences mutated with the given mutation size.
+    Returns a tuple of name and sequence.  The name is underscore separated and
+    consists of: chromosome, start (one based), cigar string, mutation detection tag.
+    These values will only be correct for plus strand sequences.
+    
+    Arguments:
+        sequence        - An IUPAC nucleotide iterable (string or list).
+                          Lowercase masking supported.
+        chromosome      - A string identifying the reference chromosome
+                          Default = None
+        one_based_start - An integer identifying the location of the first base
+                          of the string in the reference sequence
+                          Default = 1
+        length          - length of the deletion to insert
+        skip_softmasked - A boolean indicating that masked bases should
+                          not be mutated.  Should only be set False if
+                          position_excludes_softmasked is False.
+                          Default = True
+        position_excludes_softmasked - A boolean indicating that the
+                          softmasked based should be ignored when
+                          constructing the cigar and mutation tags.
+                          Results in the first uppercase base being
+                          used as postition 1.
+                          Default = True
+    Returns:
+        name        -  string of format chromosome_startInRef_cigar_MD
+        sequence    -  an IUPAC sequence string
+    """
+    if skip_softmasked:
+        start_offset, end_offset = get_softmasked_offsets(sequence)
+    else:
+        start_offset = 0
+        end_offset = 0
+    for i in range(start_offset,len(sequence)-end_offset-length+1):
+        yield deletion_mutate_sequence(sequence, one_based_site=i+1,length=length, **kw)
+
 def check_point_mutated_sequence(samfile, test_md=False, outfile=sys.stdout, verbose=True):
     header = get_sam_header(samfile)
     line_count = 0
