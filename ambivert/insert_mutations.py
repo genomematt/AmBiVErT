@@ -106,7 +106,33 @@ def point_mutate_read_pair(read_pair,):
         name,seq,qual = mutate_read(*read_pair[1])
         yield name, reverse_complement(seq), qual[::-1]
 
-def point_mutate_read(name,pos,cigar,seq,qual):
+def point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_base):
+    xcigar = str(expand_cigar(cigar))
+    if xcigar.count('D') or xcigar.count('I') or xcigar.count('S'):
+        pos_in_ref = pos
+        pos_in_read = 0
+        pos_in_cigar = 0
+        while pos_in_ref != one_based_mutation_site:
+            if xcigar[pos_in_cigar] == 'M':
+                pos_in_read += 1
+                pos_in_ref += 1
+            elif xcigar[pos_in_cigar] in ['I', 'S']:
+                pos_in_read += 1
+                #extra read base dont so incriment pos_in_ref
+            elif xcigar[pos_in_cigar] == 'D':
+                pos_in_ref += 1
+                # missing read base dont so incriment pos_in_read
+                # mutated bases will occur on first non deletion
+                # base before deletion if they overlap
+                # TODO change this behaviour so deletion reduced.
+            pos_in_cigar += 1
+            assert pos_in_cigar <= len(xcigar)
+        assert pos_in_ref == one_based_mutation_site
+        mutation_site_in_read = pos_in_read
+    else:
+        mutation_site_in_read = one_based_mutation_site-pos
+    
+    seq[mutation_site_in_read] = mutation_base
     
     return name,seq,qual
     
