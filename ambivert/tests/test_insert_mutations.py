@@ -171,8 +171,17 @@ class test_insert_mutations(unittest.TestCase):
         #                ('', 'GCTCAGCTCGCTC', 'IIIIIIIIIIIII')) #should put mismatch to right of deletion and replace a deletion
         #self.assertEqual(point_mutate_read('','10','4M3D8M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
         #                ('', 'GCTCAGCTCGCTC', 'IIIIIIIIIIIII')) #string is the same no matter size or location in deletion.
-        
-        
+    
+    def test_deletion_mutate_read(self):
+        self.assertEqual(deletion_mutate_read('','10','12M','GCTCGCTCGCTC','0123456789!@', one_based_mutation_site=15,length=1),
+                        ('', 'GCTCGTCGCTC', '012346789!@'))
+        self.assertEqual(deletion_mutate_read('','10','12M','GCTCGCTCGCTC','0123456789!@', one_based_mutation_site=15,length=3),
+                        ('', 'GCTCGGCTC', '0123489!@'))
+        self.assertEqual(deletion_mutate_read('','10','3M1D9M','GCTCGCACGCTC','0123456789!@', one_based_mutation_site=12,length=5),
+                        ('', 'GCACGCTC', '016789!@'))
+        self.assertEqual(deletion_mutate_read('','10','3M1I8M','GCTCGCTCGCTC','0123456789!@', one_based_mutation_site=12,length=5),
+                        ('', 'GCGCTC', '0189!@'))
+        self.assertRaises(IndexError,deletion_mutate_read,'','10','2S10M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=25,length=1)
            
 if __name__ == '__main__':
     unittest.main()

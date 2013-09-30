@@ -142,7 +142,17 @@ def point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_b
     
     return name,"".join(seq),qual
 
+def deletion_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,length):
+    mutation_start_site_in_read = get_mutation_position(pos,cigar,one_based_mutation_site)
+    mutation_end_site_in_read = get_mutation_position(pos,cigar,one_based_mutation_site+length)
     
+    seq = str(seq)
+    qual = str(qual)
+    
+    mut_seq = seq[:mutation_start_site_in_read]+seq[mutation_end_site_in_read:]
+    mut_qual = qual[:mutation_start_site_in_read]+qual[mutation_end_site_in_read:]
+    
+    return name, mut_seq, mut_qual
 
     
     
