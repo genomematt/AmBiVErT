@@ -140,6 +140,39 @@ class test_insert_mutations(unittest.TestCase):
                         (READS[3][1][0],reverse_complement(READS[3][1][3]),READS[3][1][4][::-1]),
                         ])
         pass
+    
+    def test_point_mutate_read(self):
+        #point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_base)
+        self.assertEqual(point_mutate_read(*READS[0][0], one_based_mutation_site=41243163,mutation_base='g'),
+                        ('chr17_41243153_122M_15G106_chr17_41243200_123M_123',
+                        'TCACACAAAAgGATTGAATTCCTTGCTTTGGGACACCTGGATTTGCTTTTATAAAATGAAACCAGAAGTAAGTCCACCAGTAATTAGGATGTTAAAGCTCATTCAGTCAAAGATGACGTCCT',
+                        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJK')
+                        )
+        self.assertEqual(point_mutate_read('','10','12M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=10,mutation_base='A'),
+                        ('', 'ACTCGCTCGCTC', 'IIIIIIIIIIII'))
+        self.assertEqual(point_mutate_read('','10','12M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=21,mutation_base='T'),
+                        ('', 'GCTCGCTCGCTT', 'IIIIIIIIIIII'))
+        self.assertEqual(point_mutate_read('','12','2S8M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+                        ('', 'GCTCGATCGCTC', 'IIIIIIIIIIII'))
+        self.assertEqual(point_mutate_read('','10','2M1D10M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+                        ('', 'GCTCACTCGCTC', 'IIIIIIIIIIII'))
+        self.assertEqual(point_mutate_read('','10','2M1I9M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+                        ('', 'GCTCGCACGCTC', 'IIIIIIIIIIII'))
+        self.assertEqual(point_mutate_read('','10','4M1I7M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+                        ('', 'GCTCGCACGCTC', 'IIIIIIIIIIII'))
+        self.assertEqual(point_mutate_read('','10','3M3I6M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+                        ('', 'GCTCGCTCACTC', 'IIIIIIIIIIII'))
+        self.assertRaises(IndexError,point_mutate_read,'','10','12M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=22,mutation_base='T')
+        self.assertRaises(IndexError,point_mutate_read,'','10','6M1I5M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=21,mutation_base='T')
+        self.assertRaises(IndexError,point_mutate_read,'','10','2S10M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=20,mutation_base='T')
+        self.assertEqual(point_mutate_read('','10','4M1D8M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+                        ('', 'GCTCACTCGCTC', 'IIIIIIIIIIII')) #corner case - not currently correct behaviour
+        #self.assertEqual(point_mutate_read('','10','4M1D8M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        #                ('', 'GCTCAGCTCGCTC', 'IIIIIIIIIIIII')) #should put mismatch to right of deletion and replace a deletion
+        #self.assertEqual(point_mutate_read('','10','4M3D8M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        #                ('', 'GCTCAGCTCGCTC', 'IIIIIIIIIIIII')) #string is the same no matter size or location in deletion.
+        
+        
            
 if __name__ == '__main__':
     unittest.main()

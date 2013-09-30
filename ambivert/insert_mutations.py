@@ -107,6 +107,8 @@ def point_mutate_read_pair(read_pair,):
         yield name, reverse_complement(seq), qual[::-1]
 
 def point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_base):
+    pos = int(pos)
+    seq = list(seq)
     xcigar = str(expand_cigar(cigar))
     if xcigar.count('D') or xcigar.count('I') or xcigar.count('S'):
         pos_in_ref = pos
@@ -134,7 +136,7 @@ def point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_b
     
     seq[mutation_site_in_read] = mutation_base
     
-    return name,seq,qual
+    return name,"".join(seq),qual
     
 
     
