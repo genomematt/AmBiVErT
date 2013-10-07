@@ -28,15 +28,10 @@ import sys, os
 import itertools, difflib, argparse
 import hashlib, cPickle
 from collections import defaultdict
-from cogent.align.algorithm import nw_align, sw_align
+#from cogent.align.algorithm import nw_align, sw_align
 from sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment
-from trueseq import parse_trueseq_manifest
-
-try:
-    import plumb.bob
-    plumb_bob_present = True
-except ImportError:
-    plumb_bob_present = False
+from truseq_manifest import parse_truseq_manifest, make_sequences
+import plumb.bob
     
 
 __author__ = "Matthew Wakefield"
@@ -51,14 +46,8 @@ __status__ = "Development"
 logfile = sys.stderr
 
 def smith_waterman(seq1,seq2):
-    if not plumb_bob_present:
-        #fall back to pure python implementation
-        align_seq1, align_seq2 = sw_align(seq1,seq2)
-        start_seq1 = seq1.find(align_seq1.replace('-',''))
-        start_seq2 = seq2.find(align_seq2.replace('-',''))
-        return align_seq1,align_seq2,start_seq1,start_seq2
-    alignment =  plumb.bob.local_align(s1, len(s1),
-                                s2, len(s2),
+    alignment =  plumb.bob.local_align(seq1, len(seq1),
+                                seq2.upper(), len(seq2),
                                 plumb.bob.DNA_MAP[0],
                                 plumb.bob.DNA_MAP[1], 
                                 plumb.bob.DNA_SCORE,
@@ -71,16 +60,16 @@ def smith_waterman(seq1,seq2):
     align_seq2 = ''
     while frag:
         frag = frag[0]
-        if frag.type == MATCH:
-            f1 = s1[frag.sa_start:frag.sa_start + frag.hsp_len]
-            f2 = s2[frag.sb_start:frag.sb_start + frag.hsp_len]
+        if frag.type == plumb.bob.MATCH:
+            f1 = seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
+            f2 = seq2[frag.sb_start:frag.sb_start + frag.hsp_len]
             align_seq1 += f1
             align_seq2 += f2
-        elif frag.type == A_GAP:
+        elif frag.type == plumb.bob.A_GAP:
             align_seq1 += '-' * frag.hsp_len
-            align_seq2 += s2[frag.sb_start:frag.sb_start + frag.hsp_len]
-        elif frag.type == B_GAP:
-            align_seq1 += s1[frag.sa_start:frag.sa_start + frag.hsp_len]
+            align_seq2 += seq2[frag.sb_start:frag.sb_start + frag.hsp_len]
+        elif frag.type == plumb.bob.B_GAP:
+            align_seq1 += seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
             align_seq2 += '-' * frag.hsp_len
         frag = frag.next
     plumb.bob.alignment_free(alignment)
@@ -174,12 +163,35 @@ class AmpliconData(object):
                     best_hit = ref_key
             return best_hit,score
         
+        def match_by_smith_waterman(merged_key,ref_keys):
+            best_score = 0
+            best_hit = ''
+            for ref_key in ref_keys:
+                if trim_primers:
+                    seq1 = self.merged[merged_key][trim_primers:-trim_primers if trim_primers else None]
+                else:
+                    seq1 = self.merged[merged_key]
+                alignment =  plumb.bob.local_align(seq1, len(seq1),
+                                self.reference_sequences[ref_key].upper(), len(self.reference_sequences[ref_key]),
+                                plumb.bob.DNA_MAP[0],
+                                plumb.bob.DNA_MAP[1], 
+                                plumb.bob.DNA_SCORE,
+                                -7, -1 #gap open, gap extend
+                                )
+                score = alignment[0].score
+                plumb.bob.alignment_free(alignment)
+                if score > best_score:
+                    best_score = score
+                    best_hit = ref_key
+            return best_hit,score
+
+                
         print('Matching read bins to references',file=logfile)
         for merged_key in self.merged:
             if merged_key in self.reference:
                 print(',',end='',file=logfile)
                 continue
-            best_hit,best_score = match_by_edit(merged_key,self.reference_sequences)
+            best_hit,best_score = match_by_smith_waterman(merged_key,self.reference_sequences)
             if best_hit and best_score > min_score:
                 self.reference[merged_key]= best_hit
                 print('.',end='',file=logfile)
@@ -194,9 +206,9 @@ class AmpliconData(object):
         for merged_key in self.reference: #use reference to restrict to matched merged pairs
             if not merged_key in self.merged:
                 continue #occurs when matched in cached file but not present in data set
-            aligned_ref_seq, aligned_sample_seq = sw_align(self.reference_sequences[self.reference[merged_key]],self.merged[merged_key])
+            aligned_sample_seq,aligned_ref_seq,sample_start,ref_start = smith_waterman(self.merged[merged_key],self.reference_sequences[self.reference[merged_key]])
             print(self.reference[merged_key], file=logfile)
-            if aligned_ref_seq != aligned_sample_seq:
+            if aligned_ref_seq.upper() != aligned_sample_seq:
                 self.potential_variants.append(merged_key)
                 print(aligned_ref_seq, file=logfile)
                 print(aligned_sample_seq, file=logfile)
