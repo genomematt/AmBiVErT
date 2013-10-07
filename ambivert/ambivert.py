@@ -83,6 +83,7 @@ def smith_waterman(seq1,seq2):
             align_seq1 += s1[frag.sa_start:frag.sa_start + frag.hsp_len]
             align_seq2 += '-' * frag.hsp_len
         frag = frag.next
+    plumb.bob.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
     
 
