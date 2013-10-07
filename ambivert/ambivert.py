@@ -228,7 +228,8 @@ class AmpliconData(object):
     def save_hash_table(self,newhashfile):
         reference_sha224 = hashlib.sha224(repr(self.reference_sequences)).hexdigest()
         with newhashfile as outfile:
-            cPickle.dump((reference_sha224,self.reference),outfile)
+            hash_dictionary = {merged_key:self.reference[merged_key] for merged_key in self.reference if merged_key not in self.potential_variants} 
+            cPickle.dump((reference_sha224,hash_dictionary),outfile)
         pass
     
     def load_hash_table(self,hashfile):
@@ -292,10 +293,10 @@ def process_commandline_args(*args,**kw):
                              to reduce the possibility that small amplicons will fail to match due to primer mismatch')    
     parser.add_argument('--hashtable',
                         type=argparse.FileType('U'),
-                        help='Filename for a precomputed hash table that matches amplicons to references.  Generate with --savehashtable')    
+                        help='Filename for a precomputed hash table of exact matches of amplicons to references.  Generate with --savehashtable')    
     parser.add_argument('--savehashtable',
                         type=argparse.FileType('w'),
-                        help='Output a precomputed hash table that matches amplicons to references.  Use to speed up matching with --hashtable')    
+                        help='Output a precomputed hash table that matches amplicons exactly to references.  Used to speed up matching with --hashtable')    
     return parser.parse_args(*args,**kw)
 
 def process_amplicon_data(forward_file, reverse_file,
@@ -313,9 +314,9 @@ def process_amplicon_data(forward_file, reverse_file,
     if hashtable:
         amplicons.load_hash_table(hashtable)
     amplicons.match_to_reference()
+    amplicons.align_to_reference()
     if savehashtable:
         amplicons.save_hash_table(savehashtable)
-    amplicons.align_to_reference()
     return amplicons
 
 def main():
