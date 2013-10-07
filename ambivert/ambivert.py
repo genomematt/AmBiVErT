@@ -32,6 +32,13 @@ from cogent.align.algorithm import nw_align, sw_align
 from sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment
 from trueseq import parse_trueseq_manifest
 
+try:
+    import plumb.bob
+    plumb_bob_present = True
+except ImportError:
+    plumb_bob_present = False
+    
+
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield","Graham Taylor"]
@@ -44,15 +51,38 @@ __status__ = "Development"
 logfile = sys.stderr
 
 def smith_waterman(seq1,seq2):
-    #this currently uses the clunky pycogent pure python implementation
-    # slow but readable and trustworthy.
-    #should be replaced with something else to 
-    # - provide better gap extension penalties
-    # - faster
-    # - return start and end of alignment without this hack.
-    align_seq1, align_seq2 = sw_align(seq1,seq2)
-    start_seq1 = seq1.find(align_seq1.replace('-',''))
-    start_seq2 = seq2.find(align_seq2.replace('-',''))
+    if not plumb_bob_present:
+        #fall back to pure python implementation
+        align_seq1, align_seq2 = sw_align(seq1,seq2)
+        start_seq1 = seq1.find(align_seq1.replace('-',''))
+        start_seq2 = seq2.find(align_seq2.replace('-',''))
+        return align_seq1,align_seq2,start_seq1,start_seq2
+    alignment =  plumb.bob.local_align(s1, len(s1),
+                                s2, len(s2),
+                                plumb.bob.DNA_MAP[0],
+                                plumb.bob.DNA_MAP[1], 
+                                plumb.bob.DNA_SCORE,
+                                -7, -1 #gap open, gap extend
+                                )
+    start_seq1 = alignment.contents.align_frag.contents.sa_start
+    start_seq2 = alignment.contents.align_frag.contents.sa_start
+    frag = alignment[0].align_frag
+    align_seq1 = ''
+    align_seq2 = ''
+    while frag:
+        frag = frag[0]
+        if frag.type == MATCH:
+            f1 = s1[frag.sa_start:frag.sa_start + frag.hsp_len]
+            f2 = s2[frag.sb_start:frag.sb_start + frag.hsp_len]
+            align_seq1 += f1
+            align_seq2 += f2
+        elif frag.type == A_GAP:
+            align_seq1 += '-' * frag.hsp_len
+            align_seq2 += s2[frag.sb_start:frag.sb_start + frag.hsp_len]
+        elif frag.type == B_GAP:
+            align_seq1 += s1[frag.sa_start:frag.sa_start + frag.hsp_len]
+            align_seq2 += '-' * frag.hsp_len
+        frag = frag.next
     return align_seq1,align_seq2,start_seq1,start_seq2
     
 
