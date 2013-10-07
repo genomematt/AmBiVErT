@@ -24,10 +24,16 @@ __status__ = "Development"
 FORWARD_FLAGS = ['99',]
 REVERSE_FLAGS = ['147',]
 
+def split_location_string(location):
+    chromosome = location.split(':')[0]
+    start = location.split(':')[-1].split('-')[0]
+    end = location.split(':')[-1].split('-')[-1] #may be same as start
+    return chromosome, start, end
+
 def overlaps(pos,length,start,end):
     return not ( (int(pos)+int(length)-1 < int(start)) or (int(pos) > int(end)) )
     
-def get_readnames_overlapping_position(samfile,chromosome,start,end):
+def get_readnames_overlapping_position(samfile, chromosome, start, end):
     first_read = samfile.tell()
     
     read_names = []
@@ -44,16 +50,13 @@ def get_readnames_overlapping_position(samfile,chromosome,start,end):
     
     return read_names
 
-
-def get_readpairs_overlapping_position(samfile,location):
+def get_readpairs_overlapping_position(samfile, chromosome, start, end):
     """returns overlapping pairs with two passes of the file.
     First pass identifies all matching reads.
     Second pass collects reads from matching pairs.
     """
-    chromosome = location.split(':')[0]
-    start = location.split(':')[-1].split('-')[0]
-    end = location.split(':')[-1].split('-')[-1] #may be same as start
-    
+        
+    samfile.seek(0)
     header = get_sam_header(samfile)
     
     read_names = get_readnames_overlapping_position(samfile,chromosome,start,end)
@@ -82,11 +85,10 @@ def get_readpairs_overlapping_position(samfile,location):
     
     return result
 
-def get_reads_not_overlapping_position(samfile,location):
-    chromosome = location.split(':')[0]
-    start = location.split(':')[-1].split('-')[0]
-    end = location.split(':')[-1].split('-')[-1] #may be same as start
-    
+def get_reads_not_overlapping_position(samfile, chromosome, start, end):
+    # TODO check memory usage and speed of this function on our data sizes
+    # Is a two or one dictionary based version faster?
+    samfile.seek(0)
     header = get_sam_header(samfile)
     
     read_names = get_readnames_overlapping_position(samfile,chromosome,start,end)

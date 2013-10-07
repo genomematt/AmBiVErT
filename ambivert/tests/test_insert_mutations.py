@@ -97,41 +97,41 @@ class test_insert_mutations(unittest.TestCase):
         pass
 
     def test_get_readpairs_overlapping_position(self):
-        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),location="chr17:41243153-41243153"),READS[0:1])
-        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),location="chr17:41243322-41243322"),READS[0:2])
-        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),location="chr17:41243323-41243323"),[])
-        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),location="chr17:41243160-41243161"),READS[0:1])
-        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),location="chr17:41243250-41243250"),READS[0:2])
-        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),location="chr13:32900230-32900231"),READS[2:3])
-        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),location="chr13:32900351-32900351"),READS[2:])
-        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),location="chr17:41243152-41243152"),[])
-        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),location="chrX:100000000-100000001"),[])
+        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr17:41243153-41243153")),READS[0:1])
+        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr17:41243322-41243322")),READS[0:2])
+        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr17:41243323-41243323")),[])
+        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr17:41243160-41243161")),READS[0:1])
+        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr17:41243250-41243250")),READS[0:2])
+        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr13:32900230-32900231")),READS[2:3])
+        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr13:32900351-32900351")),READS[2:])
+        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr17:41243152-41243152")),[])
+        self.assertEqual(get_readpairs_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chrX:100000000-100000001")),[])
         pass
     
     def test_get_readpairs_not_overlapping_position(self):
-        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),location="chr17:41243160-41243161")),
+        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr17:41243160-41243161"))),
                         [(READS[1][1][0],reverse_complement(READS[1][1][3]),READS[1][1][4][::-1]),
                         (READS[2][0][0],READS[2][0][3],READS[2][0][4]),
                         (READS[2][1][0],reverse_complement(READS[2][1][3]),READS[2][1][4][::-1]),
                         (READS[3][1][0],reverse_complement(READS[3][1][3]),READS[3][1][4][::-1]),
                         ])
-        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),location="chr17:41243250-41243250")),
+        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr17:41243250-41243250"))),
                         [(READS[2][0][0],READS[2][0][3],READS[2][0][4]),
                         (READS[2][1][0],reverse_complement(READS[2][1][3]),READS[2][1][4][::-1]),
                         (READS[3][1][0],reverse_complement(READS[3][1][3]),READS[3][1][4][::-1]),
                         ])
-        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),location="chr13:32900230-32900231")),
+        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr13:32900230-32900231"))),
                         [(READS[0][0][0],READS[0][0][3],READS[0][0][4]),
                         (READS[0][1][0],reverse_complement(READS[0][1][3]),READS[0][1][4][::-1]),
                         (READS[1][1][0],reverse_complement(READS[1][1][3]),READS[1][1][4][::-1]),
                         (READS[3][1][0],reverse_complement(READS[3][1][3]),READS[3][1][4][::-1]),
                         ])
-        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),location="chr13:32900351-32900351")),
+        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chr13:32900351-32900351"))),
                         [(READS[0][0][0],READS[0][0][3],READS[0][0][4]),
                         (READS[0][1][0],reverse_complement(READS[0][1][3]),READS[0][1][4][::-1]),
                         (READS[1][1][0],reverse_complement(READS[1][1][3]),READS[1][1][4][::-1]),
                         ])
-        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),location="chrX:100000000-100000001")),
+        self.assertEqual(list(get_reads_not_overlapping_position(io.StringIO(SAMFILE),*split_location_string("chrX:100000000-100000001"))),
                         [(READS[0][0][0],READS[0][0][3],READS[0][0][4]),
                         (READS[0][1][0],reverse_complement(READS[0][1][3]),READS[0][1][4][::-1]),
                         (READS[1][1][0],reverse_complement(READS[1][1][3]),READS[1][1][4][::-1]),
