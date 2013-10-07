@@ -78,7 +78,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'8fe08cd60ed7c306f7fb63218dba4a84')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'b2dde8e4110ccb20bbb2c474c77c4712')
         outfile.close()
         os.unlink(outfile.name)
         
@@ -88,7 +88,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'96c2e8ea6fe8f0a357f5365a80af4937')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'d253080b5236b77a4bafce88f4b7e329')
         outfile.close()
         os.unlink(outfile.name)
         
@@ -98,7 +98,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'bfdae1f47a817b667b2a34e6e1c32fc0')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'6742cc3a47e4cb1e29eec03244e8028b')
         outfile.close()
         os.unlink(outfile.name)
         
@@ -108,7 +108,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'e455c9435915c8dcf9b24acb70e38feb')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'1c1414efef85de5c96be8965704f658a')
         outfile.close()
         os.unlink(outfile.name)
         
@@ -118,7 +118,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'486df188e89ed92f3277f255d83d91bc')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'1bfd9f13e175f65380d8b2c6f7d17a74')
         outfile.close()
         os.unlink(outfile.name)
 

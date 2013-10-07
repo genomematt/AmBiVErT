@@ -130,7 +130,7 @@ def make_sequences(header, probes, targets,  with_probes=False, softmask_probes=
     probes_by_targetid = {probe.Target_ID:(probe.ULSO_Sequence,probe.DLSO_Sequence) for probe in probes}
     for target in targets:
         if with_probes:
-            name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'), target.Chromosome, target.Start_Position, target.End_Position)
+            name = '{0}_{1}_{2}_{3} {1} {2} {3} {4}'.format(target.TargetB.replace(' ','_'), target.Chromosome, target.Start_Position, target.End_Position, target.Probe_Strand)
         else:
             if all_plus and (target.Probe_Strand == '-'):
                 start = int(target.Start_Position) + len(probes_by_targetid[target.TargetA][1]) # add ULSO length to start
@@ -138,7 +138,7 @@ def make_sequences(header, probes, targets,  with_probes=False, softmask_probes=
             else:
                 start = int(target.Start_Position) + len(probes_by_targetid[target.TargetA][0]) # add DLSO length to start
                 end = int(target.End_Position) - len(probes_by_targetid[target.TargetA][1]) # subtract ULSO length from end
-            name = '{0}_{1}_{2}_{3} {1} {2} {3}'.format(target.TargetB.replace(' ','_'), target.Chromosome, start, end)
+            name = '{0}_{1}_{2}_{3} {1} {2} {3} {4}'.format(target.TargetB.replace(' ','_'), target.Chromosome, start, end, target.Probe_Strand)
         
         if with_probes and softmask_probes:
             # For on target sequences Submitted Target Region Strand == probe Probe Strand != target Probe Strand
@@ -150,6 +150,8 @@ def make_sequences(header, probes, targets,  with_probes=False, softmask_probes=
         else:
             seq = target.Sequence
         if all_plus and (target.Probe_Strand == '-'):
+            if name[-1] == '-':
+                name = name[:-1]+'+'
             #print('minus strand - rc ing',name,target.Start_Position, target.End_Position, len(probes_by_targetid[target.TargetA][0]), len(probes_by_targetid[target.TargetA][1]))
             yield(name,reverse_complement(seq))
         else:
