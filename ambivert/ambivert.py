@@ -1,9 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 # encoding: utf-8
 """
 ambivert.py
 
-Amplicon Batching Before Alignment - ABBA
+AmBiVErT: A program for binned analysis of amplicon data
+
+AMplicon BInning Variant-caller with ERror Truncation
 
 This program is designed for the processing of amplicon based resequencing data
 generated on second generation sequencing platforms (eg Illumina HiSeq/MiSeq).
@@ -14,11 +16,17 @@ clustering step prior to aligning the sequence to a reference genome.
 Steps:
     1)  Cluster similar reads
     2)  Align for overlap
-    3a) Align to reference target sequences
-    3b) Use external program to align to genome
+    3)  Align to reference target sequences
     4)  Consolidate calls
     5)  Output VCF format calls
 
+It is specifically designed not to share any of its codebase with other variant
+calling pipelines or software, run quickly and minimize false positives.
+
+Our intended purpose for this software is as lightweight backup and quality assurance
+complementing a more traditional variant calling pipeline.
+
+All lines of code [will be/are] covered by unit tests unless marked with #pragma no cover
 
 Created by Matthew Wakefield and Graham Taylor.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
@@ -90,9 +98,9 @@ class AmpliconData(object):
         self.merged = {} # a dictionary of overlapped merged sequences with same key as self.data
         self.unmergable = [] # a list of keys (to self.data) for which merging failed
         self.aligned = {} # a dictionary of aligned (ref,sample) sequence tuples with same key as self.data
-        self.location = {} # dictionary of (chromosome, start, end) with same key as self.data
+        self.location = {} # dictionary of (chromosome, start, end, strand) with same key as self.data
         self.reference = {} # dictionary of reference sequence keys with same key as self.data
-        self.reference_sequences = {} # dictionary of reference sequences
+        self.reference_sequences = {} # dictionary of reference sequences. Key is (name, chromosome, start, end, strand)
         self.potential_variants = [] # list of keys (to self.data) for which putative variants were identified 
         self.trim5 = trim5
         self.trim3 = None if trim3==None else -1*abs(trim3)
@@ -291,7 +299,7 @@ def process_commandline_args(*args,**kw):
                         help='The minimum overlap required between forward and reverse sequences to merge')    
     parser.add_argument('--primer',
                         type=int,
-                        default=15,
+                        default=0,
                         help='The size of the smallest primer.  This number of bases is trimmed from the end of the merged sequences \
                              to reduce the possibility that small amplicons will fail to match due to primer mismatch')    
     parser.add_argument('--hashtable',
@@ -353,7 +361,7 @@ def main():
             print(aligned_sample_seq,file=args.output)
             matches = ''
             for a,b in itertools.izip(aligned_ref_seq, aligned_sample_seq):
-                if a == b:
+                if a == b or a in 'abcdghkmnrstuvwy':
                     matches += '.'
                 else:
                     matches += b
