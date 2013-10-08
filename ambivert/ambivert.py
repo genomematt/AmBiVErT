@@ -142,19 +142,16 @@ class AmpliconData(object):
         pass
     
     def add_references_from_manifest(self, manifestfile):
-        header, probes, targets = parse_trueseq_manifest(manifestfile)
-        for target in targets:
-            key = (target.TargetA.split()[0],target.Chromosome,target.Start_Position,target.End_Position)
-            self.reference_sequences[key] = target.Sequence
+        for name,sequence in make_sequences(*parse_truseq_manifest(manifestfile), with_probes=True, softmask_probes=True, all_plus=False):
+            self.reference_sequences[tuple(name.split())] = sequence
         pass
     
-    def match_to_reference(self, min_score = 0.1, trim_primers=15):
+    def match_to_reference(self, min_score = 0.1, trim_primers=0):
         def match_by_edit(merged_key,ref_keys):
             best_score = 0
             best_hit = ''
             for ref_key in ref_keys:
                 if trim_primers:
-                    #if smith waterman was fast enough could use here instead of diflib to reduce gappy misassignments
                     score = difflib.SequenceMatcher(None, self.merged[merged_key][trim_primers:-trim_primers], self.reference_sequences[ref_key]).ratio()
                 else:
                     score = difflib.SequenceMatcher(None, self.merged[merged_key], self.reference_sequences[ref_key]).ratio()
@@ -168,7 +165,7 @@ class AmpliconData(object):
             best_hit = ''
             for ref_key in ref_keys:
                 if trim_primers:
-                    seq1 = self.merged[merged_key][trim_primers:-trim_primers if trim_primers else None]
+                    seq1 = self.merged[merged_key][trim_primers:-trim_primers]
                 else:
                     seq1 = self.merged[merged_key]
                 alignment =  plumb.bob.local_align(seq1, len(seq1),
@@ -206,13 +203,19 @@ class AmpliconData(object):
         for merged_key in self.reference: #use reference to restrict to matched merged pairs
             if not merged_key in self.merged:
                 continue #occurs when matched in cached file but not present in data set
-            aligned_sample_seq,aligned_ref_seq,sample_start,ref_start = smith_waterman(self.merged[merged_key],self.reference_sequences[self.reference[merged_key]])
-            print(self.reference[merged_key], file=logfile)
+            if self.reference[merged_key][-1] == '-': #last element of self.reference_sequence key indicates minus strand probe
+                #both the reference sequence and the merged sequence are on the minus strand
+                query_seq = reverse_complement(self.merged[merged_key])
+                ref_seq = reverse_complement(self.reference_sequences[self.reference[merged_key]])
+            else:
+                query_seq = self.merged[merged_key]
+                ref_seq = self.reference_sequences[self.reference[merged_key]]
+            aligned_sample_seq,aligned_ref_seq,sample_start,ref_start = smith_waterman(query_seq,ref_seq)
             if aligned_ref_seq.upper() != aligned_sample_seq:
                 self.potential_variants.append(merged_key)
                 print(aligned_ref_seq, file=logfile)
                 print(aligned_sample_seq, file=logfile)
-            self.aligned[merged_key] = (aligned_ref_seq, aligned_sample_seq)
+            self.aligned[merged_key] = (aligned_sample_seq, aligned_ref_seq)
         pass
     
     def get_amplicon_counts(self):
