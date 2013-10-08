@@ -54,7 +54,7 @@ def smith_waterman(seq1,seq2):
                                 -7, -1 #gap open, gap extend
                                 )
     start_seq1 = alignment.contents.align_frag.contents.sa_start
-    start_seq2 = alignment.contents.align_frag.contents.sa_start
+    start_seq2 = alignment.contents.align_frag.contents.sb_start
     frag = alignment[0].align_frag
     align_seq1 = ''
     align_seq2 = ''
