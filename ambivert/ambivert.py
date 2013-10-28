@@ -221,10 +221,14 @@ class AmpliconData(object):
             aligned_sample_seq,aligned_ref_seq,sample_start,ref_start = smith_waterman(query_seq,ref_seq)
             if aligned_ref_seq.upper() != aligned_sample_seq:
                 self.potential_variants.append(merged_key)
-                print(aligned_ref_seq, file=logfile)
-                print(aligned_sample_seq, file=logfile)
-            self.aligned[merged_key] = (aligned_sample_seq, aligned_ref_seq)
+                #print(aligned_ref_seq, file=logfile)
+                #print(aligned_sample_seq, file=logfile)
+            self.aligned[merged_key] = (aligned_sample_seq, aligned_ref_seq) #plus strand
+            self.location[merged_key] = (self.reference[merged_key][1], int(self.reference[merged_key][2]), int(self.reference[merged_key][3]), ref_start)
         pass
+    
+    def get_amplicon_count(self, key):
+        return len(self.data[key])
     
     def get_amplicon_counts(self):
         amplicon_counts = {key:0 for key in self.reference_sequences}
@@ -268,6 +272,17 @@ class AmpliconData(object):
                     matches += b
             print(matches,file=outfile)
 
+    def get_amplicons_overlapping(self,chrom, pos, length):
+        result = []
+        for key in self.location:
+            if chrom != self.location[key][0]:
+                continue
+            start = self.location[key][1]
+            end = self.location[key][2]
+            if not ( (int(pos)+int(length)-1 < int(start)) or (int(pos) > int(end)) ):
+                result.append(key)
+        return result
+        
 def process_commandline_args(*args,**kw):
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
         AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
