@@ -221,10 +221,14 @@ class AmpliconData(object):
             aligned_sample_seq,aligned_ref_seq,sample_start,ref_start = smith_waterman(query_seq,ref_seq)
             if aligned_ref_seq.upper() != aligned_sample_seq:
                 self.potential_variants.append(merged_key)
-                print(aligned_ref_seq, file=logfile)
-                print(aligned_sample_seq, file=logfile)
-            self.aligned[merged_key] = (aligned_sample_seq, aligned_ref_seq)
+                #print(aligned_ref_seq, file=logfile)
+                #print(aligned_sample_seq, file=logfile)
+            self.aligned[merged_key] = (aligned_sample_seq, aligned_ref_seq) #plus strand
+            self.location[merged_key] = (self.reference[merged_key][1], int(self.reference[merged_key][2]), int(self.reference[merged_key][3]), ref_start)
         pass
+    
+    def get_amplicon_count(self, key):
+        return len(self.data[key])
     
     def get_amplicon_counts(self):
         amplicon_counts = {key:0 for key in self.reference_sequences}
@@ -254,6 +258,31 @@ class AmpliconData(object):
                     without specifying an existing hash file.',file=logfile)
         pass
     
+    def print_variants_as_alignments(self, outfile=sys.stdout):
+        for key in self.potential_variants:
+            aligned_ref_seq, aligned_sample_seq = self.aligned[key]
+            print(self.reference[key],file=outfile)
+            print(aligned_ref_seq,file=outfile)
+            #print(aligned_sample_seq,file=outfile)
+            matches = ''
+            for a,b in itertools.izip(aligned_ref_seq, aligned_sample_seq):
+                if a == b or a in 'abcdghkmnrstuvwy':
+                    matches += '.'
+                else:
+                    matches += b
+            print(matches,file=outfile)
+
+    def get_amplicons_overlapping(self,chrom, pos, length):
+        result = []
+        for key in self.location:
+            if chrom != self.location[key][0]:
+                continue
+            start = self.location[key][1]
+            end = self.location[key][2]
+            if not ( (int(pos)+int(length)-1 < int(start)) or (int(pos) > int(end)) ):
+                result.append(key)
+        return result
+        
 def process_commandline_args(*args,**kw):
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
         AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
@@ -354,18 +383,7 @@ def main():
             for key in sorted(amplicon_counts.keys()):
                 outfile.write('{0}\t{1}\n'.format(key,amplicon_counts[key]))
     
-    for key in amplicons.potential_variants:
-            aligned_ref_seq, aligned_sample_seq = amplicons.aligned[key]
-            print(amplicons.reference[key],file=args.output)
-            print(aligned_ref_seq,file=args.output)
-            print(aligned_sample_seq,file=args.output)
-            matches = ''
-            for a,b in itertools.izip(aligned_ref_seq, aligned_sample_seq):
-                if a == b or a in 'abcdghkmnrstuvwy':
-                    matches += '.'
-                else:
-                    matches += b
-            print(matches,file=args.output)
+    amplicons.print_variants_as_alignments(outfile=args.output)
     pass
 
 if __name__ == '__main__':
