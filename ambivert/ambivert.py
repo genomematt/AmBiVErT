@@ -254,6 +254,20 @@ class AmpliconData(object):
                     without specifying an existing hash file.',file=logfile)
         pass
     
+    def print_variants_as_alignments(self, outfile=sys.stdout):
+        for key in self.potential_variants:
+            aligned_ref_seq, aligned_sample_seq = self.aligned[key]
+            print(self.reference[key],file=outfile)
+            print(aligned_ref_seq,file=outfile)
+            #print(aligned_sample_seq,file=outfile)
+            matches = ''
+            for a,b in itertools.izip(aligned_ref_seq, aligned_sample_seq):
+                if a == b or a in 'abcdghkmnrstuvwy':
+                    matches += '.'
+                else:
+                    matches += b
+            print(matches,file=outfile)
+
 def process_commandline_args(*args,**kw):
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
         AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
@@ -354,18 +368,7 @@ def main():
             for key in sorted(amplicon_counts.keys()):
                 outfile.write('{0}\t{1}\n'.format(key,amplicon_counts[key]))
     
-    for key in amplicons.potential_variants:
-            aligned_ref_seq, aligned_sample_seq = amplicons.aligned[key]
-            print(amplicons.reference[key],file=args.output)
-            print(aligned_ref_seq,file=args.output)
-            print(aligned_sample_seq,file=args.output)
-            matches = ''
-            for a,b in itertools.izip(aligned_ref_seq, aligned_sample_seq):
-                if a == b or a in 'abcdghkmnrstuvwy':
-                    matches += '.'
-                else:
-                    matches += b
-            print(matches,file=args.output)
+    amplicons.print_variants_as_alignments(outfile=args.output)
     pass
 
 if __name__ == '__main__':
