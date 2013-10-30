@@ -39,6 +39,7 @@ from collections import defaultdict
 #from cogent.align.algorithm import nw_align, sw_align
 from sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment
 from truseq_manifest import parse_truseq_manifest, make_sequences
+from call_mutations import call_mutations, make_vcf_header
 import plumb.bob
     
 
@@ -240,6 +241,7 @@ class AmpliconData(object):
                 amplicon_counts[self.reference[merged_key]] += len(self.data[merged_key])
         return amplicon_counts
     
+    
     def save_hash_table(self,newhashfile):
         reference_sha224 = hashlib.sha224(repr(self.reference_sequences)).hexdigest()
         with newhashfile as outfile:
@@ -272,6 +274,7 @@ class AmpliconData(object):
                     matches += b
             print(matches,file=outfile)
 
+    
     def get_amplicons_overlapping(self,chrom, pos, length):
         result = []
         for key in self.location:
@@ -283,6 +286,7 @@ class AmpliconData(object):
                 result.append(key)
         return result
         
+    
 def process_commandline_args(*args,**kw):
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
         AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
@@ -383,7 +387,22 @@ def main():
             for key in sorted(amplicon_counts.keys()):
                 outfile.write('{0}\t{1}\n'.format(key,amplicon_counts[key]))
     
-    amplicons.print_variants_as_alignments(outfile=args.output)
+    amplicons.print_variants_as_alignments(outfile=sys.stderr)
+    
+    print(make_vcf_header(args.threshold),file=args.output)
+    for key in amplicons.potential_variants:
+            aligned_ref_seq, aligned_sample_seq = amplicons.aligned[key]
+            name, chromosome, amplicon_position, end, strand = amplicons.reference[key]
+            try:
+                call_mutations(aligned_sample_seq, aligned_ref_seq, chromosome, int(amplicon_position), outfile=args.output)
+            except:
+                print('WARNING: ',name,' FAILED to CALL',file=sys.stderr)
+                print(aligned_ref_seq,file=sys.stderr)
+                print(aligned_sample_seq,file=sys.stderr)
+                print(file=sys.stderr)
+
+    
+
     pass
 
 if __name__ == '__main__':

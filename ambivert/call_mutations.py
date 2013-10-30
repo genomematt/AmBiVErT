@@ -49,14 +49,14 @@ def caller(mutant, reference, gap='-',softmask = True):
                 #gap is within softmasking
                 continue
             #gap abutts softmasking but is in unmasked sequence
-        elif softmask and (not softmasked) and reference[site] == reference[site].lower():
+        elif softmask and (not softmasked) and not reference[site] == gap and reference[site] == reference[site].lower():
             #we have reached downstream soft masking
             break
         else:
             #we have reached end of softmasking
             softmasked = False
 
-        if mutant[site].upper() == reference[site].upper():
+        if mutant[site].upper() == reference[site].upper() and not reference[site] == gap and not mutant[site] == gap:
             onebased_pos_in_ungapped_ref += 1
             if not mismatch and not deletion and not insertion:
                 continue
@@ -107,17 +107,51 @@ def caller(mutant, reference, gap='-',softmask = True):
         yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref-len(insertion), insertion
         insertion = ''
         
-                
-        
-        
+def call_mutations(mutant, reference, chromosome, ref_start=1, outfile=sys.stdout, **kw):
+    """Call mutations and print VCF formatted results
+    """
+    for mutation in caller(mutant, reference, **kw):
+        if mutation[0] == 'X':
+            #snv
+            assert mutant[mutation[1]] == mutation[3]
+            print(chromosome,
+                    ref_start+mutation[2]-1,
+                    ".",
+                    reference[mutation[1]],
+                    mutation[3],
+                    '.','PASS','.',
+                    sep='\t',file=outfile)
             
-
+        if mutation[0] == 'D':
+            #deletion
+            print(chromosome,
+                    ref_start+mutation[2]-2,
+                    ".",
+                    reference[mutation[1]-1:mutation[1]+len(mutation[3])],
+                    reference[mutation[1]-1],
+                    '.','PASS','.',
+                    sep='\t',file=outfile)
             
-             
-        
+        if mutation[0] == 'I':
+            #insertion
+            print(chromosome,
+                    ref_start+mutation[2]-2,
+                    ".",
+                    reference[mutation[1]-1],
+                    reference[mutation[1]-1]+mutation[3],
+                    '.','PASS','.',
+                    sep='\t',file=outfile)
         
         
 
+def make_vcf_header(threshold):
+    return "##fileformat=VCF4.1\n\
+##source=AmBiVeRT0.1.0\n\
+##FILTER=<ID=depth,Description=more than {threshold} variant supporting reads>\n\
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO".format(threshold=threshold)
+    
+    
+    
 if __name__ == '__main__':
     print(list(caller('AAAA','AAGA')))
     print(list(caller('AAAA','AA-A')))
@@ -133,4 +167,16 @@ if __name__ == '__main__':
     print(list(caller('GAA-A','gAAAA')))
     print(list(caller('CAA-A','gAAAA')))
     print(list(caller('CAA-A','gAAAA',softmask=False)))
+    print(list(caller('CAA-ATCT','gAAAAttt')))
+    print(list(caller('CAA-ATCT','gAAAAttt',softmask=False)))
+    print(list(caller('CAA-AT-T','gAAAAttt')))
+    print(list(caller('CAA-AT-T','gAAAAttt',softmask=False)))
+    print(list(caller('CAA-ATTT','gAAAAt-t')))
+    print(list(caller('CAA-ATTT','gAAAAt-t',softmask=False)))
     
+    print(make_vcf_header(10))
+    call_mutations('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCACGCGGCCCAGACGTG-TCAGCGGGCAG---GTACCCCGGGCATGTGCA',
+                   'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG-CAGCTCGTACCCCGGG---GTGCA',
+                   'X',
+                   ref_start = 153457150,
+                   )    
