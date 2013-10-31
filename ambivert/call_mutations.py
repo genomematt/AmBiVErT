@@ -87,6 +87,9 @@ def caller(mutant, reference, gap='-',softmask = True):
                 yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref-len(insertion), insertion
                 insertion = ''
         else:
+            if mismatch:
+                yield 'X', site-len(mismatch), onebased_pos_in_ungapped_ref-len(mismatch), mismatch
+                mismatch = ''
             mismatch += mutant[site]
             onebased_pos_in_ungapped_ref += 1
             if insertion:
@@ -154,6 +157,7 @@ def make_vcf_header(threshold):
     
 if __name__ == '__main__':
     print(list(caller('AAAA','AAGA')))
+    print(list(caller('AAAA','AGGA')))
     print(list(caller('AAAA','AA-A')))
     print(list(caller('AA-A','AAAA')))
     print(list(caller('AAAA','ACGA')))
