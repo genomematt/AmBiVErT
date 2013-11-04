@@ -117,6 +117,11 @@ class AmpliconData(object):
         pass
     
     def process_twofile_readpairs(self, forward_file, reverse_file, parser=parse_fastq):
+        print('Reading data...', file=logfile)
+        if hasattr(forward_file,'name'):
+            print('    Forward read file: ', forward_file.name, file=logfile)
+        if hasattr(reverse_file,'name'):
+            print('    Reverse read file: ', reverse_file.name, file=logfile)
         for (f_name, f_seq, f_qual),(r_name, r_seq, r_qual) in itertools.izip(parser(forward_file), parser(reverse_file)):
             assert f_name.split()[0] == r_name.split()[0]
             self.add_reads(f_name, f_seq, f_qual,r_name, r_seq, r_qual)
@@ -147,7 +152,7 @@ class AmpliconData(object):
         pass
     
     def add_references_from_fasta(self, fastafile):
-        self.reference_sequences = {(x[0].split()[0],'unknown',1):x[1] for x in parse_fasta(fastafile)}
+        self.reference_sequences = {tuple(x[0].split()):x[1] for x in parse_fasta(fastafile)}
         pass
     
     def add_references_from_manifest(self, manifestfile):
@@ -285,7 +290,19 @@ class AmpliconData(object):
             if not ( (int(pos)+int(length)-1 < int(start)) or (int(pos) > int(end)) ):
                 result.append(key)
         return result
-        
+    
+    def print_to_fastq(self, key, forwardfile=sys.stdout, reversefile=sys.stdout):
+        """Print fastq of amplicons reads - intended for debugging purposes"""
+        for ((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)) in self.data[key]:
+            print('@'+f_name,file=forwardfile)
+            print(f_seq,file=forwardfile)
+            print('+',file=forwardfile)
+            print(f_qual,file=forwardfile)
+            print('@'+r_name,file=reversefile)
+            print(r_seq,file=reversefile)
+            print('+',file=reversefile)
+            print(r_qual,file=reversefile)
+        pass
     
 def process_commandline_args(*args,**kw):
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data

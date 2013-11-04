@@ -13,15 +13,16 @@ import io
 from tempfile import NamedTemporaryFile
 from hashlib import md5
 from ambivert.truseq_manifest import *
+from pkg_resources import resource_stream
 
-MANIFEST = u"""[Header]	
+MANIFEST = u"""[Header]
 Customer Name	Joseph Bloggs
 Product Type	15026626
 Date Manufactured	25/12/2012
 Lot	WO0001234567890
 DesignStudio ID	99999
 Target Plexity	2
-	
+
 [Probes]
 Target Region Name	Target Region ID	Target ID	Species	Build ID	Chromosome	Start Position	End Position	Submitted Target Region Strand	ULSO Sequence	ULSO Genomic Hits	DLSO Sequence	DLSO Genomic Hits	Probe Strand	Designer	Design Score	Expected Amplifed Region Size	SNP Masking	Labels
 BRCA1_Exon9_UserDefined (9825051)	9825051	BRCA1_Exon9_UserDefined (9825051)_7473609	Homo sapiens	hg19	chr17	41243252	41247077	-	AAAGGAACTGCTTCTTAAACTTGAAAC	0	CATGAAAGTAAATCCAGTCCTGCCAATG	0	-	ILLUMINA	0.937	225	false	
@@ -47,6 +48,13 @@ class test_truseq_manifest(unittest.TestCase):
         self.assertEqual(md5(str(self.probes)).hexdigest(), '34c79046f6822cd1ff585eee928e9088')
         self.assertEqual(md5(str(self.targets)).hexdigest(), 'fbab15899042e8e751bdad0d3997f3af')
         #print(self.header, self.probes, self.targets)
+        
+        manifest = resource_stream(__name__, 'testdatamanifest.txt')
+        self.header, self.probes, self.targets = parse_truseq_manifest(manifest)
+        self.assertEqual(md5(str(self.header)).hexdigest(), '2f981c324cea3f412abee2c4c306d74d')
+        self.assertEqual(md5(str(self.probes)).hexdigest(), '7b3526b5867201bf8e2b848235a39343')
+        self.assertEqual(md5(str(self.targets)).hexdigest(), '6a96cfc57eeec0c981302c7770a525fb')
+        
         pass
         
     def test_make_probes(self):

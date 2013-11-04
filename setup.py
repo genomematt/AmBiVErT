@@ -8,6 +8,7 @@ setup(
     author='Matthew Wakefield',
     author_email='matthew.wakefield@unimelb.edu.au',
     packages=['ambivert'],
+    include_package_data = True,
     url='https://git@bitbucket.org/genomematt/ambivert.git',
     license='GPL',
     entry_points={
