@@ -267,10 +267,9 @@ class AmpliconData(object):
     
     def print_variants_as_alignments(self, outfile=sys.stdout):
         for key in self.potential_variants:
-            aligned_ref_seq, aligned_sample_seq = self.aligned[key]
+            aligned_sample_seq, aligned_ref_seq = self.aligned[key]
             print(self.reference[key],file=outfile)
             print(aligned_ref_seq,file=outfile)
-            #print(aligned_sample_seq,file=outfile)
             matches = ''
             for a,b in itertools.izip(aligned_ref_seq, aligned_sample_seq):
                 if a == b or a in 'abcdghkmnrstuvwy':
