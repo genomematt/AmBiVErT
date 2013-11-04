@@ -144,43 +144,12 @@ def call_mutations(mutant, reference, chromosome, ref_start=1, outfile=sys.stdou
                     reference[mutation[1]-1]+mutation[3],
                     '.','PASS','.',
                     sep='\t',file=outfile)
-        
-        
 
 def make_vcf_header(threshold):
     return "##fileformat=VCF4.1\n\
 ##source=AmBiVeRT0.1.0\n\
 ##FILTER=<ID=depth,Description=more than {threshold} variant supporting reads>\n\
 #CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO".format(threshold=threshold)
-    
-    
-    
+
 if __name__ == '__main__':
-    print(list(caller('AAAA','AAGA')))
-    print(list(caller('AAAA','AGGA')))
-    print(list(caller('AAAA','AA-A')))
-    print(list(caller('AA-A','AAAA')))
-    print(list(caller('AAAA','ACGA')))
-    print(list(caller('AATA','AC-A')))
-    print(list(caller('AA-A','ACAA')))
-    print(list(caller('AAAAA','AAGCA')))
-    print(list(caller('AAAAA','AA-CA')))
-    print(list(caller('AA-AA','AAACA')))
-    print(list(caller('GAAAA','gAAGA')))
-    print(list(caller('GAAAA','gAA-A')))
-    print(list(caller('GAA-A','gAAAA')))
-    print(list(caller('CAA-A','gAAAA')))
-    print(list(caller('CAA-A','gAAAA',softmask=False)))
-    print(list(caller('CAA-ATCT','gAAAAttt')))
-    print(list(caller('CAA-ATCT','gAAAAttt',softmask=False)))
-    print(list(caller('CAA-AT-T','gAAAAttt')))
-    print(list(caller('CAA-AT-T','gAAAAttt',softmask=False)))
-    print(list(caller('CAA-ATTT','gAAAAt-t')))
-    print(list(caller('CAA-ATTT','gAAAAt-t',softmask=False)))
-    
-    print(make_vcf_header(10))
-    call_mutations('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCACGCGGCCCAGACGTG-TCAGCGGGCAG---GTACCCCGGGCATGTGCA',
-                   'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG-CAGCTCGTACCCCGGG---GTGCA',
-                   'X',
-                   ref_start = 153457150,
-                   )    
+    pass
