@@ -67,7 +67,7 @@ def caller(mutant, reference, gap='-',softmask = True):
                 yield 'D', site-len(deletion), onebased_pos_in_ungapped_ref-len(deletion), deletion
                 deletion = ''
             elif insertion:
-                yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref-len(insertion), insertion
+                yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref, insertion
                 insertion = ''
         elif reference[site] == gap:
             insertion += mutant[site]
@@ -84,16 +84,16 @@ def caller(mutant, reference, gap='-',softmask = True):
                 yield 'X', site-len(mismatch), onebased_pos_in_ungapped_ref-len(mismatch), mismatch
                 mismatch = ''
             elif insertion:
-                yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref-len(insertion), insertion
+                yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref, insertion
                 insertion = ''
         else:
+            onebased_pos_in_ungapped_ref += 1
             if mismatch:
                 yield 'X', site-len(mismatch), onebased_pos_in_ungapped_ref-len(mismatch), mismatch
                 mismatch = ''
             mismatch += mutant[site]
-            onebased_pos_in_ungapped_ref += 1
             if insertion:
-                yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref-len(insertion), insertion
+                yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref, insertion
                 insertion = ''
             elif deletion:
                 yield 'D', site-len(deletion), onebased_pos_in_ungapped_ref-len(deletion), deletion
@@ -107,7 +107,7 @@ def caller(mutant, reference, gap='-',softmask = True):
         yield 'D', site-len(deletion), onebased_pos_in_ungapped_ref-len(deletion), deletion
         deletion = ''
     if insertion:
-        yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref-len(insertion), insertion
+        yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref, insertion
         insertion = ''
         
 def call_mutations(mutant, reference, chromosome, ref_start=1, outfile=sys.stdout, **kw):
