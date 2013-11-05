@@ -37,9 +37,9 @@ import itertools, difflib, argparse
 import hashlib, cPickle
 from collections import defaultdict
 #from cogent.align.algorithm import nw_align, sw_align
-from sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment
+from sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment, open_potentially_gzipped
 from truseq_manifest import parse_truseq_manifest, make_sequences
-from call_mutations import call_mutations, make_vcf_header
+from call_mutations import call_mutations, call_mutations_to_vcf, make_vcf_header
 import plumb.bob
     
 
@@ -302,7 +302,7 @@ class AmpliconData(object):
             print(r_qual,file=reversefile)
         pass
     
-def process_commandline_args(*args,**kw):
+def process_commandline_args():
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
         AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
         Due to sequencing errors occuring with a more random distribution than low frequency variants this approach
@@ -313,11 +313,11 @@ def process_commandline_args(*args,**kw):
     parser.add_argument('-f','--forward',
                         type=str,
                         help='a fastq format file of forward direction amplicon reads. \
-                             May be compressed with gzip or bzip2 with the appropriate suffix (.gz/.bz2)')
+                             May be compressed with gzip with the appropriate suffix (.gz)')
     parser.add_argument('-r','--reverse',
                         type=str,
                         help='a fastq format file of reverse direction amplicon reads. \
-                             May be compressed with gzip or bzip2 with the appropriate suffix (.gz/.bz2)')
+                             May be compressed with gzip with the appropriate suffix (.gz)')
     parser.add_argument('-m','--manifest',
                         type=argparse.FileType('U'),
                         help='an Illumina TrueSeq Amplicon manifest file.')
@@ -340,7 +340,21 @@ def process_commandline_args(*args,**kw):
     parser.add_argument('--threshold',
                         type=int,
                         default=20,
-                        help='the minimum occurance threshold.  Amplicons that occur fewer than threshold times are ignored.')    
+                        help='the minimum occurance threshold.  Unique amplicon sequence variants that occur fewer than threshold times are ignored.')    
+    parser.add_argument('--min_cover',
+                        type=int,
+                        default=0,
+                        help='the minimum coverage at a site required to call a mutation. \
+                            This parameter only has effect if it is > threshold. Default 0')    
+    parser.add_argument('--min_reads',
+                        type=int,
+                        default=0,
+                        help='the minimum number of mutation containing reads required to call a mutation. \
+                            This parameter only has effect if it is > threshold. Default 0')    
+    parser.add_argument('--min_freq',
+                        type=float,
+                        default=0.1,
+                        help='the minimum proportion of mutated reads. Default 0.1 (ten percent)')    
     parser.add_argument('--overlap',
                         type=int,
                         default=20,
@@ -356,7 +370,21 @@ def process_commandline_args(*args,**kw):
     parser.add_argument('--savehashtable',
                         type=argparse.FileType('w'),
                         help='Output a precomputed hash table that matches amplicons exactly to references.  Used to speed up matching with --hashtable')    
-    return parser.parse_args(*args,**kw)
+    parser.add_argument('--prefix',
+                        type=str,
+                        default='',
+                        help='Shorthand specification of --forward, --reverse, --countfile and --outfile \
+                                --forward = <prefix>_R1.fastq.gz \
+                                --reverse = <prefix>_R2.fastq.gz \
+                                --outfile = <prefix>.vcf \
+                                --countfile = <prefix>.counts')
+    args = parser.parse_args()
+    if args.prefix:
+        args.countfile = open(args.prefix + '.counts','w')
+        args.output = open(args.prefix + '.vcf','w')
+        args.forward = open(args.prefix + '_R1.fastq.gz','r')
+        args.reverse = open(args.prefix + '_R2.fastq.gz','r')
+    return args
 
 def process_amplicon_data(forward_file, reverse_file,
                           manifest=None, fasta=None,
@@ -364,7 +392,8 @@ def process_amplicon_data(forward_file, reverse_file,
                           savehashtable=None, hashtable=None,
                           ):
     amplicons = AmpliconData()
-    amplicons.process_twofile_readpairs(forward_file, reverse_file)
+    amplicons.process_twofile_readpairs(open_potentially_gzipped(forward_file),
+                                        open_potentially_gzipped(reverse_file))
     amplicons.merge_overlaps(minimum_overlap=20, threshold=threshold)
     if manifest:
         amplicons.add_references_from_manifest(manifest)
@@ -378,6 +407,21 @@ def process_amplicon_data(forward_file, reverse_file,
         amplicons.save_hash_table(savehashtable)
     return amplicons
 
+def call_mutations_per_amplicon(amplicons, args):
+    print(make_vcf_header(args.threshold),file=args.output)
+    for key in amplicons.potential_variants:
+            aligned_ref_seq, aligned_sample_seq = amplicons.aligned[key]
+            name, chromosome, amplicon_position, end, strand = amplicons.reference[key]
+            try:
+                call_mutations_to_vcf(aligned_sample_seq, aligned_ref_seq, chromosome, int(amplicon_position), outfile=args.output)
+            except:
+                print('WARNING: ',name,' FAILED to CALL',file=sys.stderr)
+                print(aligned_ref_seq,file=sys.stderr)
+                print(aligned_sample_seq,file=sys.stderr)
+                print(file=sys.stderr)
+                raise
+    pass
+    
 def main():
     args = process_commandline_args()
     amplicons = process_amplicon_data(args.forward,args.reverse,
@@ -393,17 +437,7 @@ def main():
     
     amplicons.print_variants_as_alignments(outfile=sys.stderr)
     
-    print(make_vcf_header(args.threshold),file=args.output)
-    for key in amplicons.potential_variants:
-            aligned_ref_seq, aligned_sample_seq = amplicons.aligned[key]
-            name, chromosome, amplicon_position, end, strand = amplicons.reference[key]
-            try:
-                call_mutations_to_vcf(aligned_sample_seq, aligned_ref_seq, chromosome, int(amplicon_position), outfile=args.output)
-            except:
-                print('WARNING: ',name,' FAILED to CALL',file=sys.stderr)
-                print(aligned_ref_seq,file=sys.stderr)
-                print(aligned_sample_seq,file=sys.stderr)
-                print(file=sys.stderr)
+    call_mutations_per_amplicon(amplicons,args)
     
     pass
 

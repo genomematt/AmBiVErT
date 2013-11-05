@@ -9,6 +9,7 @@ Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All right
 from __future__ import print_function
 import sys, os
 import itertools
+from gzip import GzipFile
 
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
@@ -20,19 +21,20 @@ __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
 
-def open_compressed(filename, mode='r'):
-    if type(filename) == file:
-        return filename
-    extention = os.path.splitext(filename)
-    if extention == 'bz2':
-        return BZ2File(filename, mode)
-    elif extention == 'gz':
-        return GzipFile(filename, mode)
+def open_potentially_gzipped(thefile, mode='r'):
+    if type(thefile) == str:
+        thefile = open(thefile, mode)
+    if not hasattr(thefile,'name'):
+        #likely a stringio object or other file like stream
+        return thefile
+    extention = os.path.splitext(thefile.name)[-1]
+    if extention == '.gz':
+        return GzipFile(fileobj=thefile, mode=mode)
     else:
-        return open(filename, mode)
+        return thefile
 
-def parse_fastq(filename):
-    with open_compressed(filename) as fastqfile:
+def parse_fastq(thefile):
+    with thefile as fastqfile:
         name = True
         while name:
             name = fastqfile.readline().strip('\n')

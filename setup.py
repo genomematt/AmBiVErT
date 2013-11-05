@@ -26,6 +26,7 @@ setup(
           'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
           'Operating System :: POSIX',
           'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: Implementation :: PyPy',
           'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
 

@@ -70,8 +70,8 @@ class test_ambivert(unittest.TestCase):
         
     
     def test_AmpliconData_process_twofile_readpairs(self):
-        forward_file = resource_stream(__name__, 'testdata_R1.fastq')
-        reverse_file = resource_stream(__name__, 'testdata_R2.fastq')
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         self.amplicons.process_twofile_readpairs(forward_file, reverse_file)
         
         #print(str(self.amplicons.data))
@@ -79,8 +79,8 @@ class test_ambivert(unittest.TestCase):
         pass
 
     def test_AmpliconData_get_above_threshold(self):
-        forward_file = resource_stream(__name__, 'testdata_R1.fastq')
-        reverse_file = resource_stream(__name__, 'testdata_R2.fastq')
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         self.amplicons.process_twofile_readpairs(forward_file, reverse_file)
         
         #self.assertEqual(md5(str(self.amplicons.data)).hexdigest(),'0f852572f90c142103b89eb4961720c4')
@@ -107,8 +107,8 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_process_amplicon_data(self):
-        forward_file = resource_stream(__name__, 'testdata_R1.fastq')
-        reverse_file = resource_stream(__name__, 'testdata_R2.fastq')
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = resource_stream(__name__, 'testdatamanifest.txt')
         amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
                                   manifest=manifest, fasta=None,
@@ -119,9 +119,9 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_process_amplicon_data(self):
-        forward_file = resource_stream(__name__, 'testdata_R1.fastq')
-        reverse_file = resource_stream(__name__, 'testdata_R2.fastq')
-        manifest = resource_stream(__name__, 'testdatamanifest.txt')
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = resource_stream(__name__, 'data/testdatamanifest.txt')
         amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
                                   manifest=manifest, fasta=None,
                                   threshold=50, overlap=20, primer=15, 
@@ -130,9 +130,9 @@ class test_ambivert(unittest.TestCase):
         self.assertEqual(md5(str(amplicons.potential_variants)).hexdigest(),'f0a10362afd9d576c6082af8030f9cdf')
     
     def test_AmpliconData_test_get_amplicon_count(self):
-        forward_file = resource_stream(__name__, 'testdata_R1.fastq')
-        reverse_file = resource_stream(__name__, 'testdata_R2.fastq')
-        manifest = resource_stream(__name__, 'testdatamanifest.txt')
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = resource_stream(__name__, 'data/testdatamanifest.txt')
         amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
                                   manifest=manifest, fasta=None,
                                   threshold=50, overlap=20, primer=15, 
