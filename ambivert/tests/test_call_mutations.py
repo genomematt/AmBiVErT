@@ -10,7 +10,7 @@ Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights
 from __future__ import print_function
 import unittest
 from StringIO import StringIO
-from ambivert.call_mutations import caller, call_mutations
+from ambivert.call_mutations import *
 
 
 class test_call_mutations(unittest.TestCase):
@@ -41,7 +41,7 @@ class test_call_mutations(unittest.TestCase):
         self.assertEqual(list(caller('CAA-ATTT','gAAAAt-t',softmask=False)),[('X', 0, 1, 'C'), ('D', 3, 4, 'A'), ('I', 6, 7, 'T')])
         pass
     
-    def test_call_mutations(self):
+    def test_call_mutations_to_vcf(self):
         resultfile = StringIO()
         expected_result = "\n".join([
         "X\t153457207\t.\tT\tC\t.\tPASS\t.",
@@ -50,14 +50,14 @@ class test_call_mutations(unittest.TestCase):
         "X\t153457232\t.\tGCTC\tG\t.\tPASS\t.",
         "X\t153457245\t.\tG\tGCAT\t.\tPASS\t.",
         ])+"\n"
-        #               555555555566666666667777777777888888888899999999990000000000111111111122222222222333333333344444444444444
-        #               012345678901234567890123456789012345678901234567890123456789012345678901234567899012345678901234555567890
-        #                                                                        v              v       v   vvv          vvv
-        call_mutations('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCACGCGGCCCAGACGTG-TCAGCGGGCAG---GTACCCCGGGCATGTGCA',#mutant
-                       'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG-CAGCTCGTACCCCGGG---GTGCA',#ref
-                       'X',
-                       ref_start = 153457150,
-                       outfile = resultfile)
+        #                      555555555566666666667777777777888888888899999999990000000000111111111122222222222333333333344444444444444
+        #                      012345678901234567890123456789012345678901234567890123456789012345678901234567899012345678901234555567890
+        #                                                                               v              v       v   vvv          vvv
+        call_mutations_to_vcf('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCACGCGGCCCAGACGTG-TCAGCGGGCAG---GTACCCCGGGCATGTGCA',#mutant
+                              'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG-CAGCTCGTACCCCGGG---GTGCA',#ref
+                              'X',
+                              ref_start = 153457150,
+                              outfile = resultfile)
         print(resultfile.getvalue())
         self.assertEqual(resultfile.getvalue(), expected_result)
         pass

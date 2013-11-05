@@ -8,6 +8,7 @@ Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All right
 """
 from __future__ import print_function
 import sys, os
+from collections import namedtuple
 #import itertools, difflib, argparse
 #import hashlib, cPickle
 #from collections import defaultdict
@@ -110,40 +111,53 @@ def caller(mutant, reference, gap='-',softmask = True):
         yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref, insertion
         insertion = ''
         
-def call_mutations(mutant, reference, chromosome, ref_start=1, outfile=sys.stdout, **kw):
+def call_mutations(mutant, reference, chromosome, ref_start=1, **kw):
     """Call mutations and print VCF formatted results
     """
+    AmpliconMutation = namedtuple('AmpliconMutation', 'chromosome, start, end, vcf_start, ref_allele, alt_allele')
+    result = []
     for mutation in caller(mutant, reference, **kw):
         if mutation[0] == 'X':
             #snv
             assert mutant[mutation[1]] == mutation[3]
-            print(chromosome,
-                    ref_start+mutation[2]-1,
-                    ".",
-                    reference[mutation[1]],
-                    mutation[3],
-                    '.','PASS','.',
-                    sep='\t',file=outfile)
+            start = ref_start+mutation[2]-1 #subtract 1 as adding two one based coordinates
+            vcf_start = start
+            end = start
+            ref_allele = reference[mutation[1]]
+            alt_allele = mutation[3]
             
         if mutation[0] == 'D':
             #deletion
-            print(chromosome,
-                    ref_start+mutation[2]-2,
-                    ".",
-                    reference[mutation[1]-1:mutation[1]+len(mutation[3])],
-                    reference[mutation[1]-1],
-                    '.','PASS','.',
-                    sep='\t',file=outfile)
+            start = ref_start+mutation[2]-1 #subtract 1 as adding two one based coordinates
+            vcf_start = start - 1 #subtract 1 for context base
+            end = start + len(mutation[3])-1
+            ref_allele = reference[mutation[1]-1:mutation[1]+len(mutation[3])]
+            alt_allele = reference[mutation[1]-1]
             
         if mutation[0] == 'I':
             #insertion
-            print(chromosome,
-                    ref_start+mutation[2]-2,
-                    ".",
-                    reference[mutation[1]-1],
-                    reference[mutation[1]-1]+mutation[3],
-                    '.','PASS','.',
-                    sep='\t',file=outfile)
+            start = ref_start+mutation[2]-1 #subtract 1 as adding two one based coordinates
+            vcf_start = start - 1 #subtract 1 for context base
+            end = start
+            ref_allele = reference[mutation[1]-1]
+            alt_allele = reference[mutation[1]-1]+mutation[3]
+        result.append(AmpliconMutation(chromosome, start, end, vcf_start, ref_allele, alt_allele))
+    return result
+
+def format_as_vcf(mutations, outfile=sys.stdout):
+    for mutation in mutations:
+        print(mutation.chromosome,
+                mutation.vcf_start,
+                ".",
+                mutation.ref_allele,
+                mutation.alt_allele,
+                '.','PASS','.',
+                sep='\t',file=outfile)
+    pass
+
+def call_mutations_to_vcf(mutant, reference, chromosome, ref_start=1, outfile=sys.stdout, **kw):
+    format_as_vcf(call_mutations(mutant, reference, chromosome, ref_start=ref_start, **kw), outfile=outfile)
+    pass
 
 def make_vcf_header(threshold):
     return "##fileformat=VCF4.1\n\
