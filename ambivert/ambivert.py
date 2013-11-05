@@ -102,7 +102,9 @@ class AmpliconData(object):
         self.location = {} # dictionary of (chromosome, start, end, strand) with same key as self.data
         self.reference = {} # dictionary of reference sequence keys with same key as self.data
         self.reference_sequences = {} # dictionary of reference sequences. Key is (name, chromosome, start, end, strand)
-        self.potential_variants = [] # list of keys (to self.data) for which putative variants were identified 
+        self.potential_variants = [] # list of keys (to self.data) for which putative variants were identified
+        self.called_mutations = {} # dictionary of lists of called mutations with same key as self.data
+        self.consolidated_mutations = []
         self.trim5 = trim5
         self.trim3 = None if trim3==None else -1*abs(trim3)
         self.threshold = 0
@@ -276,8 +278,80 @@ class AmpliconData(object):
                 else:
                     matches += b
             print(matches,file=outfile)
-
+        pass
     
+    def call_amplicon_mutations(self):
+        for key in self.potential_variants:
+            aligned_ref_seq, aligned_sample_seq = self.aligned[key]
+            name, chromosome, amplicon_position, end, strand = self.reference[key]
+            self.called_mutations[key] = call_mutations(aligned_sample_seq, aligned_ref_seq, chromosome, int(amplicon_position))
+        pass
+    
+    def get_variant_positions(self):
+        variant_positions = []
+        for key in self.called_mutations:
+            for mutation in self.called_mutations[key]:
+                variant_positions.append((mutation.chromosome, mutation.start, mutation.end))
+        return sorted(list(set(variant_positions)))
+    
+    def consolidate_mutations(self):
+        positions = self.get_variant_positions()
+        for (chrom, start, end) in positions:
+            amplicon_keys = self.get_amplicons_overlapping(chrom,start,end-start)
+            ref = [] #list of amplicon keys
+            alt = {} #dictionary of lists of amplicons keyed by alternative alleles
+            for key in amplicon_keys:
+                overlapping_mutation = False
+                if key in self.called_mutations:
+                    for mutation in self.called_mutations[key]:
+                        if not ((mutation.end < start) or (mutation.start > end)):
+                            if mutation in alt:
+                                alt[mutation].append(key)
+                            else:
+                                alt[mutation] = [key,]
+                if not overlapping_mutation:
+                    ref.append(key)
+            print(ref)
+            print(alt)
+            total_depth = sum([self.get_amplicon_count(key) for key in ref]) + sum([self.get_amplicon_count(key) for key in ref])
+            print(total_depth)
+            
+            #indels are not described at the same coordinate as snps so we deal with these first
+            #we dont do 'correct' VCF with all alt alleles on one line, we repeat positions instead.
+            #in rare cases of two mutations overlapping a deletion we just duplicate an identical deletion entry
+            #exact duplicate records are then cleaned up at end of this function
+            #this is structured to allow compound calling in a subsequent version
+            indels = [key for key in alt.keys() if len(key.alt_allele) > 1 or len(key.ref_allele) > 1 ]
+            #for indel in indels:
+            
+            #
+            #self.consolidated_mutations.append([chromosome, start, end, vcf_start, ref_allele, alt.keys()
+            
+        
+
+                        
+                
+        #get counts for each overlapping amplicon
+        #determine if ref/same_alt/different_alt
+        #record provisional vcf format record for location
+        #remove exact duplicate records
+        pass
+    
+    def phase_mutations(self):
+        ##### TODO
+        #cycle through amplicons and annotate with phase groups for each amplicon
+        pass
+        
+    def print_consolidated_vcf(self):
+        ##### TODO
+        #if not called call
+        #if not consolidated consolidate
+        #if not phased phase
+        #filter
+        #output vcf
+        pass
+            
+
     def get_amplicons_overlapping(self,chrom, pos, length):
         result = []
         for key in self.location:
@@ -421,6 +495,8 @@ def call_mutations_per_amplicon(amplicons, args):
                 print(file=sys.stderr)
                 raise
     pass
+
+    
     
 def main():
     args = process_commandline_args()
@@ -436,6 +512,12 @@ def main():
                 outfile.write('{0}\t{1}\n'.format(key,amplicon_counts[key]))
     
     amplicons.print_variants_as_alignments(outfile=sys.stderr)
+    
+    amplicons.call_amplicon_mutations()
+    
+    print(amplicons.get_variant_positions())
+    
+    amplicons.consolidate_mutations()
     
     call_mutations_per_amplicon(amplicons,args)
     
