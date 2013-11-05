@@ -21,14 +21,12 @@ setup(
     description='AmBiVErT - AMplicon BInning Variant caller with ERror Truncation.\
                  For calling variants in amplicon based sequencing experiments',
     long_description=open('README.txt').read(),
-    install_requires=[
-        "cogent",
-    ],
     classifiers=[
-          'Development Status :: 5 - Alpha',
-          'License :: OSI Approved :: MIT',
+          'Development Status :: 3 - Alpha',
+          'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
           'Operating System :: POSIX',
-          'Programming Language :: Python',
+          'Programming Language :: Python :: 2.7',
+          'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
 
 )

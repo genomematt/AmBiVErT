@@ -139,7 +139,6 @@ class AmpliconData(object):
         completed = 0
         print('Merging overlaps for {0} Pairs'.format(total),file=logfile)
         for key in self.get_above_threshold(threshold):
-            print(completed,end=' ',file=logfile)
             fwd = self.data[key][0][0][1]
             rev = reverse_complement(self.data[key][0][1][1])
             fwd_aligned, rev_aligned, fwd_start, rev_start = smith_waterman(fwd,rev)
@@ -380,17 +379,6 @@ def process_amplicon_data(forward_file, reverse_file,
     return amplicons
 
 def main():
-    #testargs = ['--forward','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R1.fastq',
-    #            '--reverse','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_R2.fastq',
-    #            '--manifest','/Users/wakefield/Software/ABBA/TruSeq_CAT_Manifest_Allocate-CAT.txt',
-    #            #'--hashtable','/Users/wakefield/Software/ABBA/cached_read_to_reference_table',
-    #            '--savehashtable','/Users/wakefield/Software/ABBA/new_cached_read_to_reference_table',
-    #            '--threshold','20',
-    #            '--overlap','20',
-    #            '--primer','15',
-    #            '--countfile','/Users/wakefield/Software/ABBA/130503_M00267_0038_L001_MS0302_12015B_E0023_TruSeq_AmpliconCounts',
-    #            ]
-    #args = process_commandline_args(testargs)
     args = process_commandline_args()
     amplicons = process_amplicon_data(args.forward,args.reverse,
                                       args.manifest,args.fasta,
@@ -417,42 +405,6 @@ def main():
                 print(aligned_sample_seq,file=sys.stderr)
                 print(file=sys.stderr)
     
-    ##debug code
-    #keys = amplicons.get_amplicons_overlapping('chr17',41243125,41247176)
-    #print(keys)
-    #forwardfile = open('testdata_R1.fastq','w')
-    #reversefile = open('testdata_R2.fastq','w')
-    #for key in keys:
-    #    if amplicons.reference[key] in [('BRCA1_Exon9_UserDefined_(9825051)_7473609_chr17_41243125_41243349', 'chr17', '41243125', '41243349', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473610_chr17_41243267_41243491', 'chr17', '41243267', '41243491', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473611_chr17_41243405_41243630', 'chr17', '41243405', '41243630', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473612_chr17_41243559_41243783', 'chr17', '41243559', '41243783', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473613_chr17_41243701_41243927', 'chr17', '41243701', '41243927', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473614_chr17_41243841_41244065', 'chr17', '41243841', '41244065', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473615_chr17_41243981_41244206', 'chr17', '41243981', '41244206', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473616_chr17_41244123_41244347', 'chr17', '41244123', '41244347', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473617_chr17_41244261_41244486', 'chr17', '41244261', '41244486', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473618_chr17_41244399_41244625', 'chr17', '41244399', '41244625', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473619_chr17_41244539_41244764', 'chr17', '41244539', '41244764', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473620_chr17_41244679_41244909', 'chr17', '41244679', '41244909', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473621_chr17_41244855_41245081', 'chr17', '41244855', '41245081', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473622_chr17_41245027_41245253', 'chr17', '41245027', '41245253', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473623_chr17_41245195_41245420', 'chr17', '41245195', '41245420', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473624_chr17_41245363_41245588', 'chr17', '41245363', '41245588', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473625_chr17_41245533_41245757', 'chr17', '41245533', '41245757', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473626_chr17_41245703_41245928', 'chr17', '41245703', '41245928', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473627_chr17_41245865_41246105', 'chr17', '41245865', '41246105', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473628_chr17_41246051_41246277', 'chr17', '41246051', '41246277', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473629_chr17_41246219_41246443', 'chr17', '41246219', '41246443', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473630_chr17_41246387_41246623', 'chr17', '41246387', '41246623', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473631_chr17_41246571_41246801', 'chr17', '41246571', '41246801', '+'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473632_chr17_41246745_41246989', 'chr17', '41246745', '41246989', '-'),
-    #    ('BRCA1_Exon9_UserDefined_(9825051)_7473633_chr17_41246933_41247176', 'chr17', '41246933', '41247176', '+'),
-    #    ]:
-    #        amplicons.print_to_fastq(key, forwardfile, reversefile)
-    
-    
-
     pass
 
 if __name__ == '__main__':
