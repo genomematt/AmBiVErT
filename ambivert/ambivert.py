@@ -31,7 +31,7 @@ All lines of code [will be/are] covered by unit tests unless marked with #pragma
 Created by Matthew Wakefield and Graham Taylor.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
-from __future__ import print_function
+from __future__ import print_function, division
 import sys, os
 import itertools, difflib, argparse
 import hashlib, cPickle
@@ -114,7 +114,7 @@ class AmpliconData(object):
         return self.data.__str__()
     
     def add_reads(self, f_name, f_seq, f_qual,r_name, r_seq, r_qual):
-        amplicon_key = f_seq[self.trim5:self.trim3]+r_seq[self.trim5:self.trim3]
+        amplicon_key = hashlib.md5(f_seq[self.trim5:self.trim3]+r_seq[self.trim5:self.trim3]).hexdigest()
         self.data[amplicon_key].append(((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)))
         pass
     
