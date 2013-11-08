@@ -394,7 +394,7 @@ class AmpliconData(object):
             query_start_in_amplicon = pos - start
             length_in_ref = 0
             position_in_ref = query_start_in_amplicon
-            while length_in_ref < length and position_in_ref < length(self.aligned[amplicon_id][0]):
+            while length_in_ref < length and position_in_ref < len(self.aligned[amplicon_id][0]):
                 if self.aligned[amplicon_id][0][position_in_ref] != '-':
                     length_in_ref += 1
                 position_in_ref +=1
