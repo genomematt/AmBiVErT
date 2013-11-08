@@ -289,66 +289,87 @@ class AmpliconData(object):
     
     def get_variant_positions(self):
         variant_positions = []
-        for key in self.called_mutations:
-            for mutation in self.called_mutations[key]:
-                variant_positions.append((mutation.chromosome, mutation.start, mutation.end))
+        for amplicon_id in self.called_mutations:
+            for variant in self.called_mutations[amplicon_id]:
+                variant_positions.append((variant.chromosome, variant.start, variant.end))
         return sorted(list(set(variant_positions)))
     
     def consolidate_mutations(self):
         positions = self.get_variant_positions()
         for (chrom, start, end) in positions:
-            amplicon_keys = self.get_amplicons_overlapping(chrom,start,end-start)
+            amplicon_ids = self.get_amplicons_overlapping(chrom,start,end-start)
             ref = [] #list of amplicon keys
             alt = {} #dictionary of lists of amplicons keyed by alternative alleles
-            for key in amplicon_keys:
+            for amplicon_id in amplicon_ids:
                 overlapping_mutation = False
-                if key in self.called_mutations:
-                    for mutation in self.called_mutations[key]:
+                if amplicon_id in self.called_mutations:
+                    for mutation in self.called_mutations[amplicon_id]:
                         if not ((mutation.end < start) or (mutation.start > end)):
+                            overlapping_mutation = True
                             if mutation in alt:
-                                alt[mutation].append(key)
+                                alt[mutation].append(amplicon_id)
                             else:
-                                alt[mutation] = [key,]
+                                alt[mutation] = [amplicon_id,]
                 if not overlapping_mutation:
-                    ref.append(key)
-            print(ref)
-            print(alt)
-            total_depth = sum([self.get_amplicon_count(key) for key in ref]) + sum([self.get_amplicon_count(key) for key in ref])
-            print(total_depth)
+                    ref.append(amplicon_id)
+            
+            total_depth = sum([self.get_amplicon_count(amplicon_id) for amplicon_id in amplicon_ids])
             
             #indels are not described at the same coordinate as snps so we deal with these first
             #we dont do 'correct' VCF with all alt alleles on one line, we repeat positions instead.
             #in rare cases of two mutations overlapping a deletion we just duplicate an identical deletion entry
             #exact duplicate records are then cleaned up at end of this function
             #this is structured to allow compound calling in a subsequent version
-            indels = [key for key in alt.keys() if len(key.alt_allele) > 1 or len(key.ref_allele) > 1 ]
-            #for indel in indels:
+            indels = [variant for variant in alt.keys() if len(variant.alt_allele) > 1 or len(variant.ref_allele) > 1 ]
+            for indel in indels:
+                variant_depth = sum([self.get_amplicon_count(amplicon_id) for amplicon_id in alt[indel]])
+                #print(indel,variant_depth, total_depth, variant_depth/total_depth, ref, alt[indel])
+                self.consolidated_mutations.append((indel,variant_depth, total_depth, variant_depth/total_depth, tuple(ref), tuple(alt[indel])))
             
-            #
-            #self.consolidated_mutations.append([chromosome, start, end, vcf_start, ref_allele, alt.keys()
-            
+            #for now we do one variant per line for snps
+            #this should change to at least an optional correct VCF formatting of all alleles on one line
+            snvs = [key for key in alt.keys() if len(key.alt_allele) == 1 and len(key.ref_allele) == 1 ]
+            for snv in snvs:
+                variant_depth = sum([self.get_amplicon_count(key) for key in alt[snv]])
+                #print(snv,variant_depth, total_depth, variant_depth/total_depth, ref, alt[snv])
+                self.consolidated_mutations.append((snv,variant_depth, total_depth, variant_depth/total_depth, tuple(ref), tuple(alt[snv])))
+        #### TODO TODO TODO TODO TODO TODO TODO TODO
+        #current version includes counts from primers that overlap the mutation
+        #this will artificially deflate frequency of these mutations
         
-
-                        
-                
-        #get counts for each overlapping amplicon
-        #determine if ref/same_alt/different_alt
-        #record provisional vcf format record for location
-        #remove exact duplicate records
-        pass
-    
-    def phase_mutations(self):
-        ##### TODO
-        #cycle through amplicons and annotate with phase groups for each amplicon
+        
+        #logic above does not preclude calling the same mutation more than once
+        #so we remove identical records
+        self.consolidated_mutations = sorted(list(set(self.consolidated_mutations)))
         pass
         
-    def print_consolidated_vcf(self):
-        ##### TODO
-        #if not called call
-        #if not consolidated consolidate
-        #if not phased phase
-        #filter
-        #output vcf
+    def get_filtered_mutations(self, min_cover=0, min_reads=0, min_freq=0.1):
+        for variant in self.consolidated_mutations:
+            if variant[1] >= min_reads and \
+               variant[2] >= min_cover and \
+               variant[3] >= min_freq:
+               yield variant
+        
+    def print_consolidated_vcf(self, min_cover=0, min_reads=0, min_freq=0.1, outfile=sys.stdout):
+        if not self.called_mutations:
+            self.call_amplicon_mutations()
+        if not self.consolidated_mutations:
+            self.consolidate_mutations()
+        print(make_vcf_header(self.threshold),file=outfile) ## TODO need to add filter parameters to header and add INFO and FORMAT for counts
+        for variant in self.get_filtered_mutations(min_cover=min_cover,min_reads=min_reads,min_freq=min_freq):
+            print(variant[0].chromosome,
+                variant[0].vcf_start,
+                ".",
+                variant[0].ref_allele,
+                variant[0].alt_allele,
+                '.','PASS',
+                'DP={DP};AC={AC};AF={AF:.3};ALTAMPS={ALTAMPS};REFAMPS={REFAMPS}'.format(DP=variant[2],
+                                                                                    AC=variant[1],
+                                                                                    AF=variant[3],
+                                                                                    ALTAMPS=",".join(variant[5]),
+                                                                                    REFAMPS=",".join(variant[4]),
+                                                                                    ),
+                sep='\t',file=outfile)
         pass
             
 
@@ -511,15 +532,18 @@ def main():
             for key in sorted(amplicon_counts.keys()):
                 outfile.write('{0}\t{1}\n'.format(key,amplicon_counts[key]))
     
-    amplicons.print_variants_as_alignments(outfile=sys.stderr)
+    #amplicons.print_variants_as_alignments(outfile=sys.stderr)
     
-    amplicons.call_amplicon_mutations()
+    #amplicons.call_amplicon_mutations()
     
-    print(amplicons.get_variant_positions())
+    #print(amplicons.get_variant_positions())
     
-    amplicons.consolidate_mutations()
+    #amplicons.consolidate_mutations()
     
-    call_mutations_per_amplicon(amplicons,args)
+    #call_mutations_per_amplicon(amplicons,args)
+    
+    #TODO parse args to this function
+    amplicons.print_consolidated_vcf(min_cover=args.min_cover, min_reads=args.min_reads, min_freq=args.min_freq, outfile=sys.stdout)
     
     pass
 
