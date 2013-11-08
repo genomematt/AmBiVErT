@@ -294,10 +294,13 @@ class AmpliconData(object):
                 variant_positions.append((variant.chromosome, variant.start, variant.end))
         return sorted(list(set(variant_positions)))
     
-    def consolidate_mutations(self):
+    def consolidate_mutations(self, exclude_softmasked_coverage=True):
         positions = self.get_variant_positions()
         for (chrom, start, end) in positions:
-            amplicon_ids = self.get_amplicons_overlapping(chrom,start,end-start)
+            if exclude_softmasked_coverage:
+                amplicon_ids = self.get_amplicons_overlapping_without_softmasking(chrom,start,end-start)
+            else:
+                amplicon_ids = self.get_amplicons_overlapping(chrom,start,end-start)
             ref = [] #list of amplicon keys
             alt = {} #dictionary of lists of amplicons keyed by alternative alleles
             for amplicon_id in amplicon_ids:
@@ -333,11 +336,6 @@ class AmpliconData(object):
                 variant_depth = sum([self.get_amplicon_count(key) for key in alt[snv]])
                 #print(snv,variant_depth, total_depth, variant_depth/total_depth, ref, alt[snv])
                 self.consolidated_mutations.append((snv,variant_depth, total_depth, variant_depth/total_depth, tuple(ref), tuple(alt[snv])))
-        #### TODO TODO TODO TODO TODO TODO TODO TODO
-        #current version includes counts from primers that overlap the mutation
-        #this will artificially deflate frequency of these mutations
-        
-        
         #logic above does not preclude calling the same mutation more than once
         #so we remove identical records
         self.consolidated_mutations = sorted(list(set(self.consolidated_mutations)))
@@ -375,13 +373,34 @@ class AmpliconData(object):
 
     def get_amplicons_overlapping(self,chrom, pos, length):
         result = []
+        pos = int(pos)
+        length = int(length)
         for key in self.location:
             if chrom != self.location[key][0]:
                 continue
-            start = self.location[key][1]
-            end = self.location[key][2]
-            if not ( (int(pos)+int(length)-1 < int(start)) or (int(pos) > int(end)) ):
+            start = int(self.location[key][1])
+            end = int(self.location[key][2])
+            if not ( (pos+length-1 < start) or (pos > end) ):
                 result.append(key)
+        return result
+
+    def get_amplicons_overlapping_without_softmasking(self,chrom, pos, length):
+        result = []
+        pos = int(pos)
+        length = int(length)
+        for amplicon_id in self.get_amplicons_overlapping(chrom, pos, length):
+            start = self.location[amplicon_id][1]
+            end = self.location[amplicon_id][2]
+            query_start_in_amplicon = pos - start
+            length_in_ref = 0
+            position_in_ref = query_start_in_amplicon
+            while length_in_ref < length and position_in_ref < length(self.aligned[amplicon_id][0]):
+                if self.aligned[amplicon_id][0][position_in_ref] != '-':
+                    length_in_ref += 1
+                position_in_ref +=1
+            query_end_in_amplicon = position_in_ref
+            if not [base for base in self.aligned[amplicon_id][0][query_start_in_amplicon:query_end_in_amplicon] if base.islower()]:
+                result.append(amplicon_id)
         return result
     
     def print_to_fastq(self, key, forwardfile=sys.stdout, reversefile=sys.stdout):
