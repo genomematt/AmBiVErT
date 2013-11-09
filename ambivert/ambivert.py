@@ -55,8 +55,8 @@ __status__ = "Development"
 logfile = sys.stderr
 
 def smith_waterman(seq1,seq2):
-    alignment =  plumb.bob.local_align(seq1, len(seq1),
-                                seq2.upper(), len(seq2),
+    alignment =  plumb.bob.local_align(bytes(seq1), len(seq1),
+                                bytes(seq2.upper()), len(seq2),
                                 plumb.bob.DNA_MAP[0],
                                 plumb.bob.DNA_MAP[1], 
                                 plumb.bob.DNA_SCORE,
