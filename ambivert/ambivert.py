@@ -348,7 +348,9 @@ class AmpliconData(object):
         for variant in self.consolidated_mutations:
             if variant[1] >= min_reads and \
                variant[2] >= min_cover and \
-               variant[3] >= min_freq:
+               variant[3] >= min_freq and \
+               not [base for base in variant[0].alt_allele if base.islower()] and \
+               not [base for base in variant[0].ref_allele if base.islower()]:
                yield variant
         
     def print_consolidated_vcf(self, min_cover=0, min_reads=0, min_freq=0.1, outfile=sys.stdout):
@@ -360,9 +362,10 @@ class AmpliconData(object):
         vcf_header = [
         "##fileformat=VCF4.1",
         "##source=AmBiVeRT0.1.0",
-        "##FILTER=<ID=depth,Description=more than {threshold} variant supporting reads>".format(threshold=max(self.threshold,min_reads)),
-        "##FILTER=<ID=cover,Description=more than {cover} reads at variant position>".format(cover=min_cover),
-        "##FILTER=<ID=freq,Description=more than {min_freq}% of reads support variant>".format(min_freq=min_freq*100),
+        '##FILTER=<ID=depth,Description="more than {threshold} variant supporting reads">'.format(threshold=max(self.threshold,min_reads)),
+        '##FILTER=<ID=cover,Description="more than {cover} reads at variant position">'.format(cover=max(self.threshold,min_cover)),
+        '##FILTER=<ID=freq,Description="more than {min_freq}% of reads support variant">'.format(min_freq=min_freq*100),
+        '##FILTER=<ID=primer,Description="involves primer sequence">',
         '##INFO=<ID=DP,Number=1,Type=Integer,Description="Read depth excluding soft masked primers at variant site">',
         '##INFO=<ID=AC,Number=1,Type=Integer,Description="Alt allele supporting read count">',
         '##INFO=<ID=AF,Number=1,Type=Float,Description="Alt allele frequency">',
