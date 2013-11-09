@@ -356,7 +356,21 @@ class AmpliconData(object):
             self.call_amplicon_mutations()
         if not self.consolidated_mutations:
             self.consolidate_mutations()
-        print(make_vcf_header(self.threshold),file=outfile) ## TODO need to add filter parameters to header and add INFO and FORMAT for counts
+        
+        vcf_header = [
+        "##fileformat=VCF4.1",
+        "##source=AmBiVeRT0.1.0",
+        "##FILTER=<ID=depth,Description=more than {threshold} variant supporting reads>".format(threshold=max(self.threshold,min_reads)),
+        "##FILTER=<ID=cover,Description=more than {cover} reads at variant position>".format(cover=min_cover),
+        "##FILTER=<ID=freq,Description=more than {min_freq}% of reads support variant>".format(min_freq=min_freq*100),
+        '##INFO=<ID=DP,Number=1,Type=Integer,Description="Read depth excluding soft masked primers at variant site">',
+        '##INFO=<ID=AC,Number=1,Type=Integer,Description="Alt allele supporting read count">',
+        '##INFO=<ID=AF,Number=1,Type=Float,Description="Alt allele frequency">',
+        '##INFO=<ID=ALTAMPS,Number=.,Type=String,Description="Unique identifiers for amplicons supporting alt allele">',
+        '##INFO=<ID=REFAMPS,Number=.,Type=String,Description="Unique identifiers for amplicons supporting other alleles">',
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+        ]
+        print("\n".join(vcf_header),file=outfile)
         for variant in self.get_filtered_mutations(min_cover=min_cover,min_reads=min_reads,min_freq=min_freq):
             print(variant[0].chromosome,
                 variant[0].vcf_start,
