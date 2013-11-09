@@ -108,6 +108,7 @@ class AmpliconData(object):
         self.trim5 = trim5
         self.trim3 = None if trim3==None else -1*abs(trim3)
         self.threshold = 0
+        self.readpairs = 0
         pass
     
     def __str__(self):
@@ -116,6 +117,7 @@ class AmpliconData(object):
     def add_reads(self, f_name, f_seq, f_qual,r_name, r_seq, r_qual):
         amplicon_key = hashlib.md5(f_seq[self.trim5:self.trim3]+r_seq[self.trim5:self.trim3]).hexdigest()
         self.data[amplicon_key].append(((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)))
+        self.readpairs += 1
         pass
     
     def process_twofile_readpairs(self, forward_file, reverse_file, parser=parse_fastq):
@@ -127,6 +129,7 @@ class AmpliconData(object):
         for (f_name, f_seq, f_qual),(r_name, r_seq, r_qual) in itertools.izip(parser(forward_file), parser(reverse_file)):
             assert f_name.split()[0] == r_name.split()[0]
             self.add_reads(f_name, f_seq, f_qual,r_name, r_seq, r_qual)
+        print('Read',self.readpairs,'read pairs', file=logfile)
         pass
     
     #def process_interleaved_readpairs(parser=parse_fastq, filename):
@@ -139,7 +142,7 @@ class AmpliconData(object):
         self.threshold = threshold #record in object data
         total = len(self.get_above_threshold(threshold))
         completed = 0
-        print('Merging overlaps for {0} Pairs'.format(total),file=logfile)
+        print('Merging overlaps for {0} unique pairs'.format(total),file=logfile)
         for key in self.get_above_threshold(threshold):
             fwd = self.data[key][0][0][1]
             rev = reverse_complement(self.data[key][0][1][1])
