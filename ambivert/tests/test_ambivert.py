@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # encoding: utf-8
 """
 test_ambivert.py
@@ -7,17 +7,20 @@ Created by Matthew Wakefield on 2013-11-04.
 Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
 
-from __future__ import division, print_function
+#from __future__ import division, print_function, unicode_literals
 import unittest, io
-from hashlib import md5
+import hashlib
 from ambivert import ambivert
 
 from pkg_resources import resource_stream
 
+def md5(data):
+    #python3 compatibility
+    return hashlib.md5(bytes(data,'ascii'))
+
 def make_testdata_fastq(amplicons): #pragma no cover
     """This function can be called in ambivert.main to make testdata files restricted to brca1 exon9"""
     keys = amplicons.get_amplicons_overlapping('chr17',41243125,41247176)
-    print(keys)
     forwardfile = open('testdata_R1.fastq','w')
     reversefile = open('testdata_R2.fastq','w')
     for key in keys:
@@ -75,7 +78,7 @@ class test_ambivert(unittest.TestCase):
         self.amplicons.process_twofile_readpairs(forward_file, reverse_file)
         
         #print(str(self.amplicons.data))
-        self.assertEqual(md5(str(self.amplicons.data)).hexdigest(),'6a08b5ae61f4823d4c38dfd019ae1ab4')
+        self.assertEqual(md5(str(sorted(self.amplicons.data))).hexdigest(),'0b8d563beaeb05e6b6ea8615fbf8906b')
         pass
 
     def test_AmpliconData_get_above_threshold(self):
@@ -84,9 +87,8 @@ class test_ambivert(unittest.TestCase):
         self.amplicons.process_twofile_readpairs(forward_file, reverse_file)
         
         #self.assertEqual(md5(str(self.amplicons.data)).hexdigest(),'0f852572f90c142103b89eb4961720c4')
-        
-        self.assertEqual(md5(str(self.amplicons.get_above_threshold(1))).hexdigest(),'1e374c49be89cd2b184ee730094c77c1')
-        self.assertEqual(md5(str(self.amplicons.get_above_threshold(75))).hexdigest(),'f25fca6689f6104b00e0f3a2465e816a')
+        self.assertEqual(md5(str(sorted(self.amplicons.get_above_threshold(1)))).hexdigest(),'0b8d563beaeb05e6b6ea8615fbf8906b')
+        self.assertEqual(md5(str(sorted(self.amplicons.get_above_threshold(75)))).hexdigest(),'6d062386c9f2c16dc7a245a38fbcf60f')
         self.assertEqual(self.amplicons.get_above_threshold(175),['6bb3477f87edfbf67d6ab286926bff99'])
         
         pass
@@ -127,7 +129,7 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, primer=15, 
                                   savehashtable=None, hashtable=None,
                                   )
-        self.assertEqual(md5(str(amplicons.potential_variants)).hexdigest(),'298435ed1d51749b121d6424bed05aed')
+        self.assertEqual(md5(str(sorted(amplicons.potential_variants))).hexdigest(),'1a28f10a7a1e2ea430e79453e367a342')
     
     def test_AmpliconData_test_get_amplicon_count(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
@@ -138,8 +140,8 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, primer=15, 
                                   savehashtable=None, hashtable=None,
                                   )
-        print(amplicons.get_amplicon_counts())
-        self.assertEqual(md5(str(amplicons.get_amplicon_counts())).hexdigest(),'aa84de03ec1385010cca644d3ce744a0')
+        #print(amplicons.get_amplicon_counts())
+        self.assertEqual(md5(str(sorted(amplicons.get_amplicon_counts()))).hexdigest(),'564424f9a9e909cb9323d5ceac93a559')
         
 
 

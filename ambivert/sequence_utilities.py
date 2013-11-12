@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 """
 sequence_utilities.py
@@ -6,9 +6,9 @@ sequence_utilities.py
 Created by Matthew Wakefield on 2013-05-02.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
-from __future__ import print_function
+#from __future__ import print_function, division, unicode_literals
 import sys, os
-import itertools
+#import itertools
 from gzip import GzipFile
 
 __author__ = "Matthew Wakefield"
@@ -37,10 +37,10 @@ def parse_fastq(thefile):
     with thefile as fastqfile:
         name = True
         while name:
-            name = fastqfile.readline().strip('\n')
-            seq = fastqfile.readline().strip('\n')
+            name = str(fastqfile.readline(), encoding='ascii').strip('\n')
+            seq = str(fastqfile.readline(), encoding='ascii').strip('\n')
             fastqfile.readline()
-            qual = fastqfile.readline().strip('\n')
+            qual = str(fastqfile.readline(), encoding='ascii').strip('\n')
             if name:
                 yield name[1:], seq, qual
 
@@ -111,7 +111,7 @@ def encode_ambiguous(bases):
 
 def flatten_paired_alignment(seq1,seq2,gap='-'):
     result = []
-    for base1,base2 in itertools.izip(seq1,seq2):
+    for base1,base2 in zip(seq1,seq2):
         if base1 == gap:
             result.append(base2)
         elif base2 == gap:

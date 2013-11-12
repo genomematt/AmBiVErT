@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # encoding: utf-8
 """
 ambivert.py
@@ -31,15 +31,15 @@ All lines of code [will be/are] covered by unit tests unless marked with #pragma
 Created by Matthew Wakefield and Graham Taylor.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
-from __future__ import print_function, division
+#from __future__ import print_function, division, unicode_literals
 import sys, os
 import itertools, difflib, argparse
-import hashlib, cPickle
+import hashlib, pickle
 from collections import defaultdict
 #from cogent.align.algorithm import nw_align, sw_align
-from sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment, open_potentially_gzipped
-from truseq_manifest import parse_truseq_manifest, make_sequences
-from call_mutations import call_mutations, call_mutations_to_vcf, make_vcf_header
+from ambivert.sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment, open_potentially_gzipped
+from ambivert.truseq_manifest import parse_truseq_manifest, make_sequences
+from ambivert.call_mutations import call_mutations, call_mutations_to_vcf, make_vcf_header
 import plumb.bob
     
 
@@ -55,8 +55,8 @@ __status__ = "Development"
 logfile = sys.stderr
 
 def smith_waterman(seq1,seq2):
-    alignment =  plumb.bob.local_align(bytes(seq1), len(seq1),
-                                bytes(seq2.upper()), len(seq2),
+    alignment =  plumb.bob.local_align(bytes(seq1,'ascii'), len(seq1),
+                                bytes(seq2.upper(),'ascii'), len(seq2),
                                 plumb.bob.DNA_MAP[0],
                                 plumb.bob.DNA_MAP[1], 
                                 plumb.bob.DNA_SCORE,
@@ -115,7 +115,7 @@ class AmpliconData(object):
         return self.data.__str__()
     
     def add_reads(self, f_name, f_seq, f_qual,r_name, r_seq, r_qual):
-        amplicon_key = hashlib.md5(f_seq[self.trim5:self.trim3]+r_seq[self.trim5:self.trim3]).hexdigest()
+        amplicon_key = hashlib.md5(bytes(f_seq[self.trim5:self.trim3]+r_seq[self.trim5:self.trim3], 'ascii')).hexdigest()
         self.data[amplicon_key].append(((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)))
         self.readpairs += 1
         pass
@@ -126,7 +126,7 @@ class AmpliconData(object):
             print('    Forward read file: ', forward_file.name, file=logfile)
         if hasattr(reverse_file,'name'):
             print('    Reverse read file: ', reverse_file.name, file=logfile)
-        for (f_name, f_seq, f_qual),(r_name, r_seq, r_qual) in itertools.izip(parser(forward_file), parser(reverse_file)):
+        for (f_name, f_seq, f_qual),(r_name, r_seq, r_qual) in zip(parser(forward_file), parser(reverse_file)):
             assert f_name.split()[0] == r_name.split()[0]
             self.add_reads(f_name, f_seq, f_qual,r_name, r_seq, r_qual)
         print('Read',self.readpairs,'read pairs', file=logfile)
@@ -186,8 +186,8 @@ class AmpliconData(object):
                     seq1 = self.merged[merged_key][trim_primers:-trim_primers]
                 else:
                     seq1 = self.merged[merged_key]
-                alignment =  plumb.bob.local_align(seq1, len(seq1),
-                                self.reference_sequences[ref_key].upper(), len(self.reference_sequences[ref_key]),
+                alignment =  plumb.bob.local_align(bytes(seq1, 'ascii'), len(seq1),
+                                bytes(self.reference_sequences[ref_key].upper(),'ascii'), len(self.reference_sequences[ref_key]),
                                 plumb.bob.DNA_MAP[0],
                                 plumb.bob.DNA_MAP[1], 
                                 plumb.bob.DNA_SCORE,

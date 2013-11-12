@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 """
 truseq_manifest.py
@@ -8,10 +8,10 @@ Utilities for handling Illumina TruSeq amplicon manifest files
 Created by Matthew Wakefield on 2013-05-02.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
-from __future__ import print_function
+#from __future__ import print_function, division, unicode_literals
 import sys, os
 import argparse
-from sequence_utilities import *
+from ambivert.sequence_utilities import *
 from collections import namedtuple
 
 __author__ = "Matthew Wakefield"
@@ -26,12 +26,12 @@ __status__ = "Development"
 
 def parse_truseq_manifest(inputfile):
     def parse_header(infile):
-        line = infile.readline().strip('\n').split('\t')
+        line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
         header = {}
         while line[0] != '[Probes]':
             if line[0] and line[0][0] != '[':
                 header[line[0]] = line[1]
-            line = infile.readline().strip('\n').split('\t')
+            line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
             #print('#'*5, repr(line))
         return header
     
@@ -41,10 +41,10 @@ def parse_truseq_manifest(inputfile):
                         'Submitted Target Region Strand', 'ULSO Sequence', 'ULSO Genomic Hits', 'DLSO Sequence', 'DLSO Genomic Hits', 'Probe Strand',
                         'Designer', 'Design Score', 'Expected Amplifed Region Size', 'SNP Masking', 'Labels']
         ProbeRecord = namedtuple('TargetRecord', [ x.replace(' ','_') for x in column_names])
-        line = infile.readline().strip('\n').split('\t')
+        line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
         assert line == column_names
         while line[0] != '[Targets]':
-            line = infile.readline().strip('\n').split('\t')
+            line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
             if len(line) == 19 and line[0] != '[Targets]':
                 probes.append(ProbeRecord._make(line))
         return probes
@@ -53,14 +53,14 @@ def parse_truseq_manifest(inputfile):
         targets = []
         column_names = ['TargetA', 'TargetB', 'Target Number', 'Chromosome', 'Start Position', 'End Position', 'Probe Strand', 'Sequence', 'Species', 'Build ID']
         TargetRecord = namedtuple('TargetRecord', [ x.replace(' ','_') for x in column_names])
-        line = infile.readline().strip('\n').split('\t')
+        line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
         assert line[:10] == column_names #ignore extra columns that may have been added by excel
         if len(line) > 10:
             print('WARNING Extra columns in mainifest file being ignored:',line[10:],file=sys.stderr)
-        line = infile.readline().strip('\n').split('\t')[:10]
+        line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')[:10]
         while line[0] != '':
             targets.append(TargetRecord._make(line))
-            line = infile.readline().strip('\n').split('\t')[:10]
+            line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')[:10]
         return targets
     
     with inputfile as infile:
