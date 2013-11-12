@@ -5,6 +5,23 @@ test_ambivert.py
 
 Created by Matthew Wakefield on 2013-11-04.
 Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights reserved.
+
+Incomplete test coverage.  Current status:
+coverage3 report --show-missing
+Name                                                            Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------------------------------
+/usr/local/lib/python3.3/site-packages/pkg_resources             1543   1519     2%   16-226, 229, 232-234, 238-887, 893-1294, 1298-1374, 1377-1392, 1396, 1403-1406, 1410-1422, 1425-2720, 2723-2724, 2727, 2734-2815
+/usr/local/lib/python3.3/site-packages/plumb/__init__               1      0   100%   
+/usr/local/lib/python3.3/site-packages/plumb/bob/__init__           1      0   100%   
+/usr/local/lib/python3.3/site-packages/plumb/bob/align_ctypes      94     33    65%   14, 90-123, 128, 132-134
+ambivert/__init__                                                   0      0   100%   
+ambivert/ambivert                                                 350    187    47%   77-82, 115, 151, 159-160, 169-179, 186, 207-208, 216, 223, 241, 246, 255-259, 262-270, 273-284, 287-291, 294-298, 301-345, 348-354, 357-391, 395-405, 408-424, 428-437, 440-521, 535, 537, 541, 545-557, 562-587, 590
+ambivert/call_mutations                                           118     99    16%   33-112, 117-145, 148-156, 159-160, 163, 169
+ambivert/sequence_utilities                                       117     66    44%   26, 29, 32, 53-66, 90-91, 95-110, 116, 118, 122, 127-134, 138-139, 143, 146-156, 159-168, 171-174, 177-180
+ambivert/tests/test_ambivert                                       68      6    91%   112-121
+ambivert/truseq_manifest                                          106     42    60%   59, 73-99, 102-121, 124-126, 135-141, 148-151, 153-156, 162-168, 171
+---------------------------------------------------------------------------------------------
+TOTAL                                                            2398   1952    19%
 """
 
 #from __future__ import division, print_function, unicode_literals
