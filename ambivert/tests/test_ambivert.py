@@ -65,7 +65,7 @@ class test_ambivert(unittest.TestCase):
         r_qual = 'AABAAFFFBFFFGFGGGGGGGGHHHHHHHHGHHGGHGHGGHFHGGEHGGGHFHGHHHHHFFHHEHHFHHHHHHFHGGGGGHHHHHHGGHHHGFHHGHGGHHGGHHGHGGFGHHHGHGHHHHHHGHGHFHHHHHGFHHHGHHHHHGFFHHHB'
         self.amplicons.add_reads(f_name, f_seq, f_qual,r_name, r_seq, r_qual)
         
-        self.assertEqual(md5(str(self.amplicons.data[f_seq+r_seq])).hexdigest(),'a9f89bfd3d14021dd43afaefbdeeb0f6')
+        self.assertEqual(md5(str(self.amplicons.data[f_seq+r_seq])).hexdigest(),'d751713988987e9331980363e24189ce')
         pass
         
     
@@ -75,7 +75,7 @@ class test_ambivert(unittest.TestCase):
         self.amplicons.process_twofile_readpairs(forward_file, reverse_file)
         
         #print(str(self.amplicons.data))
-        self.assertEqual(md5(str(self.amplicons.data)).hexdigest(),'0f852572f90c142103b89eb4961720c4')
+        self.assertEqual(md5(str(self.amplicons.data)).hexdigest(),'6a08b5ae61f4823d4c38dfd019ae1ab4')
         pass
 
     def test_AmpliconData_get_above_threshold(self):
@@ -85,9 +85,9 @@ class test_ambivert(unittest.TestCase):
         
         #self.assertEqual(md5(str(self.amplicons.data)).hexdigest(),'0f852572f90c142103b89eb4961720c4')
         
-        self.assertEqual(md5(str(self.amplicons.get_above_threshold(1))).hexdigest(),'e1fdc5020c89f23bcb3f498f9240487a')
-        self.assertEqual(md5(str(self.amplicons.get_above_threshold(75))).hexdigest(),'c7b7ae699cbc0630ba336b8716b6617b')
-        self.assertEqual(self.amplicons.get_above_threshold(175),['ACTTCTATAAATAGACTGGGGCAAACACAAAAACCTGGTTCCAATACCTAAGTTTGAATCCATGCTTTGCTCTTCTTGATTATTTTCTTCCAAGCCCGTTCCTCTTTCTTCATCATCTGAAACCAATTCCTTGTCACTCAGACCAACTCCCGACTGCAAATACAAACACCCAGGATCCTTTCTTGATTGGTTCTTCCAAACAAATGAGGCATCAGTCTGAAAGCCAGGGAGTTGGTCTGAGTGACAAGGAATTGGTTTCAGATGATGAAGAAAGAGGAACGGGCTTGGAAGAAAATAATCAA'])
+        self.assertEqual(md5(str(self.amplicons.get_above_threshold(1))).hexdigest(),'1e374c49be89cd2b184ee730094c77c1')
+        self.assertEqual(md5(str(self.amplicons.get_above_threshold(75))).hexdigest(),'f25fca6689f6104b00e0f3a2465e816a')
+        self.assertEqual(self.amplicons.get_above_threshold(175),['6bb3477f87edfbf67d6ab286926bff99'])
         
         pass
 
@@ -103,7 +103,7 @@ class test_ambivert(unittest.TestCase):
         
         logfile = io.StringIO()
         self.amplicons.merge_overlaps()
-        self.assertEqual(self.amplicons.merged,{'TTACCTTCCATGAGTTGTAGGTTTCTGCTGTGCCTGACTGGCATTTGGTTGTACTTTTTTTTCTTTATCTCTTCACTGCTAGAACAACTATCAATTTGCAATTCAGTACAATTAGGTGGGCTTAGATTTCTACTGACTACTAGTTCAAGCGGTTAAATATCCACAATTCAAAAGCACCTAAAAAGAATAGGCTGAGGAGGAAGTCTTCTACCAGGCATATTCATGCGCTTGAACTAGTAGTCAGTAGAAATCTAAGCCCACCTAATTGTACTGAATTGCAAATTGATAGTTGTTCTAGCAGT': 'TTACCTTCCATGAGTTGTAGGTTTCTGCTGTGCCTGACTGGCATTTGGTTGTACTTTTTTTTCTTTATCTCTTCACTGCTAGAACAACTATCAATTTGCAATTCAGTACAATTAGGTGGGCTTAGATTTCTACTGACTACTAGTTCAAGCGCATGAATATGCCTGGTAGAAGACTTCCTCCTCAGCCTATTCTTTTTAGGTGCTTTTGAATTGTGGATATTTAAC'})
+        self.assertEqual(self.amplicons.merged,{md5('TTACCTTCCATGAGTTGTAGGTTTCTGCTGTGCCTGACTGGCATTTGGTTGTACTTTTTTTTCTTTATCTCTTCACTGCTAGAACAACTATCAATTTGCAATTCAGTACAATTAGGTGGGCTTAGATTTCTACTGACTACTAGTTCAAGCGGTTAAATATCCACAATTCAAAAGCACCTAAAAAGAATAGGCTGAGGAGGAAGTCTTCTACCAGGCATATTCATGCGCTTGAACTAGTAGTCAGTAGAAATCTAAGCCCACCTAATTGTACTGAATTGCAAATTGATAGTTGTTCTAGCAGT').hexdigest(): 'TTACCTTCCATGAGTTGTAGGTTTCTGCTGTGCCTGACTGGCATTTGGTTGTACTTTTTTTTCTTTATCTCTTCACTGCTAGAACAACTATCAATTTGCAATTCAGTACAATTAGGTGGGCTTAGATTTCTACTGACTACTAGTTCAAGCGCATGAATATGCCTGGTAGAAGACTTCCTCCTCAGCCTATTCTTTTTAGGTGCTTTTGAATTGTGGATATTTAAC'})
         pass
     
     def test_process_amplicon_data(self):
@@ -127,7 +127,7 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, primer=15, 
                                   savehashtable=None, hashtable=None,
                                   )
-        self.assertEqual(md5(str(amplicons.potential_variants)).hexdigest(),'f0a10362afd9d576c6082af8030f9cdf')
+        self.assertEqual(md5(str(amplicons.potential_variants)).hexdigest(),'298435ed1d51749b121d6424bed05aed')
     
     def test_AmpliconData_test_get_amplicon_count(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
