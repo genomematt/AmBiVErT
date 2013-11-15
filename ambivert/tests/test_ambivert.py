@@ -162,7 +162,10 @@ class test_ambivert(unittest.TestCase):
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
         self.amplicons.add_references_from_manifest(manifest)
         self.assertEqual(md5(str(sorted(self.amplicons.reference_sequences.items()))).hexdigest(),'fc3c6701032dbd84c6f5731d344df060')
-        #fasta = 
+        fasta = io.TextIOWrapper(resource_stream(__name__, 'data/testdatareferences.fasta'))
+        self.amplicons.reference_sequences = {}
+        self.amplicons.add_references_from_fasta(fasta)
+        self.assertEqual(md5(str(sorted(self.amplicons.reference_sequences.items()))).hexdigest(),'fc3c6701032dbd84c6f5731d344df060')
         pass
         
     def test_process_amplicon_data(self):

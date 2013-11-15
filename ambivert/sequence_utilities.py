@@ -50,11 +50,11 @@ def parse_fasta(filename, token='>'):
                 do something
            parse_fasta(open(filename)).next()
     """
-    with open_compressed(filename) as f:
+    with open_potentially_gzipped(filename) as f:
         seq = None
         name = None   
         for line in f:
-            line = str(line, encoding='latin-1').strip()
+            line = line.strip()
             if line.startswith(token):
                 if name:
                     yield (name, seq)
