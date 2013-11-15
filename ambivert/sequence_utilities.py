@@ -7,9 +7,9 @@ Created by Matthew Wakefield on 2013-05-02.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
 #from __future__ import print_function, division, unicode_literals
-import sys, os
+import sys, os, io
 #import itertools
-from gzip import GzipFile
+import gzip
 
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
@@ -21,15 +21,15 @@ __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
 
-def open_potentially_gzipped(thefile, mode='r'):
+def open_potentially_gzipped(thefile):
     if type(thefile) == str:
-        thefile = open(thefile, mode)
+        thefile = io.open(thefile, mode='rb')
     if not hasattr(thefile,'name'):
         #likely a stringio object or other file like stream
         return thefile
     extention = os.path.splitext(thefile.name)[-1]
     if extention == '.gz':
-        return GzipFile(fileobj=thefile, mode=mode)
+        return gzip.open(thefile,  mode='rb')
     else:
         return thefile
 
@@ -37,10 +37,10 @@ def parse_fastq(thefile):
     with thefile as fastqfile:
         name = True
         while name:
-            name = str(fastqfile.readline(), encoding='ascii').strip('\n')
-            seq = str(fastqfile.readline(), encoding='ascii').strip('\n')
+            name = str(fastqfile.readline(), encoding='latin-1').strip('\n')
+            seq = str(fastqfile.readline(), encoding='latin-1').strip('\n')
             fastqfile.readline()
-            qual = str(fastqfile.readline(), encoding='ascii').strip('\n')
+            qual = str(fastqfile.readline(), encoding='latin-1').strip('\n')
             if name:
                 yield name[1:], seq, qual
 
@@ -54,7 +54,7 @@ def parse_fasta(filename, token='>'):
         seq = None
         name = None   
         for line in f:
-            line = line.strip()
+            line = str(line, encoding='latin-1').strip()
             if line.startswith(token):
                 if name:
                     yield (name, seq)

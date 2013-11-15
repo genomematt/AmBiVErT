@@ -11,7 +11,7 @@ from __future__ import print_function
 import unittest
 import io
 from tempfile import NamedTemporaryFile
-from hashlib import md5
+import hashlib
 from ambivert.truseq_manifest import *
 from pkg_resources import resource_stream
 
@@ -38,23 +38,20 @@ BRCA2_exon22_23_UserDefined (9825052)_7473651	BRCA2_exon22_23_UserDefined (98250
 
 """
 
+def md5(data):
+    #python3 compatibility
+    return hashlib.md5(bytes(data,'ascii'))
+
 class test_truseq_manifest(unittest.TestCase):
     def setUp(self):
-        self.header, self.probes, self.targets = parse_truseq_manifest(io.StringIO(MANIFEST))
+        self.header, self.probes, self.targets = parse_truseq_manifest(resource_stream(__name__, 'data/testdatamanifest.txt'))
         pass
     
     def test_parse_truseq_manifest(self):        
-        self.assertEqual(md5(str(self.header)).hexdigest(), '8fe60036dd4cc7d22c731338678a94e0')
-        self.assertEqual(md5(str(self.probes)).hexdigest(), '34c79046f6822cd1ff585eee928e9088')
-        self.assertEqual(md5(str(self.targets)).hexdigest(), 'fbab15899042e8e751bdad0d3997f3af')
         #print(self.header, self.probes, self.targets)
-        
-        manifest = resource_stream(__name__, 'testdatamanifest.txt')
-        self.header, self.probes, self.targets = parse_truseq_manifest(manifest)
-        self.assertEqual(md5(str(self.header)).hexdigest(), '2f981c324cea3f412abee2c4c306d74d')
+        self.assertEqual(md5(str(sorted(self.header.items()))).hexdigest(), '9442a2a72901b006f8ea16640cf5d418')
         self.assertEqual(md5(str(self.probes)).hexdigest(), '7b3526b5867201bf8e2b848235a39343')
         self.assertEqual(md5(str(self.targets)).hexdigest(), '6a96cfc57eeec0c981302c7770a525fb')
-        
         pass
         
     def test_make_probes(self):
@@ -64,7 +61,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'0958aee1ba65c510320ea41fdde12359')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'a9d739c4ba4e7ecb1c2b10b69171e8dd')
         outfile.close()
         os.unlink(outfile.name)
 
@@ -74,7 +71,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'e43c1292d8792bbab8f4b99a9b55db59')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'d4f7115e442204fd668b0980fb23d305')
         outfile.close()
         os.unlink(outfile.name)
         pass
@@ -86,7 +83,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'b2dde8e4110ccb20bbb2c474c77c4712')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'721ea92b3bc94910f0f1396077694161')
         outfile.close()
         os.unlink(outfile.name)
         
@@ -96,7 +93,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'d253080b5236b77a4bafce88f4b7e329')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'4d5112f709c03dc63019cfa7d1f07941')
         outfile.close()
         os.unlink(outfile.name)
         
@@ -106,7 +103,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'6742cc3a47e4cb1e29eec03244e8028b')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'cfcec95a220139e574132b94b690aa7e')
         outfile.close()
         os.unlink(outfile.name)
         
@@ -116,7 +113,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'1c1414efef85de5c96be8965704f658a')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'1a2ea63012b713fc9f1dce9eddf36a9c')
         outfile.close()
         os.unlink(outfile.name)
         
@@ -126,7 +123,7 @@ class test_truseq_manifest(unittest.TestCase):
         outfile = open(outfile.name)
         #print(outfile.read())
         #outfile.seek(0)
-        self.assertEqual(md5(outfile.read()).hexdigest(),'1bfd9f13e175f65380d8b2c6f7d17a74')
+        self.assertEqual(md5(outfile.read()).hexdigest(),'c09802e71fb028768388b6574539e606')
         outfile.close()
         os.unlink(outfile.name)
 

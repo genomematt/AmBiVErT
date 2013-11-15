@@ -109,6 +109,31 @@ class test_ambivert(unittest.TestCase):
         self.assertEqual(self.amplicons.get_above_threshold(175),['6bb3477f87edfbf67d6ab286926bff99'])
         
         pass
+        
+    def test_smithwaterman_align_DNA(self):
+        s1 = 'GCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTGGCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+        s2 = 'GCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGCTACTTCATCTTTGGCCGCCATGTTTGTGCTATGGAGGGTT'
+    
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.smith_waterman(s1,s2)
+        self.assertEqual(aligned_s1,aligned_s2)
+        self.assertEqual(aligned_s1,s1[40:])
+        self.assertEqual(start_s1, 40)
+        self.assertEqual(start_s2, 0)
+
+        s1 = 'GCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTCACACACACACACTTCTCGGTCGTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+        s2 = 'GCGCCAGCCACTCAACTATATTTGGTTAATATCTCCTTCACACACACACTTCTCGGTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.smith_waterman(s1,s2)
+        self.assertEqual('GCGCCAGCCACTCAACTATA-TTTGGTTAATATCTCCTT--CACACACACACTTCTCG---GTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC',aligned_s2)
+
+        s1 = 'GCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTCACACACACACACTTCTCGGTCGTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+        s2 = 'GCGCCAGCCACTCAACTATATTTGGTTAATATCTCCTGCACACTTCTCGGTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.smith_waterman(s1,s2)
+        
+        self.assertEqual('GCGCCAGCCACTCAACTATA-TTTGGTTAATATCTCCT--------GCACACTTCTCG---GTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC',aligned_s2)
+
+    def test_AmpliconData_str(self):
+        self.assertEqual(str(self.amplicons),'Data file names: \nReference file names: \nReadpairs: 0\nThreshold: 0\nUnique read groups: 0\nUnmerged pairs: 0\n')
 
     def test_AmpliconData_merge_overlaps(self):
         
@@ -120,15 +145,30 @@ class test_ambivert(unittest.TestCase):
         r_qual = 'AABAAFFFBFFFGFGGGGGGGGHHHHHHHHGHHGGHGHGGHFHGGEHGGGHFHGHHHHHFFHHEHHFHHHHHHFHGGGGGHHHHHHGGHHHGFHHGHGGHHGGHHGHGGFGHHHGHGHHHHHHGHGHFHHHHHGFHHHGHHHHHGFFHHHB'
         self.amplicons.add_reads(f_name, f_seq, f_qual,r_name, r_seq, r_qual)
         
+        f_name = 'dodgybrothers'
+        f_seq =  'TTACCTTCCATGAGTTGTAGGTTTCTGCTG'
+        f_qual = 'BBBBBFFFFFFFGG5GGGGGGFHHHHFHHG'
+        r_name = 'dodgybrothers'                
+        r_seq =  'GTTAAATATCCACAATTCAAAAGCACCTAA'
+        r_qual = 'AABAAFFFBFFFGFGGGGGGGGHHHHHHHH'
+        self.amplicons.add_reads(f_name, f_seq, f_qual,r_name, r_seq, r_qual)
+        
         logfile = io.StringIO()
         self.amplicons.merge_overlaps()
         self.assertEqual(self.amplicons.merged,{md5('TTACCTTCCATGAGTTGTAGGTTTCTGCTGTGCCTGACTGGCATTTGGTTGTACTTTTTTTTCTTTATCTCTTCACTGCTAGAACAACTATCAATTTGCAATTCAGTACAATTAGGTGGGCTTAGATTTCTACTGACTACTAGTTCAAGCGGTTAAATATCCACAATTCAAAAGCACCTAAAAAGAATAGGCTGAGGAGGAAGTCTTCTACCAGGCATATTCATGCGCTTGAACTAGTAGTCAGTAGAAATCTAAGCCCACCTAATTGTACTGAATTGCAAATTGATAGTTGTTCTAGCAGT').hexdigest(): 'TTACCTTCCATGAGTTGTAGGTTTCTGCTGTGCCTGACTGGCATTTGGTTGTACTTTTTTTTCTTTATCTCTTCACTGCTAGAACAACTATCAATTTGCAATTCAGTACAATTAGGTGGGCTTAGATTTCTACTGACTACTAGTTCAAGCGCATGAATATGCCTGGTAGAAGACTTCCTCCTCAGCCTATTCTTTTTAGGTGCTTTTGAATTGTGGATATTTAAC'})
+        self.assertEqual(self.amplicons.unmergable,[md5('TTACCTTCCATGAGTTGTAGGTTTCTGCTG'+'GTTAAATATCCACAATTCAAAAGCACCTAA').hexdigest(),])
+
+    def test_add_references_from_manifest_and_fasta(self):
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        self.amplicons.add_references_from_manifest(manifest)
+        self.assertEqual(md5(str(sorted(self.amplicons.reference_sequences.items()))).hexdigest(),'fc3c6701032dbd84c6f5731d344df060')
+        #fasta = 
         pass
-    
+        
     def test_process_amplicon_data(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
-        manifest = resource_stream(__name__, 'testdatamanifest.txt')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
         amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
                                   manifest=manifest, fasta=None,
                                   threshold=50, overlap=20, primer=15, 
@@ -140,7 +180,7 @@ class test_ambivert(unittest.TestCase):
     def test_process_amplicon_data(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
-        manifest = resource_stream(__name__, 'data/testdatamanifest.txt')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
         amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
                                   manifest=manifest, fasta=None,
                                   threshold=50, overlap=20, primer=15, 
@@ -151,7 +191,7 @@ class test_ambivert(unittest.TestCase):
     def test_AmpliconData_test_get_amplicon_count(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
-        manifest = resource_stream(__name__, 'data/testdatamanifest.txt')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
         amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
                                   manifest=manifest, fasta=None,
                                   threshold=50, overlap=20, primer=15, 

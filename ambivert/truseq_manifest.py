@@ -26,12 +26,12 @@ __status__ = "Development"
 
 def parse_truseq_manifest(inputfile):
     def parse_header(infile):
-        line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
+        line = infile.readline().strip('\n').split('\t')
         header = {}
         while line[0] != '[Probes]':
             if line[0] and line[0][0] != '[':
                 header[line[0]] = line[1]
-            line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
+            line = infile.readline().strip('\n').split('\t')
             #print('#'*5, repr(line))
         return header
     
@@ -41,10 +41,10 @@ def parse_truseq_manifest(inputfile):
                         'Submitted Target Region Strand', 'ULSO Sequence', 'ULSO Genomic Hits', 'DLSO Sequence', 'DLSO Genomic Hits', 'Probe Strand',
                         'Designer', 'Design Score', 'Expected Amplifed Region Size', 'SNP Masking', 'Labels']
         ProbeRecord = namedtuple('TargetRecord', [ x.replace(' ','_') for x in column_names])
-        line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
+        line = infile.readline().strip('\n').split('\t')
         assert line == column_names
         while line[0] != '[Targets]':
-            line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
+            line = infile.readline().strip('\n').split('\t')
             if len(line) == 19 and line[0] != '[Targets]':
                 probes.append(ProbeRecord._make(line))
         return probes
@@ -53,14 +53,14 @@ def parse_truseq_manifest(inputfile):
         targets = []
         column_names = ['TargetA', 'TargetB', 'Target Number', 'Chromosome', 'Start Position', 'End Position', 'Probe Strand', 'Sequence', 'Species', 'Build ID']
         TargetRecord = namedtuple('TargetRecord', [ x.replace(' ','_') for x in column_names])
-        line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')
+        line = infile.readline().strip('\n').split('\t')
         assert line[:10] == column_names #ignore extra columns that may have been added by excel
         if len(line) > 10:
             print('WARNING Extra columns in mainifest file being ignored:',line[10:],file=sys.stderr)
-        line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')[:10]
+        line = infile.readline().strip('\n').split('\t')[:10]
         while line[0] != '':
             targets.append(TargetRecord._make(line))
-            line = str(infile.readline(), encoding='ascii').strip('\n').split('\t')[:10]
+            line = infile.readline().strip('\n').split('\t')[:10]
         return targets
     
     with inputfile as infile:
@@ -116,14 +116,14 @@ def make_probes(header, probes, targets, adaptors=False, output=sys.stdout):
         #print(probes)
         for probe in probes:
             if probe.Target_ID:
-                outfile.write(format_fasta(probe.Target_ID.replace(' ','_')+'_ULSO',ULSOadaptor+probe.ULSO_Sequence))
-                outfile.write(format_fasta(probe.Target_ID.replace(' ','_')+'_DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
+                outfile.write(bytes(format_fasta(probe.Target_ID.replace(' ','_')+'_ULSO',ULSOadaptor+probe.ULSO_Sequence),'ascii'))
+                outfile.write(bytes(format_fasta(probe.Target_ID.replace(' ','_')+'_DLSO',probe.DLSO_Sequence+DLSOadaptorRC),'ascii'))
     pass
 
 def make_fasta(header, probes, targets, output=sys.stdout, **kw):
     with output as outfile:
         for name,sequence in make_sequences(header, probes, targets, **kw):
-            outfile.write(format_fasta(name,sequence))
+            outfile.write(bytes(format_fasta(name,sequence),'latin-1'))
             
     
 def make_sequences(header, probes, targets,  with_probes=False, softmask_probes=False, all_plus=True):

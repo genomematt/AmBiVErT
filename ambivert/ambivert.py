@@ -109,10 +109,23 @@ class AmpliconData(object):
         self.trim3 = None if trim3==None else -1*abs(trim3)
         self.threshold = 0
         self.readpairs = 0
+        self.input_filenames = []
+        self.reference_filenames = []
         pass
     
     def __str__(self):
-        return self.data.__str__()
+        result = ""
+        result += "Data file names: \n"
+        for filename in self.input_filenames:
+            result += filename + '\n'
+        result += "Reference file names: \n"
+        for filename in self.reference_filenames:
+            result += filename + '\n'
+        result += "Readpairs: {0}\n".format(self.readpairs)
+        result += "Threshold: {0}\n".format(self.threshold)
+        result += "Unique read groups: {0}\n".format(len(self.merged))
+        result += "Unmerged pairs: {0}\n".format(len(self.unmergable))
+        return result
     
     def add_reads(self, f_name, f_seq, f_qual,r_name, r_seq, r_qual):
         amplicon_key = hashlib.md5(bytes(f_seq[self.trim5:self.trim3]+r_seq[self.trim5:self.trim3], 'ascii')).hexdigest()
@@ -123,8 +136,10 @@ class AmpliconData(object):
     def process_twofile_readpairs(self, forward_file, reverse_file, parser=parse_fastq):
         print('Reading data...', file=logfile)
         if hasattr(forward_file,'name'):
+            self.input_filenames.append(forward_file.name)
             print('    Forward read file: ', forward_file.name, file=logfile)
         if hasattr(reverse_file,'name'):
+            self.input_filenames.append(reverse_file.name)
             print('    Reverse read file: ', reverse_file.name, file=logfile)
         for (f_name, f_seq, f_qual),(r_name, r_seq, r_qual) in zip(parser(forward_file), parser(reverse_file)):
             assert f_name.split()[0] == r_name.split()[0]
@@ -252,16 +267,17 @@ class AmpliconData(object):
     
     
     def save_hash_table(self,newhashfile):
-        reference_sha224 = hashlib.sha224(repr(self.reference_sequences)).hexdigest()
+        reference_sha224 = hashlib.sha224(repr(self.reference_sequences).encode('latin-1')).hexdigest()
         with newhashfile as outfile:
             hash_dictionary = {merged_key:self.reference[merged_key] for merged_key in self.reference if merged_key not in self.potential_variants} 
-            cPickle.dump((reference_sha224,hash_dictionary),outfile)
+            pickle.dump((reference_sha224,hash_dictionary),outfile)
         pass
     
     def load_hash_table(self,hashfile):
+        print(hashfile)
         with hashfile as infile:
-            reference_sha224,refdict = cPickle.load(infile)
-            if reference_sha224 == hashlib.sha224(repr(self.reference_sequences)).hexdigest():
+            reference_sha224,refdict = pickle.load(infile)
+            if reference_sha224 == hashlib.sha224(repr(self.reference_sequences).encode('latin-1')).hexdigest():
                 self.reference = refdict
             else:
                 print('WARNING: loaded read to reference hash library does not match reference sequences\n\
@@ -499,10 +515,10 @@ def process_commandline_args():
                         help='The size of the smallest primer.  This number of bases is trimmed from the end of the merged sequences \
                              to reduce the possibility that small amplicons will fail to match due to primer mismatch')    
     parser.add_argument('--hashtable',
-                        type=argparse.FileType('U'),
+                        type=argparse.FileType('rb'),
                         help='Filename for a precomputed hash table of exact matches of amplicons to references.  Generate with --savehashtable')    
     parser.add_argument('--savehashtable',
-                        type=argparse.FileType('w'),
+                        type=argparse.FileType('wb'),
                         help='Output a precomputed hash table that matches amplicons exactly to references.  Used to speed up matching with --hashtable')    
     parser.add_argument('--prefix',
                         type=str,
@@ -516,8 +532,8 @@ def process_commandline_args():
     if args.prefix:
         args.countfile = open(args.prefix + '.counts','w')
         args.output = open(args.prefix + '.vcf','w')
-        args.forward = open(args.prefix + '_R1.fastq.gz','r')
-        args.reverse = open(args.prefix + '_R2.fastq.gz','r')
+        args.forward = open(args.prefix + '_R1.fastq.gz','rb')
+        args.reverse = open(args.prefix + '_R2.fastq.gz','rb')
     return args
 
 def process_amplicon_data(forward_file, reverse_file,
