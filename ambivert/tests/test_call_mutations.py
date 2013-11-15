@@ -9,7 +9,7 @@ Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights
 
 from __future__ import print_function
 import unittest
-from StringIO import StringIO
+from io import StringIO
 from ambivert.call_mutations import *
 
 
