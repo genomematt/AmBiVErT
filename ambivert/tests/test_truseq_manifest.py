@@ -44,7 +44,8 @@ def md5(data):
 
 class test_truseq_manifest(unittest.TestCase):
     def setUp(self):
-        self.header, self.probes, self.targets = parse_truseq_manifest(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        self.header, self.probes, self.targets = parse_truseq_manifest(manifest)
         pass
     
     def test_parse_truseq_manifest(self):        
@@ -56,7 +57,7 @@ class test_truseq_manifest(unittest.TestCase):
         
     def test_make_probes(self):
         #without adaptors
-        outfile = NamedTemporaryFile(delete=False)
+        outfile = NamedTemporaryFile(delete=False,mode='wt')
         make_probes(self.header, self.probes, self.targets, output=outfile)
         outfile = open(outfile.name)
         #print(outfile.read())
@@ -66,7 +67,7 @@ class test_truseq_manifest(unittest.TestCase):
         os.unlink(outfile.name)
 
         #with adaptors
-        outfile = NamedTemporaryFile(delete=False)
+        outfile = NamedTemporaryFile(delete=False,mode='wt')
         make_probes(self.header, self.probes, self.targets, adaptors=True, output=outfile)
         outfile = open(outfile.name)
         #print(outfile.read())
@@ -78,7 +79,7 @@ class test_truseq_manifest(unittest.TestCase):
         
     def test_make_fasta(self):
         # with_probes=False, softmask_probes=False, all_plus=True
-        outfile = NamedTemporaryFile(delete=False)
+        outfile = NamedTemporaryFile(delete=False,mode='wt')
         make_fasta(self.header, self.probes, self.targets, output=outfile, all_plus=True)
         outfile = open(outfile.name)
         #print(outfile.read())
@@ -88,7 +89,7 @@ class test_truseq_manifest(unittest.TestCase):
         os.unlink(outfile.name)
         
         # with_probes=False, softmask_probes=False, all_plus=False
-        outfile = NamedTemporaryFile(delete=False)
+        outfile = NamedTemporaryFile(delete=False,mode='wt')
         make_fasta(self.header, self.probes, self.targets, output=outfile, all_plus=False)
         outfile = open(outfile.name)
         #print(outfile.read())
@@ -98,7 +99,7 @@ class test_truseq_manifest(unittest.TestCase):
         os.unlink(outfile.name)
         
         # with_probes=True, softmask_probes=False, all_plus=True
-        outfile = NamedTemporaryFile(delete=False)
+        outfile = NamedTemporaryFile(delete=False,mode='wt')
         make_fasta(self.header, self.probes, self.targets, output=outfile, with_probes=True, softmask_probes=False, all_plus=True)
         outfile = open(outfile.name)
         #print(outfile.read())
@@ -108,7 +109,7 @@ class test_truseq_manifest(unittest.TestCase):
         os.unlink(outfile.name)
         
         # with_probes=True, softmask_probes=True, all_plus=True
-        outfile = NamedTemporaryFile(delete=False)
+        outfile = NamedTemporaryFile(delete=False,mode='wt')
         make_fasta(self.header, self.probes, self.targets, output=outfile, with_probes=True, softmask_probes=True, all_plus=True)
         outfile = open(outfile.name)
         #print(outfile.read())
@@ -118,7 +119,7 @@ class test_truseq_manifest(unittest.TestCase):
         os.unlink(outfile.name)
         
         # with_probes=True, softmask_probes=True, all_plus=False
-        outfile = NamedTemporaryFile(delete=False)
+        outfile = NamedTemporaryFile(delete=False,mode='wt')
         make_fasta(self.header, self.probes, self.targets, output=outfile, with_probes=True, softmask_probes=True, all_plus=False)
         outfile = open(outfile.name)
         #print(outfile.read())

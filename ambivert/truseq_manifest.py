@@ -74,11 +74,11 @@ def command_line_interface(*args,**kw):
                                                     Produces either a fasta file of target sequences without primers or a file\
                                                     of primer sequences suitable for use by a trimming program (eg Nesoni clip)')
     parser.add_argument('--manifest',
-                        type=argparse.FileType('U'),
+                        type=argparse.FileType('rt'),
                         default=sys.stdin,
                         help='an Illumina TruSeq Amplicon manifest file. Default: stdin')
     parser.add_argument('--output',
-                        type=argparse.FileType('w'),
+                        type=argparse.FileType('wt'),
                         default=sys.stdout,
                         help='a multi fasta output file of sequence targets. Default: stdout')
     parser.add_argument('--probes',
@@ -116,14 +116,15 @@ def make_probes(header, probes, targets, adaptors=False, output=sys.stdout):
         #print(probes)
         for probe in probes:
             if probe.Target_ID:
-                outfile.write(bytes(format_fasta(probe.Target_ID.replace(' ','_')+'_ULSO',ULSOadaptor+probe.ULSO_Sequence),'ascii'))
-                outfile.write(bytes(format_fasta(probe.Target_ID.replace(' ','_')+'_DLSO',probe.DLSO_Sequence+DLSOadaptorRC),'ascii'))
+                outfile.write(format_fasta(probe.Target_ID.replace(' ','_')+'_ULSO',ULSOadaptor+probe.ULSO_Sequence))
+                outfile.write(format_fasta(probe.Target_ID.replace(' ','_')+'_DLSO',probe.DLSO_Sequence+DLSOadaptorRC))
     pass
 
 def make_fasta(header, probes, targets, output=sys.stdout, **kw):
     with output as outfile:
         for name,sequence in make_sequences(header, probes, targets, **kw):
-            outfile.write(bytes(format_fasta(name,sequence),'latin-1'))
+            #print(name,sequence)
+            outfile.write(format_fasta(name,sequence))
             
     
 def make_sequences(header, probes, targets,  with_probes=False, softmask_probes=False, all_plus=True):
