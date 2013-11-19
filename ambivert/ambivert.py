@@ -180,7 +180,8 @@ class AmpliconData(object):
         pass
     
     def match_to_reference(self, min_score = 0.1, trim_primers=0):
-        def match_by_edit(merged_key,ref_keys):
+        def match_by_edit(merged_key,ref_keys): #pragma no cover
+            #depreciated
             best_score = 0
             best_hit = ''
             for ref_key in ref_keys:
@@ -267,7 +268,7 @@ class AmpliconData(object):
     
     
     def save_hash_table(self,newhashfile):
-        reference_sha224 = hashlib.sha224(repr(self.reference_sequences).encode('latin-1')).hexdigest()
+        reference_sha224 = hashlib.sha224(repr(sorted(self.reference_sequences)).encode('latin-1')).hexdigest()
         with newhashfile as outfile:
             hash_dictionary = {merged_key:self.reference[merged_key] for merged_key in self.reference if merged_key not in self.potential_variants} 
             pickle.dump((reference_sha224,hash_dictionary),outfile)
@@ -277,7 +278,7 @@ class AmpliconData(object):
         print(hashfile)
         with hashfile as infile:
             reference_sha224,refdict = pickle.load(infile)
-            if reference_sha224 == hashlib.sha224(repr(self.reference_sequences).encode('latin-1')).hexdigest():
+            if reference_sha224 == hashlib.sha224(repr(sorted(self.reference_sequences)).encode('latin-1')).hexdigest():
                 self.reference = refdict
             else:
                 print('WARNING: loaded read to reference hash library does not match reference sequences\n\
@@ -286,12 +287,12 @@ class AmpliconData(object):
         pass
     
     def print_variants_as_alignments(self, outfile=sys.stdout):
-        for key in self.potential_variants:
+        for key in sorted(self.potential_variants):
             aligned_sample_seq, aligned_ref_seq = self.aligned[key]
             print(self.reference[key],file=outfile)
             print(aligned_ref_seq,file=outfile)
             matches = ''
-            for a,b in itertools.izip(aligned_ref_seq, aligned_sample_seq):
+            for a,b in zip(aligned_ref_seq, aligned_sample_seq):
                 if a == b or a in 'abcdghkmnrstuvwy':
                     matches += '.'
                 else:
@@ -354,7 +355,7 @@ class AmpliconData(object):
             for snv in snvs:
                 variant_depth = sum([self.get_amplicon_count(key) for key in alt[snv]])
                 #print(snv,variant_depth, total_depth, variant_depth/total_depth, ref, alt[snv])
-                self.consolidated_mutations.append((snv,variant_depth, total_depth, variant_depth/total_depth, tuple(ref), tuple(alt[snv])))
+                self.consolidated_mutations.append((snv,variant_depth, total_depth, variant_depth/total_depth, tuple(sorted(ref)), tuple(sorted(alt[snv]))))
         #logic above does not preclude calling the same mutation more than once
         #so we remove identical records
         self.consolidated_mutations = sorted(list(set(self.consolidated_mutations)))
@@ -452,7 +453,7 @@ class AmpliconData(object):
             print(r_qual,file=reversefile)
         pass
     
-def process_commandline_args():
+def process_commandline_args(): #pragma no cover
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
         AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
         Due to sequencing errors occuring with a more random distribution than low frequency variants this approach
@@ -557,7 +558,8 @@ def process_amplicon_data(forward_file, reverse_file,
         amplicons.save_hash_table(savehashtable)
     return amplicons
 
-def call_mutations_per_amplicon(amplicons, args):
+def call_mutations_per_amplicon(amplicons, args): #pragma no cover
+    #depreciated
     print(make_vcf_header(args.threshold),file=args.output)
     for key in amplicons.potential_variants:
             aligned_ref_seq, aligned_sample_seq = amplicons.aligned[key]
@@ -574,7 +576,7 @@ def call_mutations_per_amplicon(amplicons, args):
 
     
     
-def main():
+def main(): #pragma no cover
     args = process_commandline_args()
     amplicons = process_amplicon_data(args.forward,args.reverse,
                                       args.manifest,args.fasta,
@@ -590,17 +592,12 @@ def main():
     #amplicons.print_variants_as_alignments(outfile=sys.stderr)
     
     #amplicons.call_amplicon_mutations()
-    
-    #print(amplicons.get_variant_positions())
-    
     #amplicons.consolidate_mutations()
-    
     #call_mutations_per_amplicon(amplicons,args)
     
-    #TODO parse args to this function
     amplicons.print_consolidated_vcf(min_cover=args.min_cover, min_reads=args.min_reads, min_freq=args.min_freq, outfile=sys.stdout)
     
     pass
 
-if __name__ == '__main__':
+if __name__ == '__main__': #pragma no cover
     main()

@@ -6,30 +6,19 @@ test_ambivert.py
 Created by Matthew Wakefield on 2013-11-04.
 Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights reserved.
 
-Incomplete test coverage.  Current status:
+Incomplete test coverage of some conditional code.  Excludes command line interface code.  Current status:
 coverage3 report --show-missing
-Name                                                            Stmts   Miss  Cover   Missing
+Name                           Stmts   Miss  Cover   Missing
 ---------------------------------------------------------------------------------------------
-/usr/local/lib/python3.3/site-packages/pkg_resources             1543   1519     2%   16-226, 229, 232-234, 238-887, 893-1294, 1298-1374, 1377-1392, 1396, 1403-1406, 1410-1422, 1425-2720, 2723-2724, 2727, 2734-2815
-/usr/local/lib/python3.3/site-packages/plumb/__init__               1      0   100%   
-/usr/local/lib/python3.3/site-packages/plumb/bob/__init__           1      0   100%   
-/usr/local/lib/python3.3/site-packages/plumb/bob/align_ctypes      94     33    65%   14, 90-123, 128, 132-134
-ambivert/__init__                                                   0      0   100%   
-ambivert/ambivert                                                 350    187    47%   77-82, 115, 151, 159-160, 169-179, 186, 207-208, 216, 223, 241, 246, 255-259, 262-270, 273-284, 287-291, 294-298, 301-345, 348-354, 357-391, 395-405, 408-424, 428-437, 440-521, 535, 537, 541, 545-557, 562-587, 590
-ambivert/call_mutations                                           118     99    16%   33-112, 117-145, 148-156, 159-160, 163, 169
-ambivert/sequence_utilities                                       117     66    44%   26, 29, 32, 53-66, 90-91, 95-110, 116, 118, 122, 127-134, 138-139, 143, 146-156, 159-168, 171-174, 177-180
-ambivert/tests/test_ambivert                                       68      6    91%   112-121
-ambivert/truseq_manifest                                          106     42    60%   59, 73-99, 102-121, 124-126, 135-141, 148-151, 153-156, 162-168, 171
----------------------------------------------------------------------------------------------
-TOTAL                                                            2398   1952    19%
+ambivert/ambivert                305     21    93%   78-79, 120, 123, 202, 223-224, 232, 239, 262, 284, 323, 348-350, 417, 435-437, 552, 554, 558
 """
 
 #from __future__ import division, print_function, unicode_literals
-import unittest, io
+import unittest, io, os
 import hashlib
-from ambivert import ambivert
-
+from tempfile import NamedTemporaryFile
 from pkg_resources import resource_stream
+from ambivert import ambivert
 
 def md5(data):
     #python3 compatibility
@@ -191,7 +180,7 @@ class test_ambivert(unittest.TestCase):
                                   )
         self.assertEqual(md5(str(sorted(amplicons.potential_variants))).hexdigest(),'1a28f10a7a1e2ea430e79453e367a342')
     
-    def test_AmpliconData_test_get_amplicon_count(self):
+    def test_AmpliconData_test_get_amplicon_counts(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -200,11 +189,132 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, primer=15, 
                                   savehashtable=None, hashtable=None,
                                   )
-        #print(amplicons.get_amplicon_counts())
         self.assertEqual(md5(str(sorted(amplicons.get_amplicon_counts()))).hexdigest(),'564424f9a9e909cb9323d5ceac93a559')
         
-
-
+        self.assertEqual(amplicons.get_amplicon_count('335eb2f760b98b4f25d281537400baf4'),144)
+    
+    def test_save_hash_table(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        outfile = NamedTemporaryFile(delete=False,mode='wb')
+        outfilename = outfile.name
+        amplicons.save_hash_table(outfile)
+        amplicons.reference = {}
+        amplicons.load_hash_table(open(outfilename,mode='rb'))
+        self.assertEqual(md5(str(sorted(amplicons.reference))).hexdigest(),'c5e174ffd7ee8cfbd47e162667c83796')
+        outfile.close()
+        os.unlink(outfile.name)
+        pass
+    
+    def test_print_variants_as_alignments(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        outfile = io.StringIO()
+        amplicons.print_variants_as_alignments(outfile)
+        #print(outfile.getvalue())
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'ea430013b12300195ebe92f475c7f7de')
+        pass
+    
+    def test_call_amplicon_mutations(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        amplicons.call_amplicon_mutations()
+        #print(sorted(amplicons.called_mutations.items()))
+        self.assertEqual(md5(str(sorted(amplicons.called_mutations.items()))).hexdigest(),'ce2f3b5cdbe365747b7487c76e2ca61a')
+        pass
+    
+    def test_get_variant_positions(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        amplicons.call_amplicon_mutations()
+        #print(amplicons.get_variant_positions())
+        self.assertEqual(md5(str(amplicons.get_variant_positions())).hexdigest(),'563614d673fc502e6a191b7d37dd2070')
+        pass
+    
+    def test_consolidate_mutations(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        amplicons.call_amplicon_mutations()
+        amplicons.consolidate_mutations()
+        #print(sorted(amplicons.consolidated_mutations))
+        self.assertEqual(md5(str(sorted(amplicons.consolidated_mutations))).hexdigest(),'aa3ad204819417b15b0eadb218ae44f1')
+        pass
+    
+    def test_get_filtered_mutations(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        amplicons.call_amplicon_mutations()
+        amplicons.consolidate_mutations()
+        #print(list(amplicons.get_filtered_mutations(min_freq=0.5)))
+        self.assertEqual(md5(str(list(amplicons.get_filtered_mutations(min_freq=0.5)))).hexdigest(),'39fa318f8730b7fef97dfc2fff1269a0')
+        pass
+    
+    def test_print_to_fastq(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        outfile = io.StringIO()
+        amplicons.print_to_fastq('335eb2f760b98b4f25d281537400baf4',forwardfile=outfile,reversefile=outfile)
+        #print(outfile.getvalue())
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'f7208f5b8a2e6a33d48e76f861ed35c9')
+        pass
+    
+    def test_print_consolidated_vcf(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        outfile = io.StringIO()
+        amplicons.print_consolidated_vcf(outfile=outfile)
+        #print(outfile.getvalue())
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'589979418a5b116247e43fedee22361b')
+        pass
+    
     
 if __name__ == '__main__':
     unittest.main()
