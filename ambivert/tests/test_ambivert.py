@@ -227,7 +227,7 @@ class test_ambivert(unittest.TestCase):
         self.assertEqual(md5(outfile.getvalue()).hexdigest(),'ea430013b12300195ebe92f475c7f7de')
         pass
     
-    def test_call_amplicon_mutations(self):
+    def test_call_amplicon_variants(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -236,9 +236,9 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, 
                                   savehashtable=None, hashtable=None,
                                   )
-        amplicons.call_amplicon_mutations()
-        #print(sorted(amplicons.called_mutations.items()))
-        self.assertEqual(md5(str(sorted(amplicons.called_mutations.items()))).hexdigest(),'ce2f3b5cdbe365747b7487c76e2ca61a')
+        amplicons.call_amplicon_variants()
+        #print(sorted(amplicons.called_variants.items()))
+        self.assertEqual(md5(str(sorted(amplicons.called_variants.items()))).hexdigest(),'0734be77676bf94c0203541d65c88fcf')
         pass
     
     def test_get_variant_positions(self):
@@ -250,12 +250,12 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, 
                                   savehashtable=None, hashtable=None,
                                   )
-        amplicons.call_amplicon_mutations()
+        amplicons.call_amplicon_variants()
         #print(amplicons.get_variant_positions())
         self.assertEqual(md5(str(amplicons.get_variant_positions())).hexdigest(),'563614d673fc502e6a191b7d37dd2070')
         pass
     
-    def test_consolidate_mutations(self):
+    def test_consolidate_variants(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -264,13 +264,13 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, 
                                   savehashtable=None, hashtable=None,
                                   )
-        amplicons.call_amplicon_mutations()
-        amplicons.consolidate_mutations()
-        #print(sorted(amplicons.consolidated_mutations))
-        self.assertEqual(md5(str(sorted(amplicons.consolidated_mutations))).hexdigest(),'aa3ad204819417b15b0eadb218ae44f1')
+        amplicons.call_amplicon_variants()
+        amplicons.consolidate_variants()
+        #print(sorted(amplicons.consolidated_variants))
+        self.assertEqual(md5(str(sorted(amplicons.consolidated_variants))).hexdigest(),'025cc46068aa1f1927cfafa8e2f60e3f')
         pass
     
-    def test_get_filtered_mutations(self):
+    def test_get_filtered_variants(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -279,10 +279,10 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, 
                                   savehashtable=None, hashtable=None,
                                   )
-        amplicons.call_amplicon_mutations()
-        amplicons.consolidate_mutations()
-        #print(list(amplicons.get_filtered_mutations(min_freq=0.5)))
-        self.assertEqual(md5(str(list(amplicons.get_filtered_mutations(min_freq=0.5)))).hexdigest(),'39fa318f8730b7fef97dfc2fff1269a0')
+        amplicons.call_amplicon_variants()
+        amplicons.consolidate_variants()
+        #print(list(amplicons.get_filtered_variants(min_freq=0.5)))
+        self.assertEqual(md5(str(list(amplicons.get_filtered_variants(min_freq=0.5)))).hexdigest(),'2800309952ab5c11088661679bef82b0')
         pass
     
     def test_print_to_fastq(self):
