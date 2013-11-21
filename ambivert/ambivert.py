@@ -366,12 +366,15 @@ class AmpliconData(object):
         pass
         
     def get_filtered_variants(self, min_cover=0, min_reads=0, min_freq=0.1):
+        def is_softmasked(allele):
+            return bool([base for base in allele if base.islower()])
+            
         for variant in self.consolidated_variants:
             if variant[1] >= min_reads and \
                variant[2] >= min_cover and \
                variant[3] >= min_freq and \
-               not [base for base in variant[0].alt_allele if base.islower()] and \
-               not [base for base in variant[0].ref_allele if base.islower()]:
+               not is_softmasked(variant[0].alt_allele) and \
+               not is_softmasked(variant[0].ref_allele):
                yield variant
         
     def print_consolidated_vcf(self, min_cover=0, min_reads=0, min_freq=0.1, outfile=sys.stdout):
