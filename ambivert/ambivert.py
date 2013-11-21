@@ -281,14 +281,15 @@ class AmpliconData(object):
             if reference_sha224 == hashlib.sha224(repr(sorted(self.reference_sequences)).encode('latin-1')).hexdigest():
                 self.reference = refdict
             else:
-                print('WARNING: loaded read to reference hash library does not match reference sequences\n\
-                    I really hope you know what you are doing... Check and if in doubt use --newhashfile\n \
-                    without specifying an existing hash file.',file=logfile)
+                print('WARNING: loaded read to reference hash library does not match reference sequences\n'+ \
+                    'I really hope you know what you are doing... Check and if in doubt use --savehashtable\n'+ \
+                    'without specifying an existing hash file.',file=logfile)
         pass
     
     def print_variants_as_alignments(self, outfile=sys.stdout):
         for key in sorted(self.potential_variants):
             aligned_sample_seq, aligned_ref_seq = self.aligned[key]
+            print(key,file=outfile)
             print(self.reference[key],file=outfile)
             print(aligned_ref_seq,file=outfile)
             matches = ''
@@ -298,6 +299,8 @@ class AmpliconData(object):
                 else:
                     matches += b
             print(matches,file=outfile)
+            print(aligned_sample_seq,file=outfile)
+            print(file=outfile)
         pass
     
     def call_amplicon_variants(self):
@@ -521,6 +524,9 @@ def process_commandline_args(): #pragma no cover
     parser.add_argument('--savehashtable',
                         type=argparse.FileType('wb'),
                         help='Output a precomputed hash table that matches amplicons exactly to references.  Used to speed up matching with --hashtable')    
+    parser.add_argument('--show_alignments',
+                        action='store_true',
+                        help='Print a formatted text version of variant containing alignments to stdout')    
     parser.add_argument('--prefix',
                         type=str,
                         default='',
@@ -589,13 +595,14 @@ def main(): #pragma no cover
             for key in sorted(amplicon_counts.keys()):
                 outfile.write('{0}\t{1}\n'.format(key,amplicon_counts[key]))
     
-    #amplicons.print_variants_as_alignments(outfile=sys.stderr)
+    if args.show_alignments:
+        amplicons.print_variants_as_alignments(outfile=sys.stderr)
     
     #amplicons.call_amplicon_variants()
     #amplicons.consolidate_variants()
     #call_variants_per_amplicon(amplicons,args)
     
-    amplicons.print_consolidated_vcf(min_cover=args.min_cover, min_reads=args.min_reads, min_freq=args.min_freq, outfile=sys.stdout)
+    amplicons.print_consolidated_vcf(min_cover=args.min_cover, min_reads=args.min_reads, min_freq=args.min_freq, outfile=args.output)
     
     pass
 

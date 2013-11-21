@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-insert_mutations.py
+insert_variants.py
 
 Created by Matthew Wakefield on 2013-09-26.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
@@ -10,7 +10,7 @@ from __future__ import print_function
 import sys
 import os
 from sequence_utilities import *
-from simulate_mutations import expand_cigar, engap
+from simulate_variants import expand_cigar, engap
 
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
@@ -122,14 +122,14 @@ def get_reads_not_overlapping_position(samfile, chromosome, start, end):
     return forward_reads, reverse_reads, singleton_reads
 
 
-def get_mutation_position(pos,cigar,one_based_mutation_site):
+def get_variant_position(pos,cigar,one_based_variant_site):
     pos = int(pos)
     xcigar = str(expand_cigar(cigar))
     if xcigar.count('D') or xcigar.count('I') or xcigar.count('S'):
         pos_in_ref = pos
         pos_in_read = 0
         pos_in_cigar = 0
-        while pos_in_ref != one_based_mutation_site:
+        while pos_in_ref != one_based_variant_site:
             if xcigar[pos_in_cigar] == 'M':
                 pos_in_read += 1
                 pos_in_ref += 1
@@ -144,45 +144,45 @@ def get_mutation_position(pos,cigar,one_based_mutation_site):
                 # TODO change this behaviour so deletion reduced.
             pos_in_cigar += 1
             assert pos_in_cigar <= len(xcigar)
-        assert pos_in_ref == one_based_mutation_site
+        assert pos_in_ref == one_based_variant_site
         return pos_in_read
     else:
-        return one_based_mutation_site-pos
+        return one_based_variant_site-pos
 
-def point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_base):
-    mutation_site_in_read = get_mutation_position(pos,cigar,one_based_mutation_site)
+def point_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_base):
+    variant_site_in_read = get_variant_position(pos,cigar,one_based_variant_site)
     
     seq = list(seq)
     
-    seq[mutation_site_in_read] = mutation_base
+    seq[variant_site_in_read] = variant_base
     
     return name,"".join(seq),qual
 
-def deletion_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,length):
-    mutation_start_site_in_read = get_mutation_position(pos,cigar,one_based_mutation_site)
-    mutation_end_site_in_read = get_mutation_position(pos,cigar,one_based_mutation_site+length)
+def deletion_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,length):
+    variant_start_site_in_read = get_variant_position(pos,cigar,one_based_variant_site)
+    variant_end_site_in_read = get_variant_position(pos,cigar,one_based_variant_site+length)
     
     seq = str(seq)
     qual = str(qual)
     
-    mut_seq = seq[:mutation_start_site_in_read]+seq[mutation_end_site_in_read:]
-    mut_qual = qual[:mutation_start_site_in_read]+qual[mutation_end_site_in_read:]
+    mut_seq = seq[:variant_start_site_in_read]+seq[variant_end_site_in_read:]
+    mut_qual = qual[:variant_start_site_in_read]+qual[variant_end_site_in_read:]
     
     return name, mut_seq, mut_qual
     
-def salt_mutation_into_mapped_reads(samfile, chromosome, one_based_mutation_site,
-                                    mutation_base=None, mutation_length=None, insertion_bases=None,
+def salt_variant_into_mapped_reads(samfile, chromosome, one_based_variant_site,
+                                    variant_base=None, variant_length=None, insertion_bases=None,
                                     forward_fastq_name='mutated_R1.fastq', reverse_fastq_name='mutated_R2.fastq',
                                     unpaired_fastq_name='mutated_unpaired.fastq',
-                                    mutation_frequency=0.5,
-                                    mutation_name=''):
+                                    variant_frequency=0.5,
+                                    variant_name=''):
     forward_fastq = open('forward_fastq_name','w')
     reverse_fastq = open('reverse_fastq_name','w')
     unpaired_fastq = open('unpaired_fastq_name','w')
     
-    length = max(len(mutation_base), int(mutation_length), len(insertion_bases))
+    length = max(len(variant_base), int(variant_length), len(insertion_bases))
     
-    forward_reads, reverse_reads, singleton_reads = get_reads_not_overlapping_position(samfile,chromosome, one_based_mutation_site, one_based_mutation_site+length)
+    forward_reads, reverse_reads, singleton_reads = get_reads_not_overlapping_position(samfile,chromosome, one_based_variant_site, one_based_variant_site+length)
     for read in forward_reads:
         forward_fastq.write(format_fastq(*read))
     for read in reverse_reads:
@@ -190,44 +190,44 @@ def salt_mutation_into_mapped_reads(samfile, chromosome, one_based_mutation_site
     for read in singleton_reads:
         unpaired_fastq.write(format_fastq(*read))
     
-    templates = get_readpairs_overlapping_position(samfile,chromosome, one_based_mutation_site, one_based_mutation_site+length)
+    templates = get_readpairs_overlapping_position(samfile,chromosome, one_based_variant_site, one_based_variant_site+length)
     
     total_templates = len(templates)
-    number_of_templates_to_mutate = min(int(mutation_frequency * total_templates) + 1, total_templates)
+    number_of_templates_to_mutate = min(int(variant_frequency * total_templates) + 1, total_templates)
     
     random.shuffle(templates)
     
     templates_to_mutate = templates[:number_of_templates_to_mutate]
     
-    if len(mutation_base) == 1: #SNV
+    if len(variant_base) == 1: #SNV
         for i,template in enumerate(templates_to_mutate):
-            name = "{mutation_name}_{index}_{mutants}_{total}".format(mutation_name=mutation_name,index=i,mutatants=number_of_templates_to_mutate,total=total_templates)
+            name = "{variant_name}_{index}_{variants}_{total}".format(variant_name=variant_name,index=i,variants=number_of_templates_to_mutate,total=total_templates)
             if template[0] and template[1]:
                 pos,cigar,seq,qual = template[0][1:5]
-                forward_fastq.write(format_fastq(*point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_base))
+                forward_fastq.write(format_fastq(*point_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_base))
                 pos,cigar,seq,qual = template[1][1:5]
-                reverse_fastq.write(format_fastq(*point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_base))
+                reverse_fastq.write(format_fastq(*point_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_base))
             elif template[0]:
                 pos,cigar,seq,qual = template[0][1:5]
-                unpaired_fastq.write(format_fastq(*point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_base))
+                unpaired_fastq.write(format_fastq(*point_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_base))
             elif template[1]:
                 pos,cigar,seq,qual = template[1][1:5]
-                unpaired_fastq.write(format_fastq(*point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_base))
+                unpaired_fastq.write(format_fastq(*point_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_base))
         
-    elif mutation_length:
+    elif variant_length:
         for i,template in enumerate(templates_to_mutate):
-            name = "{mutation_name}_{index}_{mutants}_{total}".format(mutation_name=mutation_name,index=i,mutatants=number_of_templates_to_mutate,total=total_templates)
+            name = "{variant_name}_{index}_{variants}_{total}".format(variant_name=variant_name,index=i,variants=number_of_templates_to_mutate,total=total_templates)
             if template[0] and template[1]:
                 pos,cigar,seq,qual = template[0][1:5]
-                forward_fastq.write(format_fastq(*deletion_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_length))
+                forward_fastq.write(format_fastq(*deletion_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_length))
                 pos,cigar,seq,qual = template[1][1:5]
-                reverse_fastq.write(format_fastq(*deletion_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_length))
+                reverse_fastq.write(format_fastq(*deletion_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_length))
             elif template[0]:
                 pos,cigar,seq,qual = template[0][1:5]
-                unpaired_fastq.write(format_fastq(*deletion_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_length))
+                unpaired_fastq.write(format_fastq(*deletion_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_length))
             elif template[1]:
                 pos,cigar,seq,qual = template[1][1:5]
-                unpaired_fastq.write(format_fastq(*deletion_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_length))
+                unpaired_fastq.write(format_fastq(*deletion_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_length))
         
     elif insertion_bases:
         print('Not yet implemented')

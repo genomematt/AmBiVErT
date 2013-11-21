@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-simulate_mutations.py
+simulate_variants.py
 
 Created by Matthew Wakefield on 2013-05-03.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
@@ -27,7 +27,7 @@ __status__ = "Development"
 def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_site=1, position_excludes_softmasked=True):
     """Yields sequences with a specific site mutated to the three alternative SNVs.
     Returns a tuple of name and sequence.  The name is underscore separated and
-    consists of: chromosome, start (one based), cigar string, mutation detection tag.
+    consists of: chromosome, start (one based), cigar string, variant detection tag.
     These values will only be correct for plus strand sequences.
     
     Arguments:
@@ -40,7 +40,7 @@ def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_s
                           First base in string is 1.
         position_excludes_softmasked - A boolean indicating that the
                           softmasked based should be ignored when
-                          constructing the cigar and mutation tags.
+                          constructing the cigar and variant tags.
                           Results in the first uppercase base being
                           used as postition 1.
     Yields:
@@ -70,7 +70,7 @@ def point_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_s
 def deletion_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_based_site=1, length=1, position_excludes_softmasked=True):
     """Returns a sequence with a specific site mutated to a deletion of a given length.
     Returns a tuple of name and sequence.  The name is underscore separated and
-    consists of: chromosome, start (one based), cigar string, mutation detection tag.
+    consists of: chromosome, start (one based), cigar string, variant detection tag.
     These values will only be correct for plus strand sequences.
     
     Arguments:
@@ -88,7 +88,7 @@ def deletion_mutate_sequence(sequence,chromosome=None,one_based_start=1,one_base
                           the maximum valid deletion will be created
         position_excludes_softmasked - A boolean indicating that the
                           softmasked based should be ignored when
-                          constructing the cigar and mutation tags.
+                          constructing the cigar and variant tags.
                           Results in the first uppercase base being
                           used as postition 1.
     Returns:
@@ -126,10 +126,10 @@ def get_softmasked_offsets(sequence):
     end_offset = len(softmasked_end[0]) if softmasked_end else 0
     return start_offset, end_offset
 
-def make_all_point_mutations(sequence, skip_softmasked=True, **kw):
+def make_all_point_variants(sequence, skip_softmasked=True, **kw):
     """Yields sequences mutated to the three alternative SNVs at all sites.
     Returns a tuple of name and sequence.  The name is underscore separated and
-    consists of: chromosome, start (one based), cigar string, mutation detection tag.
+    consists of: chromosome, start (one based), cigar string, variant detection tag.
     These values will only be correct for plus strand sequences.
     
     Arguments:
@@ -146,7 +146,7 @@ def make_all_point_mutations(sequence, skip_softmasked=True, **kw):
                           Default = True
         position_excludes_softmasked - A boolean indicating that the
                           softmasked based should be ignored when
-                          constructing the cigar and mutation tags.
+                          constructing the cigar and variant tags.
                           Results in the first uppercase base being
                           used as postition 1.
                           Default = True
@@ -159,10 +159,10 @@ def make_all_point_mutations(sequence, skip_softmasked=True, **kw):
             for x in point_mutate_sequence(sequence, one_based_site=i+1, **kw):
                 yield x
 
-def make_all_deletion_mutations(sequence, skip_softmasked=True,length=1, **kw):
-    """Yields sequences mutated with the given mutation size.
+def make_all_deletion_variants(sequence, skip_softmasked=True,length=1, **kw):
+    """Yields sequences mutated with the given variant size.
     Returns a tuple of name and sequence.  The name is underscore separated and
-    consists of: chromosome, start (one based), cigar string, mutation detection tag.
+    consists of: chromosome, start (one based), cigar string, variant detection tag.
     These values will only be correct for plus strand sequences.
     
     Arguments:
@@ -180,7 +180,7 @@ def make_all_deletion_mutations(sequence, skip_softmasked=True,length=1, **kw):
                           Default = True
         position_excludes_softmasked - A boolean indicating that the
                           softmasked based should be ignored when
-                          constructing the cigar and mutation tags.
+                          constructing the cigar and variant tags.
                           Results in the first uppercase base being
                           used as postition 1.
                           Default = True
@@ -303,7 +303,7 @@ def cigar_add_deletion(cigar,one_based_start=1,length=1):
     return compact_cigar(result)
 
 def mdtag_add_deletion(mdtag, seq, one_based_start=1, length=1):
-    #compact deletions deals with adjacent deletions and deletions adjacent to mutations
+    #compact deletions deals with adjacent deletions and deletions adjacent to variants
     xmdtag_tokens = expand_mdtag(mdtag)
     
     position_in_sequence = 1
@@ -377,9 +377,9 @@ def compact_expanded_mdtag_tokens(expanded_mdtag_tokens):
             result.append(str(count))
     return "".join(result).upper()
 
-def mutation_detection_tag_trimmer(mdtag,trim_from_start=0,trim_from_end=0):
+def variant_detection_tag_trimmer(mdtag,trim_from_start=0,trim_from_end=0):
     #when trimming reads only non-standard state is deletions
-    #mutations and insertions maintain 1 md token per string postition.
+    #variants and insertions maintain 1 md token per string postition.
     xmdtag_tokens = expand_mdtag(mdtag)
     if trim_from_end:
         return compact_expanded_mdtag_tokens(xmdtag_tokens[trim_from_start:-trim_from_end])
@@ -389,7 +389,7 @@ def mutation_detection_tag_trimmer(mdtag,trim_from_start=0,trim_from_end=0):
 def mutated_amplicon_to_paired_reads(sequence,chromosome,one_based_start,cigar,mdtag,quality='',readlength=150, position_excludes_softmasked=False):
     """Convert a single sequence representing an amplicon
     into two paired end reads, adjusting cigar string
-    and mutation detection tags to be correct for the
+    and variant detection tags to be correct for the
     new read sequences.
     Cigar and MD tag will only be valid for plus strand
     amplicon sequences.
@@ -403,21 +403,21 @@ def mutated_amplicon_to_paired_reads(sequence,chromosome,one_based_start,cigar,m
                           of the string in the reference sequence
                           Default = 1
         cigar           - A cigar format string indicating indels
-        mdtag           - A SAM format mutation detection (MD) tag
+        mdtag           - A SAM format variant detection (MD) tag
         quality         - An optional fastq quality string
                           Default = ''
         readlength      - The length of the sequence reads to generate.
                           Default = 150
         position_excludes_softmasked - A boolean indicating that the
                           softmasked bases have been ignored when
-                          constructing the cigar and mutation tags.
+                          constructing the cigar and variant tags.
                           Results in the first uppercase base being
                           used as postition 1.
                           Default = True
     Returns:
         A tuple of tuples consisting of sequence, quality, chromosome, start, cigar, mdtag.
         The reverse sequence is reverse complemented and quality reversed.
-        All cigar and mutation detection tags are presented in plus strand format
+        All cigar and variant detection tags are presented in plus strand format
     """
     forward_sequence = sequence[:readlength]
     reverse_sequence = reverse_complement(sequence[-readlength:])
@@ -429,9 +429,9 @@ def mutated_amplicon_to_paired_reads(sequence,chromosome,one_based_start,cigar,m
         reverse_start = str(int(one_based_start) + trimsize)
         forward_start = one_based_start
         reverse_cigar = cigar_trimmer(cigar, trim_from_start=trimsize)
-        reverse_mdtag = mutation_detection_tag_trimmer(mdtag, trim_from_start=trimsize)
+        reverse_mdtag = variant_detection_tag_trimmer(mdtag, trim_from_start=trimsize)
         forward_cigar = cigar_trimmer(cigar, trim_from_end=trimsize)
-        forward_mdtag = mutation_detection_tag_trimmer(mdtag, trim_from_end=trimsize)
+        forward_mdtag = variant_detection_tag_trimmer(mdtag, trim_from_end=trimsize)
     else:
         # positions are described excluding the soft masked bases
         # need to modify keeping these offsets from either end
@@ -439,9 +439,9 @@ def mutated_amplicon_to_paired_reads(sequence,chromosome,one_based_start,cigar,m
         reverse_start = str(int(one_based_start) - start_offset + trimsize) # start defined as position of first unmasked base
         forward_start = one_based_start
         reverse_cigar = cigar_trimmer(cigar, trim_from_start=trimsize-start_offset)
-        reverse_mdtag = mutation_detection_tag_trimmer(mdtag,trim_from_start=trimsize-start_offset)
+        reverse_mdtag = variant_detection_tag_trimmer(mdtag,trim_from_start=trimsize-start_offset)
         forward_cigar = cigar_trimmer(cigar, trim_from_end=trimsize-end_offset)
-        forward_mdtag = mutation_detection_tag_trimmer(mdtag, trim_from_end=trimsize-end_offset)
+        forward_mdtag = variant_detection_tag_trimmer(mdtag, trim_from_end=trimsize-end_offset)
 
     return ((forward_sequence, forward_quality, chromosome, forward_start, forward_cigar, forward_mdtag),
             (reverse_sequence, reverse_quality, chromosome, reverse_start, reverse_cigar, reverse_mdtag))
@@ -464,23 +464,23 @@ def amplicons_to_mutated_reads(forward_outfile = sys.stdout,
                                 **kw):
     for chromosome, start, sequence in sequences:
         if deletions:
-            for mutant_name, mutant_sequence in list(make_all_deletion_mutations(sequence,chromosome=chromosome,one_based_start=start,length=deletions, **kw)):
-                    mutant_chromosome,mutant_start,cigar,mdtag = mutant_name.split('_')
-                    reads = mutated_amplicon_to_paired_reads(mutant_sequence,mutant_chromosome,mutant_start,cigar,mdtag, **kw)
+            for variant_name, variant_sequence in list(make_all_deletion_variants(sequence,chromosome=chromosome,one_based_start=start,length=deletions, **kw)):
+                    variant_chromosome,variant_start,cigar,mdtag = variant_name.split('_')
+                    reads = mutated_amplicon_to_paired_reads(variant_sequence,variant_chromosome,variant_start,cigar,mdtag, **kw)
                     readname = "_".join(reads[0][2:]+reads[1][2:])
                     print(format_fastq_entry(readname,reads[0][0]),end='',file=forward_outfile)
                     print(format_fastq_entry(readname,reads[1][0]),end='',file=reverse_outfile)
         else:
-            for mutant_name, mutant_sequence in list(make_all_point_mutations(sequence,chromosome=chromosome,one_based_start=start, **kw)):
-                    mutant_chromosome,mutant_start,cigar,mdtag = mutant_name.split('_')
-                    reads = mutated_amplicon_to_paired_reads(mutant_sequence,mutant_chromosome,mutant_start,cigar,mdtag, **kw)
+            for variant_name, variant_sequence in list(make_all_point_variants(sequence,chromosome=chromosome,one_based_start=start, **kw)):
+                    variant_chromosome,variant_start,cigar,mdtag = variant_name.split('_')
+                    reads = mutated_amplicon_to_paired_reads(variant_sequence,variant_chromosome,variant_start,cigar,mdtag, **kw)
                     readname = "_".join(reads[0][2:]+reads[1][2:])
                     print(format_fastq_entry(readname,reads[0][0]),end='',file=forward_outfile)
                     print(format_fastq_entry(readname,reads[1][0]),end='',file=reverse_outfile)
     pass
 
 def command_line_interface(*args,**kw):
-    parser = argparse.ArgumentParser(description='A script for simulating paired end reads with mutations\
+    parser = argparse.ArgumentParser(description='A script for simulating paired end reads with variants\
                                                  from an amplicon target file')
     parser.add_argument('--manifest',
                         type=argparse.FileType('U'),
@@ -502,20 +502,20 @@ def command_line_interface(*args,**kw):
                         help='a fastq output file of reverse reads. Default: stdout')
     parser.add_argument('--skip_softmasked',
                         action="store_true",
-                        help='dont generate mutations in softmasked sequence. Default: True')
+                        help='dont generate variants in softmasked sequence. Default: True')
     parser.add_argument('--position_excludes_softmasked',
                         action="store_true",
                         help='Exclude softmasked sequence when calculating start site of read,\
-                              cigar and mutation detection strings. Default: True')
+                              cigar and variant detection strings. Default: True')
     parser.add_argument('--deletions',
                         type = int,
                         default=None,
-                        help='The size deletions to insert instead of point mutations. Default: None')
+                        help='The size deletions to insert instead of point variants. Default: None')
     parser.add_argument('--check_sam',
                         type=argparse.FileType('U'),
                         default=None,
                         help='a sam file for parsing to identify entries where name does not \
-                              match the sam file mapping location and mutation strings')
+                              match the sam file mapping location and variant strings')
     return parser.parse_args(*args,**kw)
 
 def main():

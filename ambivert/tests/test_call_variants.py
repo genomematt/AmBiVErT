@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-test_call_mutations.py
+test_call_variants.py
 
 Created by Matthew Wakefield on 2013-11-04.
 Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights reserved.
@@ -10,10 +10,10 @@ Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights
 from __future__ import print_function
 import unittest
 from io import StringIO
-from ambivert.call_mutations import *
+from ambivert.call_variants import *
 
 
-class test_call_mutations(unittest.TestCase):
+class test_call_variants(unittest.TestCase):
     def setUp(self):
         pass
     
@@ -41,24 +41,24 @@ class test_call_mutations(unittest.TestCase):
         self.assertEqual(list(caller('CAA-ATTT','gAAAAt-t',softmask=False)),[('X', 0, 1, 'C'), ('D', 3, 4, 'A'), ('I', 6, 7, 'T')])
         pass
 
-    def test_call_mutations(self):
+    def test_call_variants(self):
         #                        555555555566666666667777777777888888888899999999990000000000111111111122222222222333333333344444444444444
         #                        012345678901234567890123456789012345678901234567890123456789012345678901234567899012345678901234555567890
         #                                                                                 v              v       v   vvv          vvv
-        result = call_mutations('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCACGCGGCCCAGACGTG-TCAGCGGGCAG---GTACCCCGGGCATGTGCA',#mutant
+        result = call_variants('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCACGCGGCCCAGACGTG-TCAGCGGGCAG---GTACCCCGGGCATGTGCA',#mutant
                                 'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG-CAGCTCGTACCCCGGG---GTGCA',#ref
                                 'X',
                                 ref_start = 153457150)
-        self.assertEqual(repr(result),"[AmpliconMutation(chromosome='X', start=153457207, end=153457207, vcf_start=153457207, ref_allele='T', alt_allele='C'), " +\
-                                "AmpliconMutation(chromosome='X', start=153457222, end=153457222, vcf_start=153457221, ref_allele='GT', alt_allele='G'), " +\
-                                "AmpliconMutation(chromosome='X', start=153457230, end=153457230, vcf_start=153457229, ref_allele='G', alt_allele='GG'), " +\
-                                "AmpliconMutation(chromosome='X', start=153457233, end=153457235, vcf_start=153457232, ref_allele='GCTC', alt_allele='G'), " +\
-                                "AmpliconMutation(chromosome='X', start=153457246, end=153457246, vcf_start=153457245, ref_allele='G', alt_allele='GCAT')]")
+        self.assertEqual(repr(result),"[AmpliconVariant(chromosome='X', start=153457207, end=153457207, vcf_start=153457207, ref_allele='T', alt_allele='C'), " +\
+                                "AmpliconVariant(chromosome='X', start=153457222, end=153457222, vcf_start=153457221, ref_allele='GT', alt_allele='G'), " +\
+                                "AmpliconVariant(chromosome='X', start=153457230, end=153457230, vcf_start=153457229, ref_allele='G', alt_allele='GG'), " +\
+                                "AmpliconVariant(chromosome='X', start=153457233, end=153457235, vcf_start=153457232, ref_allele='GCTC', alt_allele='G'), " +\
+                                "AmpliconVariant(chromosome='X', start=153457246, end=153457246, vcf_start=153457245, ref_allele='G', alt_allele='GCAT')]")
         pass
 
 
     
-    def test_call_mutations_to_vcf(self):
+    def test_call_variants_to_vcf(self):
         resultfile = StringIO()
         expected_result = "\n".join([
         "X\t153457207\t.\tT\tC\t.\tPASS\t.",
@@ -67,7 +67,7 @@ class test_call_mutations(unittest.TestCase):
         "X\t153457232\t.\tGCTC\tG\t.\tPASS\t.",
         "X\t153457245\t.\tG\tGCAT\t.\tPASS\t.",
         ])+"\n"
-        call_mutations_to_vcf('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCACGCGGCCCAGACGTG-TCAGCGGGCAG---GTACCCCGGGCATGTGCA',#mutant
+        call_variants_to_vcf('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCACGCGGCCCAGACGTG-TCAGCGGGCAG---GTACCCCGGGCATGTGCA',#mutant
                               'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG-CAGCTCGTACCCCGGG---GTGCA',#ref
                               'X',
                               ref_start = 153457150,

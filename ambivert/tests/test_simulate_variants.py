@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-test_simulate_mutations.py
+test_simulate_variants.py
 
 Created by Matthew Wakefield on 2013-09-24.
 Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights reserved.
@@ -9,7 +9,7 @@ Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights
 
 import unittest
 import io
-from ambivert.simulate_mutations import *
+from ambivert.simulate_variants import *
 from hashlib import md5
 
 __author__ = "Matthew Wakefield"
@@ -55,7 +55,7 @@ chr17_41243125_150M_27C122_chr17_41243200_150M_150	147	chr13	32900109	60	150M	=	
 chr17_41243125_150M_27C122_chr17_41243200_150M_150	0	.	.	.	.	.	.	.	TAATATAAAATATCTAAAAGTAGTATTCCAACAATTTATATGAATGAGAATCTTCTTTTAAAAATAAGATAAACTAGTTTTTGCCAGTTTTTTAAAATAACCTAAGGGATTTGCTTTGTTTTATTTTAGTCCTGTTGTTCTACAATGTAC	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 """
 
-class test_simulate_mutations(unittest.TestCase):
+class test_simulate_variants(unittest.TestCase):
     def setUp(self):
         pass
     
@@ -71,13 +71,13 @@ class test_simulate_mutations(unittest.TestCase):
                         [('chrX_123460_8M_2A5', 'cagtGAACGATCacgt'), ('chrX_123460_8M_2C5', 'cagtGACCGATCacgt'), ('chrX_123460_8M_2G5', 'cagtGAGCGATCacgt')])
         pass
     
-    def test_make_all_point_mutations(self):
+    def test_make_all_point_variants(self):
         sequence = 'cagtGATCGATCacgt'
-        #print(list(make_all_point_mutations(sequence)))
-        self.assertEqual('63d7c766aebd4de2d4f6ac93ca0c2550',md5(str(list(make_all_point_mutations(sequence)))).hexdigest())
+        #print(list(make_all_point_variants(sequence)))
+        self.assertEqual('63d7c766aebd4de2d4f6ac93ca0c2550',md5(str(list(make_all_point_variants(sequence)))).hexdigest())
         
-        #print(list(make_all_point_mutations(sequence, skip_softmasked=False, position_excludes_softmasked=False)))
-        self.assertEqual('e39f6ab49cf9fa517368a8dcba416c97',md5(str(list(make_all_point_mutations(sequence, skip_softmasked=False, position_excludes_softmasked=False)))).hexdigest())
+        #print(list(make_all_point_variants(sequence, skip_softmasked=False, position_excludes_softmasked=False)))
+        self.assertEqual('e39f6ab49cf9fa517368a8dcba416c97',md5(str(list(make_all_point_variants(sequence, skip_softmasked=False, position_excludes_softmasked=False)))).hexdigest())
         pass
     
     def test_format_fastq_entry(self):
@@ -136,13 +136,13 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(compact_expanded_mdtag_tokens(['', '', '', '', '', '', '', '^' ,'c','a','t', '^', 'g', '', '', '', '', '', '', '']),'7^CATG7')
         pass
         
-    def test_mutation_detection_tag_trimmer(self):
-        self.assertEqual(mutation_detection_tag_trimmer('7A8',trim_from_start=0,trim_from_end=0),'7A8')
-        self.assertEqual(mutation_detection_tag_trimmer('7A8',trim_from_start=3,trim_from_end=0),'4A8')
-        self.assertEqual(mutation_detection_tag_trimmer('7A8',trim_from_start=0,trim_from_end=5),'7A3')
-        self.assertEqual(mutation_detection_tag_trimmer('7A8',trim_from_start=3,trim_from_end=5),'4A3')
-        self.assertEqual(mutation_detection_tag_trimmer('7A8G',trim_from_start=3,trim_from_end=5),'4A4')
-        self.assertEqual(mutation_detection_tag_trimmer('17',trim_from_start=3,trim_from_end=5),'9')
+    def test_variant_detection_tag_trimmer(self):
+        self.assertEqual(variant_detection_tag_trimmer('7A8',trim_from_start=0,trim_from_end=0),'7A8')
+        self.assertEqual(variant_detection_tag_trimmer('7A8',trim_from_start=3,trim_from_end=0),'4A8')
+        self.assertEqual(variant_detection_tag_trimmer('7A8',trim_from_start=0,trim_from_end=5),'7A3')
+        self.assertEqual(variant_detection_tag_trimmer('7A8',trim_from_start=3,trim_from_end=5),'4A3')
+        self.assertEqual(variant_detection_tag_trimmer('7A8G',trim_from_start=3,trim_from_end=5),'4A4')
+        self.assertEqual(variant_detection_tag_trimmer('17',trim_from_start=3,trim_from_end=5),'9')
         pass
     
     def test_mdtag_add_deletion(self):
@@ -162,8 +162,8 @@ class test_simulate_mutations(unittest.TestCase):
         self.assertEqual(deletion_mutate_sequence('acgtCATGacgt',one_based_start=1,one_based_site=6, length=1),('None_5_1M1D2M_1^A2', 'acgtCTGacgt'))############# TODO WORKING ON THIS
         pass
     
-    def test_make_all_deletion_mutations(self):
-        self.assertEqual(list(make_all_deletion_mutations('acgtCATGacgt',length=2)),[('None_5_2D2M_^CA2', 'acgtTGacgt'),
+    def test_make_all_deletion_variants(self):
+        self.assertEqual(list(make_all_deletion_variants('acgtCATGacgt',length=2)),[('None_5_2D2M_^CA2', 'acgtTGacgt'),
                                                                                     ('None_5_1M2D1M_1^AT1', 'acgtCGacgt'),
                                                                                     ('None_5_2M2D_2^TG', 'acgtCAacgt'),])
         pass

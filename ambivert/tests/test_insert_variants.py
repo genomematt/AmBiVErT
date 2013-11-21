@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-test_insert_mutations.py
+test_insert_variants.py
 
 Created by Matthew Wakefield on 2013-09-26.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
@@ -9,7 +9,7 @@ Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All right
 
 import unittest
 import io
-from ambivert.insert_mutations import *
+from ambivert.insert_variants import *
 from ambivert.sequence_utilities import reverse_complement
 
 SAMFILE = u"""@SQ	SN:chr13	LN:115169878
@@ -82,7 +82,7 @@ READS = [
 
 
 
-class test_insert_mutations(unittest.TestCase):
+class test_insert_variants(unittest.TestCase):
     def setUp(self):
         pass
     
@@ -142,46 +142,46 @@ class test_insert_mutations(unittest.TestCase):
         pass
     
     def test_point_mutate_read(self):
-        #point_mutate_read(name,pos,cigar,seq,qual,one_based_mutation_site,mutation_base)
-        self.assertEqual(point_mutate_read(*READS[0][0], one_based_mutation_site=41243163,mutation_base='g'),
+        #point_mutate_read(name,pos,cigar,seq,qual,one_based_variant_site,variant_base)
+        self.assertEqual(point_mutate_read(*READS[0][0], one_based_variant_site=41243163,variant_base='g'),
                         ('chr17_41243153_122M_15G106_chr17_41243200_123M_123',
                         'TCACACAAAAgGATTGAATTCCTTGCTTTGGGACACCTGGATTTGCTTTTATAAAATGAAACCAGAAGTAAGTCCACCAGTAATTAGGATGTTAAAGCTCATTCAGTCAAAGATGACGTCCT',
                         '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJK')
                         )
-        self.assertEqual(point_mutate_read('','10','12M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=10,mutation_base='A'),
+        self.assertEqual(point_mutate_read('','10','12M','GCTCGCTCGCTC','I'*12, one_based_variant_site=10,variant_base='A'),
                         ('', 'ACTCGCTCGCTC', 'IIIIIIIIIIII'))
-        self.assertEqual(point_mutate_read('','10','12M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=21,mutation_base='T'),
+        self.assertEqual(point_mutate_read('','10','12M','GCTCGCTCGCTC','I'*12, one_based_variant_site=21,variant_base='T'),
                         ('', 'GCTCGCTCGCTT', 'IIIIIIIIIIII'))
-        self.assertEqual(point_mutate_read('','12','2S8M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        self.assertEqual(point_mutate_read('','12','2S8M','GCTCGCTCGCTC','I'*12, one_based_variant_site=15,variant_base='A'),
                         ('', 'GCTCGATCGCTC', 'IIIIIIIIIIII'))
-        self.assertEqual(point_mutate_read('','10','2M1D10M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        self.assertEqual(point_mutate_read('','10','2M1D10M','GCTCGCTCGCTC','I'*12, one_based_variant_site=15,variant_base='A'),
                         ('', 'GCTCACTCGCTC', 'IIIIIIIIIIII'))
-        self.assertEqual(point_mutate_read('','10','2M1I9M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        self.assertEqual(point_mutate_read('','10','2M1I9M','GCTCGCTCGCTC','I'*12, one_based_variant_site=15,variant_base='A'),
                         ('', 'GCTCGCACGCTC', 'IIIIIIIIIIII'))
-        self.assertEqual(point_mutate_read('','10','4M1I7M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        self.assertEqual(point_mutate_read('','10','4M1I7M','GCTCGCTCGCTC','I'*12, one_based_variant_site=15,variant_base='A'),
                         ('', 'GCTCGCACGCTC', 'IIIIIIIIIIII'))
-        self.assertEqual(point_mutate_read('','10','3M3I6M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        self.assertEqual(point_mutate_read('','10','3M3I6M','GCTCGCTCGCTC','I'*12, one_based_variant_site=15,variant_base='A'),
                         ('', 'GCTCGCTCACTC', 'IIIIIIIIIIII'))
-        self.assertRaises(IndexError,point_mutate_read,'','10','12M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=22,mutation_base='T')
-        self.assertRaises(IndexError,point_mutate_read,'','10','6M1I5M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=21,mutation_base='T')
-        self.assertRaises(IndexError,point_mutate_read,'','10','2S10M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=20,mutation_base='T')
-        self.assertEqual(point_mutate_read('','10','4M1D8M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        self.assertRaises(IndexError,point_mutate_read,'','10','12M','GCTCGCTCGCTC','I'*12, one_based_variant_site=22,variant_base='T')
+        self.assertRaises(IndexError,point_mutate_read,'','10','6M1I5M','GCTCGCTCGCTC','I'*12, one_based_variant_site=21,variant_base='T')
+        self.assertRaises(IndexError,point_mutate_read,'','10','2S10M','GCTCGCTCGCTC','I'*12, one_based_variant_site=20,variant_base='T')
+        self.assertEqual(point_mutate_read('','10','4M1D8M','GCTCGCTCGCTC','I'*12, one_based_variant_site=15,variant_base='A'),
                         ('', 'GCTCACTCGCTC', 'IIIIIIIIIIII')) #corner case - not currently correct behaviour
-        #self.assertEqual(point_mutate_read('','10','4M1D8M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        #self.assertEqual(point_mutate_read('','10','4M1D8M','GCTCGCTCGCTC','I'*12, one_based_variant_site=15,variant_base='A'),
         #                ('', 'GCTCAGCTCGCTC', 'IIIIIIIIIIIII')) #should put mismatch to right of deletion and replace a deletion
-        #self.assertEqual(point_mutate_read('','10','4M3D8M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=15,mutation_base='A'),
+        #self.assertEqual(point_mutate_read('','10','4M3D8M','GCTCGCTCGCTC','I'*12, one_based_variant_site=15,variant_base='A'),
         #                ('', 'GCTCAGCTCGCTC', 'IIIIIIIIIIIII')) #string is the same no matter size or location in deletion.
     
     def test_deletion_mutate_read(self):
-        self.assertEqual(deletion_mutate_read('','10','12M','GCTCGCTCGCTC','0123456789!@', one_based_mutation_site=15,length=1),
+        self.assertEqual(deletion_mutate_read('','10','12M','GCTCGCTCGCTC','0123456789!@', one_based_variant_site=15,length=1),
                         ('', 'GCTCGTCGCTC', '012346789!@'))
-        self.assertEqual(deletion_mutate_read('','10','12M','GCTCGCTCGCTC','0123456789!@', one_based_mutation_site=15,length=3),
+        self.assertEqual(deletion_mutate_read('','10','12M','GCTCGCTCGCTC','0123456789!@', one_based_variant_site=15,length=3),
                         ('', 'GCTCGGCTC', '0123489!@'))
-        self.assertEqual(deletion_mutate_read('','10','3M1D9M','GCTCGCACGCTC','0123456789!@', one_based_mutation_site=12,length=5),
+        self.assertEqual(deletion_mutate_read('','10','3M1D9M','GCTCGCACGCTC','0123456789!@', one_based_variant_site=12,length=5),
                         ('', 'GCACGCTC', '016789!@'))
-        self.assertEqual(deletion_mutate_read('','10','3M1I8M','GCTCGCTCGCTC','0123456789!@', one_based_mutation_site=12,length=5),
+        self.assertEqual(deletion_mutate_read('','10','3M1I8M','GCTCGCTCGCTC','0123456789!@', one_based_variant_site=12,length=5),
                         ('', 'GCGCTC', '0189!@'))
-        self.assertRaises(IndexError,deletion_mutate_read,'','10','2S10M','GCTCGCTCGCTC','I'*12, one_based_mutation_site=25,length=1)
+        self.assertRaises(IndexError,deletion_mutate_read,'','10','2S10M','GCTCGCTCGCTC','I'*12, one_based_variant_site=25,length=1)
            
 if __name__ == '__main__':
     unittest.main()
