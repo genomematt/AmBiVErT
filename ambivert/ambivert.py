@@ -171,7 +171,8 @@ class AmpliconData(object):
         pass
     
     def add_references_from_fasta(self, fastafile):
-        self.reference_sequences = {tuple(x[0].split()):x[1] for x in parse_fasta(fastafile)}
+        for name,sequence in parse_fasta(fastafile):
+            self.reference_sequences[tuple(name.split())] = sequence
         pass
     
     def add_references_from_manifest(self, manifestfile):
