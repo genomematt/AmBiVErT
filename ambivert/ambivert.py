@@ -306,7 +306,7 @@ class AmpliconData(object):
     
     def call_amplicon_variants(self):
         for key in self.potential_variants:
-            aligned_ref_seq, aligned_sample_seq = self.aligned[key]
+            aligned_sample_seq, aligned_ref_seq = self.aligned[key]
             name, chromosome, amplicon_position, end, strand = self.reference[key]
             self.called_variants[key] = call_variants(aligned_sample_seq, aligned_ref_seq, chromosome, int(amplicon_position))
         pass

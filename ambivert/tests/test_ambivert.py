@@ -224,7 +224,7 @@ class test_ambivert(unittest.TestCase):
         outfile = io.StringIO()
         amplicons.print_variants_as_alignments(outfile)
         #print(outfile.getvalue())
-        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'ea430013b12300195ebe92f475c7f7de')
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'6905671f81cc776afecc8a13bc01b1c3')
         pass
     
     def test_call_amplicon_variants(self):
@@ -238,7 +238,7 @@ class test_ambivert(unittest.TestCase):
                                   )
         amplicons.call_amplicon_variants()
         #print(sorted(amplicons.called_variants.items()))
-        self.assertEqual(md5(str(sorted(amplicons.called_variants.items()))).hexdigest(),'0734be77676bf94c0203541d65c88fcf')
+        self.assertEqual(md5(str(sorted(amplicons.called_variants.items()))).hexdigest(),'395ea8c7d8c55a4a752d9fa47dae8c8a')
         pass
     
     def test_get_variant_positions(self):
@@ -267,7 +267,7 @@ class test_ambivert(unittest.TestCase):
         amplicons.call_amplicon_variants()
         amplicons.consolidate_variants()
         #print(sorted(amplicons.consolidated_variants))
-        self.assertEqual(md5(str(sorted(amplicons.consolidated_variants))).hexdigest(),'025cc46068aa1f1927cfafa8e2f60e3f')
+        self.assertEqual(md5(str(sorted(amplicons.consolidated_variants))).hexdigest(),'a38f22f05f6c7d91f6615c404b206b2a')
         pass
     
     def test_get_filtered_variants(self):
@@ -282,7 +282,7 @@ class test_ambivert(unittest.TestCase):
         amplicons.call_amplicon_variants()
         amplicons.consolidate_variants()
         #print(list(amplicons.get_filtered_variants(min_freq=0.5)))
-        self.assertEqual(md5(str(list(amplicons.get_filtered_variants(min_freq=0.5)))).hexdigest(),'2800309952ab5c11088661679bef82b0')
+        self.assertEqual(md5(str(list(amplicons.get_filtered_variants(min_freq=0.5)))).hexdigest(),'870ffb1202aa1f3acde75c18a6b4ff1f')
         pass
     
     def test_print_to_fastq(self):
@@ -312,7 +312,7 @@ class test_ambivert(unittest.TestCase):
         outfile = io.StringIO()
         amplicons.print_consolidated_vcf(outfile=outfile)
         #print(outfile.getvalue())
-        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'589979418a5b116247e43fedee22361b')
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'35ab1efaf334d95e8e52044cea5ad2aa')
         pass
     
     
