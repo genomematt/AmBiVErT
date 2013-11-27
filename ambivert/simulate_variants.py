@@ -6,12 +6,11 @@ simulate_variants.py
 Created by Matthew Wakefield on 2013-05-03.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
-from __future__ import print_function
 import os, sys
 import re
 import argparse
-from sequence_utilities import *
-from truseq_manifest import parse_truseq_manifest, make_sequences
+from ambivert.sequence_utilities import *
+from ambivert.truseq_manifest import parse_truseq_manifest, make_sequences
 
 
 __author__ = "Matthew Wakefield"
