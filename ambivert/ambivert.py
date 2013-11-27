@@ -24,19 +24,18 @@ It is specifically designed not to share any of its codebase with other variant
 calling pipelines or software, run quickly and minimize false positives.
 
 Our intended purpose for this software is as lightweight backup and quality assurance
-complementing a more traditional variant calling pipeline.
+complementing a more traditional variant calling pipeline, and to provide amplicon level
+phasing of multiple mutations that exist on the same amplicon.
 
 All lines of code [will be/are] covered by unit tests unless marked with #pragma no cover
 
 Created by Matthew Wakefield and Graham Taylor.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
-#from __future__ import print_function, division, unicode_literals
 import sys, os
 import itertools, difflib, argparse
 import hashlib, pickle
 from collections import defaultdict
-#from cogent.align.algorithm import nw_align, sw_align
 from ambivert.sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment, open_potentially_gzipped
 from ambivert.truseq_manifest import parse_truseq_manifest, make_sequences
 from ambivert.call_variants import call_variants, call_variants_to_vcf, make_vcf_header
@@ -222,11 +221,13 @@ class AmpliconData(object):
         for merged_key in self.merged:
             if merged_key in self.reference:
                 print(',',end='',file=logfile)
+                logfile.flush()
                 continue
             best_hit,best_score = match_by_smith_waterman(merged_key,self.reference_sequences)
             if best_hit and best_score > min_score:
                 self.reference[merged_key]= best_hit
                 print('.',end='',file=logfile)
+                logfile.flush()
                 #print("Matched", self.merged[merged_key], 'to', best_hit)
                 #print(self.reference_sequences[best_hit])
             else:
