@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='AmBiVErT',
-    version='0.1.0',
+    version='0.1.5',
     author='Matthew Wakefield',
     author_email='matthew.wakefield@unimelb.edu.au',
     packages=['ambivert'],
@@ -14,7 +14,7 @@ setup(
     entry_points={
         'console_scripts': ['ambivert = ambivert.ambivert:main',
                             'truseq_manifest = ambivert.truseq_manifest:main',
-                            'simulate_mutations = ambivert.simulate_mutations:main',
+                            'simulate_variants = ambivert.simulate_variants:main',
                            ]
     },
 
