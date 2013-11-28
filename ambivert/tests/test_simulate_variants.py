@@ -10,7 +10,7 @@ Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights
 import unittest
 import io
 from ambivert.simulate_variants import *
-from hashlib import md5
+import hashlib
 
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
@@ -54,6 +54,9 @@ chr17_41243125_150M_27C122_chr17_41243200_150M_150	99	chr13	32899987	60	150M	=	3
 chr17_41243125_150M_27C122_chr17_41243200_150M_150	147	chr13	32900109	60	150M	=	32899987	-272	TAATATAAAATATCTAAAAGTAGTATTCCAACAATTTATATGAATGAGAATCTTCTTTTAAAAATAAGATAAACTAGTTTTTGCCAGTTTTTTAAAATAACCTAAGGGATTTGCTTTGTTTTATTTTAGTCCTGTTGTTCTACAATGTAC	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII	NM:i:0	AS:i:150	XS:i:0
 chr17_41243125_150M_27C122_chr17_41243200_150M_150	0	.	.	.	.	.	.	.	TAATATAAAATATCTAAAAGTAGTATTCCAACAATTTATATGAATGAGAATCTTCTTTTAAAAATAAGATAAACTAGTTTTTGCCAGTTTTTTAAAATAACCTAAGGGATTTGCTTTGTTTTATTTTAGTCCTGTTGTTCTACAATGTAC	IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
 """
+def md5(data):
+    #python3 compatibility
+    return hashlib.md5(bytes(data,'ascii'))
 
 class test_simulate_variants(unittest.TestCase):
     def setUp(self):
@@ -185,8 +188,8 @@ class test_simulate_variants(unittest.TestCase):
         samfile = io.StringIO(SAMFILE)
         outfile = io.StringIO()
         check_point_mutated_sequence(samfile, outfile=outfile, verbose=False)
-        #print(outfile.getvalue())
-        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'de119c1e94dbf6e1664b419f09500c07')
+        print(outfile.getvalue())
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'17c5c2f058c4ff56a173d0255314ba6a')
         pass
     
 
