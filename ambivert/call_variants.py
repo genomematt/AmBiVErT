@@ -101,6 +101,7 @@ def caller(variant_amplicon, reference, gap='-',softmask = True):
                 deletion = ''
                 
     #clean up non match states at end of sequence
+    onebased_pos_in_ungapped_ref += 1
     if mismatch:
         yield 'X', site-len(mismatch), onebased_pos_in_ungapped_ref-len(mismatch), mismatch
         mismatch = ''
