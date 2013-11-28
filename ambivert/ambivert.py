@@ -277,7 +277,6 @@ class AmpliconData(object):
         pass
     
     def load_hash_table(self,hashfile):
-        print(hashfile)
         with hashfile as infile:
             reference_sha224,refdict = pickle.load(infile)
             if reference_sha224 == hashlib.sha224(repr(sorted(self.reference_sequences)).encode('latin-1')).hexdigest():
