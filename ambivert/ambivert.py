@@ -498,7 +498,7 @@ def process_commandline_args(): #pragma no cover
     parser.add_argument('--threshold',
                         type=int,
                         default=20,
-                        help='the minimum occurance threshold.  Unique amplicon sequence variants that occur fewer than threshold times are ignored.')    
+                        help='the minimum occurance threshold.  Unique amplicon sequence variants that occur fewer than threshold times are ignored. Default 20')    
     parser.add_argument('--min_cover',
                         type=int,
                         default=0,
@@ -516,12 +516,12 @@ def process_commandline_args(): #pragma no cover
     parser.add_argument('--overlap',
                         type=int,
                         default=20,
-                        help='The minimum overlap required between forward and reverse sequences to merge')    
-    parser.add_argument('--primer',
-                        type=int,
-                        default=0,
-                        help='The size of the smallest primer.  This number of bases is trimmed from the end of the merged sequences \
-                             to reduce the possibility that small amplicons will fail to match due to primer mismatch')    
+                        help='The minimum overlap required between forward and reverse sequences to merge. Default 20bp')    
+    #parser.add_argument('--primer',
+    #                    type=int,
+    #                    default=0,
+    #                    help='The size of the smallest primer.  This number of bases is trimmed from the end of the merged sequences \
+    #                         to reduce the possibility that small amplicons will fail to match due to primer mismatch')    
     parser.add_argument('--hashtable',
                         type=argparse.FileType('rb'),
                         help='Filename for a precomputed hash table of exact matches of amplicons to references.  Generate with --savehashtable')    
@@ -534,7 +534,7 @@ def process_commandline_args(): #pragma no cover
     parser.add_argument('--prefix',
                         type=str,
                         default='',
-                        help='Shorthand specification of --forward, --reverse, --countfile and --outfile \
+                        help='Shorthand specification of --forward, --reverse, --countfile and --outfile. \
                                 --forward = <prefix>_R1.fastq.gz \
                                 --reverse = <prefix>_R2.fastq.gz \
                                 --outfile = <prefix>.vcf \
@@ -545,17 +545,21 @@ def process_commandline_args(): #pragma no cover
         args.output = open(args.prefix + '.vcf','w')
         args.forward = open(args.prefix + '_R1.fastq.gz','rb')
         args.reverse = open(args.prefix + '_R2.fastq.gz','rb')
+    elif not (args.forward and args.reverse):
+        print("ERROR: You must specify --prefix or both --forward and --reverse \n", file=logfile)
+        parser.print_help()
+        sys.exit()
     return args
 
 def process_amplicon_data(forward_file, reverse_file,
                           manifest=None, fasta=None,
-                          threshold=50, overlap=20, primer=15, 
+                          threshold=50, overlap=20, 
                           savehashtable=None, hashtable=None,
                           ):
     amplicons = AmpliconData()
     amplicons.process_twofile_readpairs(open_potentially_gzipped(forward_file),
                                         open_potentially_gzipped(reverse_file))
-    amplicons.merge_overlaps(minimum_overlap=20, threshold=threshold)
+    amplicons.merge_overlaps(minimum_overlap=overlap, threshold=threshold)
     if manifest:
         amplicons.add_references_from_manifest(manifest)
     if fasta:
@@ -590,7 +594,7 @@ def main(): #pragma no cover
     args = process_commandline_args()
     amplicons = process_amplicon_data(args.forward,args.reverse,
                                       args.manifest,args.fasta,
-                                      args.threshold,args.overlap,args.primer,
+                                      args.threshold,args.overlap,
                                       args.savehashtable,args.hashtable,
                                       )
     if args.countfile:
