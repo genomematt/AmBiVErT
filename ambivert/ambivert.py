@@ -46,7 +46,7 @@ __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield","Graham Taylor"]
 __license__ = "GPL"
-__version__ = "0.1"
+__version__ = "0.1.6"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
@@ -528,9 +528,10 @@ def process_commandline_args(): #pragma no cover
     parser.add_argument('--savehashtable',
                         type=argparse.FileType('wb'),
                         help='Output a precomputed hash table that matches amplicons exactly to references.  Used to speed up matching with --hashtable')    
-    parser.add_argument('--show_alignments',
-                        action='store_true',
-                        help='Print a formatted text version of variant containing alignments to stdout')    
+    parser.add_argument('--alignments',
+                        type=str,
+                        default='',
+                        help='Print a formatted text version of variant containing alignments to a file. "-" will print to stderr')    
     parser.add_argument('--prefix',
                         type=str,
                         default='',
@@ -549,6 +550,11 @@ def process_commandline_args(): #pragma no cover
         print("ERROR: You must specify --prefix or both --forward and --reverse \n", file=logfile)
         parser.print_help()
         sys.exit()
+    if args.alignments:
+        if args.alignments == '-':
+            args.alignments = sys.stderr
+        else:
+            args.alignments = open(args.alignments,'wt')
     return args
 
 def process_amplicon_data(forward_file, reverse_file,
@@ -603,8 +609,8 @@ def main(): #pragma no cover
             for key in sorted(amplicon_counts.keys()):
                 outfile.write('{0}\t{1}\n'.format(key,amplicon_counts[key]))
     
-    if args.show_alignments:
-        amplicons.print_variants_as_alignments(outfile=sys.stderr)
+    if args.alignments:
+        amplicons.print_variants_as_alignments(outfile=args.alignments)
     
     #amplicons.call_amplicon_variants()
     #amplicons.consolidate_variants()
