@@ -163,7 +163,7 @@ class test_ambivert(unittest.TestCase):
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
         amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
                                   manifest=manifest, fasta=None,
-                                  threshold=50, overlap=20, primer=15, 
+                                  threshold=50, overlap=20, 
                                   savehashtable=None, hashtable=None,
                                   )
         self.assertEqual(md5(str(amplicons.potential_variants)).hexdigest(),'f0a10362afd9d576c6082af8030f9cdf')
@@ -175,7 +175,7 @@ class test_ambivert(unittest.TestCase):
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
         amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
                                   manifest=manifest, fasta=None,
-                                  threshold=50, overlap=20, primer=15, 
+                                  threshold=50, overlap=20,
                                   savehashtable=None, hashtable=None,
                                   )
         self.assertEqual(md5(str(sorted(amplicons.potential_variants))).hexdigest(),'1a28f10a7a1e2ea430e79453e367a342')
@@ -186,7 +186,7 @@ class test_ambivert(unittest.TestCase):
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
         amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
                                   manifest=manifest, fasta=None,
-                                  threshold=50, overlap=20, primer=15, 
+                                  threshold=50, overlap=20, 
                                   savehashtable=None, hashtable=None,
                                   )
         self.assertEqual(md5(str(sorted(amplicons.get_amplicon_counts()))).hexdigest(),'564424f9a9e909cb9323d5ceac93a559')
