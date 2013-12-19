@@ -18,13 +18,13 @@ Steps:
 Created by Matthew Wakefield and Graham Taylor.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 
-mac2115:ambivert$ ambivert --help
+$ ambivert --help
 usage: ambivert [-h] [-f FORWARD] [-r REVERSE] [-m MANIFEST] [--fasta FASTA]
                 [--output OUTPUT] [--countfile COUNTFILE]
                 [--threshold THRESHOLD] [--min_cover MIN_COVER]
                 [--min_reads MIN_READS] [--min_freq MIN_FREQ]
-                [--overlap OVERLAP] [--primer PRIMER] [--hashtable HASHTABLE]
-                [--savehashtable SAVEHASHTABLE] [--show_alignments]
+                [--overlap OVERLAP] [--hashtable HASHTABLE]
+                [--savehashtable SAVEHASHTABLE] [--alignments ALIGNMENTS]
                 [--prefix PREFIX]
 
 AmBiVErT: A program for binned analysis of amplicon data AmBiVErT clusters
@@ -64,7 +64,7 @@ optional arguments:
   --threshold THRESHOLD
                         the minimum occurance threshold. Unique amplicon
                         sequence variants that occur fewer than threshold
-                        times are ignored.
+                        times are ignored. Default 20
   --min_cover MIN_COVER
                         the minimum coverage at a site required to call a
                         variant. This parameter only has effect if it is >
@@ -76,11 +76,7 @@ optional arguments:
   --min_freq MIN_FREQ   the minimum proportion of mutated reads. Default 0.1
                         (ten percent)
   --overlap OVERLAP     The minimum overlap required between forward and
-                        reverse sequences to merge
-  --primer PRIMER       The size of the smallest primer. This number of bases
-                        is trimmed from the end of the merged sequences to
-                        reduce the possibility that small amplicons will fail
-                        to match due to primer mismatch
+                        reverse sequences to merge. Default 20bp
   --hashtable HASHTABLE
                         Filename for a precomputed hash table of exact matches
                         of amplicons to references. Generate with
@@ -89,13 +85,15 @@ optional arguments:
                         Output a precomputed hash table that matches amplicons
                         exactly to references. Used to speed up matching with
                         --hashtable
-  --show_alignments     Print a formatted text version of variant containing
-                        alignments to stdout
+  --alignments ALIGNMENTS
+                        Print a formatted text version of variant containing
+                        alignments to a file. "-" will print to stderr
   --prefix PREFIX       Shorthand specification of --forward, --reverse,
-                        --countfile and --outfile --forward =
+                        --countfile and --outfile. --forward =
                         <prefix>_R1.fastq.gz --reverse = <prefix>_R2.fastq.gz
                         --outfile = <prefix>.vcf --countfile = <prefix>.counts
-
+						
+						
 Additional tools for simulating amplicon data
 ---------------------------------------------
 
