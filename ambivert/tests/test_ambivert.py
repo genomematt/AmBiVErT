@@ -84,7 +84,7 @@ class test_ambivert(unittest.TestCase):
         self.amplicons.process_twofile_readpairs(forward_file, reverse_file)
         
         #print(str(self.amplicons.data))
-        self.assertEqual(md5(str(sorted(self.amplicons.data))).hexdigest(),'0b8d563beaeb05e6b6ea8615fbf8906b')
+        self.assertEqual(md5(str(sorted(self.amplicons.data))).hexdigest(),'37e10d52aa874a8fbdb40330e1294f02')
         pass
 
     def test_AmpliconData_get_above_threshold(self):
@@ -284,6 +284,21 @@ class test_ambivert(unittest.TestCase):
         #print(list(amplicons.get_filtered_variants(min_freq=0.5)))
         self.assertEqual(md5(str(list(amplicons.get_filtered_variants(min_freq=0.5)))).hexdigest(),'870ffb1202aa1f3acde75c18a6b4ff1f')
         pass
+
+    def test_get_filtered_variants_filtering_ambiguous(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=0, overlap=10, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        amplicons.call_amplicon_variants()
+        amplicons.consolidate_variants()
+        self.assertEqual(md5(str(list(amplicons.get_filtered_variants(min_reads=0, min_cover=0, min_freq=0.00001)))).hexdigest(),'4cf0f400ea7e0636e2c0f2027f50b085')
+        pass
+
     
     def test_print_to_fastq(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')

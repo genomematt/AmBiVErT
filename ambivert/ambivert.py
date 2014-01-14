@@ -368,13 +368,17 @@ class AmpliconData(object):
     def get_filtered_variants(self, min_cover=0, min_reads=0, min_freq=0.1):
         def is_softmasked(allele):
             return bool([base for base in allele if base.islower()])
-            
+        
+        def is_ambiguous(allele):
+            return bool([base for base in allele if not base in '-GATC']) #compound events may have gaps
+        
         for variant in self.consolidated_variants:
             if variant[1] >= min_reads and \
                variant[2] >= min_cover and \
                variant[3] >= min_freq and \
                not is_softmasked(variant[0].alt_allele) and \
-               not is_softmasked(variant[0].ref_allele):
+               not is_softmasked(variant[0].ref_allele) and \
+               not is_ambiguous(variant[0].alt_allele):
                yield variant
         
     def print_consolidated_vcf(self, min_cover=0, min_reads=0, min_freq=0.1, outfile=sys.stdout):
