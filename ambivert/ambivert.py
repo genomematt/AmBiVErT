@@ -419,7 +419,8 @@ class AmpliconData(object):
         pass
             
 
-    def get_amplicons_overlapping(self,chrom, pos, length):
+    def get_amplicons_overlapping(self,chrom, pos, length=1):
+        """Returns a list of amplicon ids for amplicons that overlap a reference position"""
         result = []
         pos = int(pos)
         length = int(length)
@@ -432,22 +433,31 @@ class AmpliconData(object):
                 result.append(key)
         return result
 
-    def get_amplicons_overlapping_without_softmasking(self,chrom, pos, length):
+    def get_reference_overlapping(self,chrom, pos, length=1):
+        """Returns a list of reference identifiers that overlap a chromosomal position"""
+        result = []
+        pos = int(pos)
+        length = int(length)
+        for key in self.reference:
+            if chrom != self.reference[key][0]:
+                continue
+            start = int(self.reference[key][1])
+            end = int(self.reference[key][2])
+            if not ( (pos+length-1 < start) or (pos > end) ):
+                result.append(key)
+        return result
+
+    def get_amplicons_overlapping_without_softmasking(self,chrom, pos, length=1):
+        """Returns a list of amplicon ids for amplicons that overlap a reference position
+        where the reference bases are not softmasked (represented by lower case)"""
         result = []
         pos = int(pos)
         length = int(length)
         for amplicon_id in self.get_amplicons_overlapping(chrom, pos, length):
             start = self.location[amplicon_id][1]
             end = self.location[amplicon_id][2]
-            query_start_in_amplicon = pos - start
-            length_in_ref = 0
-            position_in_ref = query_start_in_amplicon
-            while length_in_ref < length and position_in_ref < len(self.aligned[amplicon_id][0]):
-                if self.aligned[amplicon_id][0][position_in_ref] != '-':
-                    length_in_ref += 1
-                position_in_ref +=1
-            query_end_in_amplicon = position_in_ref
-            if not [base for base in self.aligned[amplicon_id][0][query_start_in_amplicon:query_end_in_amplicon] if base.islower()]:
+            ungapped_reference = self.aligned[amplicon_id][1].replace('-','')
+            if not [base for base in ungapped_reference[pos-start:pos-start+length+1] if base.islower()]:
                 result.append(amplicon_id)
         return result
     

@@ -255,6 +255,21 @@ class test_ambivert(unittest.TestCase):
         self.assertEqual(md5(str(amplicons.get_variant_positions())).hexdigest(),'563614d673fc502e6a191b7d37dd2070')
         pass
     
+    def test_get_amplicons_overlapping(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        
+        self.assertEqual(sorted(amplicons.get_amplicons_overlapping('chr17', '41245364')),['32ff3ea55601305b5e8b3bd266c4080a', '357199abf30c529a625b24916a341ff8', '4a2c50f29c387e9f5853d7e071c1d4ff'])
+        self.assertEqual(sorted(amplicons.get_amplicons_overlapping_without_softmasking('chr17', '41245364')),['4a2c50f29c387e9f5853d7e071c1d4ff'])
+        
+        pass
+    
     def test_consolidate_variants(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
@@ -296,7 +311,8 @@ class test_ambivert(unittest.TestCase):
                                   )
         amplicons.call_amplicon_variants()
         amplicons.consolidate_variants()
-        self.assertEqual(md5(str(list(amplicons.get_filtered_variants(min_reads=0, min_cover=0, min_freq=0.00001)))).hexdigest(),'4cf0f400ea7e0636e2c0f2027f50b085')
+        #print(list(amplicons.get_filtered_variants(min_reads=0, min_cover=0, min_freq=0.00001)))
+        self.assertEqual(md5(str(list(amplicons.get_filtered_variants(min_reads=0, min_cover=0, min_freq=0.00001)))).hexdigest(),'4c5d87513811af17fe80bb7029490edf')
         pass
 
     
