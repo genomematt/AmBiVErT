@@ -561,14 +561,16 @@ def process_commandline_args(): #pragma no cover
         args.forward = open(args.prefix + '_R1.fastq.gz','rb')
         args.reverse = open(args.prefix + '_R2.fastq.gz','rb')
     elif not (args.forward and args.reverse):
-        print("ERROR: You must specify --prefix or both --forward and --reverse \n", file=logfile)
         parser.print_help()
-        sys.exit()
+        raise RuntimeError("ERROR: You must specify --prefix or both --forward and --reverse")
     if args.alignments:
         if args.alignments == '-':
             args.alignments = sys.stderr
         else:
             args.alignments = open(args.alignments,'wt')
+    if not args.manifest and not args.fasta:
+        parser.print_help()
+        raise RuntimeError("ERROR: You must specify at least one of --manifest and --fasta")
     return args
 
 def process_amplicon_data(forward_file, reverse_file,
