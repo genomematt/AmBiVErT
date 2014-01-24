@@ -546,6 +546,15 @@ def process_commandline_args(): #pragma no cover
                         type=str,
                         default='',
                         help='Print a formatted text version of variant containing alignments to a file. "-" will print to stderr')    
+    parser.add_argument('--fastqamplicon',
+                        type=str,
+                        default='',
+                        help='Retrieve fastq output for specified amplicon (specified by MD5 identifier).\
+                          Analysis is not run, only importing of data.  Must specify --fastqfilename')    
+    parser.add_argument('--fastqfilename',
+                        type=str,
+                        default='',
+                        help='Base file name for forward and reverse fastqfiles for use with --fastqamplicon')    
     parser.add_argument('--prefix',
                         type=str,
                         default='',
@@ -574,9 +583,12 @@ def process_commandline_args(): #pragma no cover
             args.alignments = sys.stderr
         else:
             args.alignments = open(args.alignments,'wt')
-    if not args.manifest and not args.fasta:
+    if not args.manifest and not args.fasta and not args.fastqamplicon:
         parser.print_help()
         raise RuntimeError("ERROR: You must specify at least one of --manifest and --fasta")
+    if args.fastqamplicon and not args.fastqfilename:
+        parser.print_help()
+        raise RuntimeError("ERROR: You must specify an output file with --fastqfilename when using --fastqamplicon")
     return args
 
 def process_amplicon_data(forward_file, reverse_file,
@@ -615,16 +627,28 @@ def call_variants_per_amplicon(amplicons, args): #pragma no cover
                 print(file=sys.stderr)
                 raise
     pass
-
     
     
 def main(): #pragma no cover
     args = process_commandline_args()
+    
+    if args.fastqamplicon:
+        amplicons = AmpliconData()
+        amplicons.process_twofile_readpairs(open_potentially_gzipped(forward_file),
+                                            open_potentially_gzipped(reverse_file))
+        amplicons.merge_overlaps(minimum_overlap=args.overlap, threshold=args.threshold)
+        amplicons.print_to_fastq(args.fastqamplicon,
+                                forwardfile=args.fastqfilename+'_R1.fastq',
+                                reversefile=args.fastqfilename+'_R2.fastq')
+        sys.exit()
+        
+        
     amplicons = process_amplicon_data(args.forward,args.reverse,
                                       args.manifest,args.fasta,
                                       args.threshold,args.overlap,
                                       args.savehashtable,args.hashtable,
                                       )
+    
     if args.countfile:
         with args.countfile as outfile:
             amplicon_counts = amplicons.get_amplicon_counts()
