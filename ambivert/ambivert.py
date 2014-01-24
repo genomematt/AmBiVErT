@@ -46,7 +46,7 @@ __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield","Graham Taylor"]
 __license__ = "GPL"
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
@@ -389,7 +389,7 @@ class AmpliconData(object):
         
         vcf_header = [
         "##fileformat=VCF4.1",
-        "##source=AmBiVeRT0.1.7",
+        "##source=AmBiVeRT0.1.8",
         '##FILTER=<ID=depth,Description="more than {threshold} variant supporting reads">'.format(threshold=max(self.threshold,min_reads)),
         '##FILTER=<ID=cover,Description="more than {cover} reads at variant position">'.format(cover=max(self.threshold,min_cover)),
         '##FILTER=<ID=freq,Description="more than {min_freq}% of reads support variant">'.format(min_freq=min_freq*100),
