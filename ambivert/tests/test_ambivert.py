@@ -330,6 +330,26 @@ class test_ambivert(unittest.TestCase):
         #print(outfile.getvalue())
         self.assertEqual(md5(outfile.getvalue()).hexdigest(),'f7208f5b8a2e6a33d48e76f861ed35c9')
         pass
+
+    def test_is_homopolymer_at_position(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        self.assertEqual(sorted(amplicons.get_reference_overlapping('chr17',41243290)),
+                        [('BRCA1_Exon9_UserDefined_(9825051)_7473609_chr17_41243125_41243349', 'chr17', '41243125', '41243349', '+'),
+                        ('BRCA1_Exon9_UserDefined_(9825051)_7473610_chr17_41243267_41243491', 'chr17', '41243267', '41243491', '-')])
+        
+        self.assertTrue(amplicons.is_homopolymer_at_position('chr17',41243290))
+        self.assertTrue(amplicons.is_homopolymer_at_position('chr17',41243290, minimum=6))
+        self.assertFalse(amplicons.is_homopolymer_at_position('chr17',41243290, minimum=7))
+        pass
+        
+        
     
     def test_print_consolidated_vcf(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
@@ -343,7 +363,7 @@ class test_ambivert(unittest.TestCase):
         outfile = io.StringIO()
         amplicons.print_consolidated_vcf(outfile=outfile)
         #print(outfile.getvalue())
-        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'35ab1efaf334d95e8e52044cea5ad2aa')
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'8c132f329a65a01fc7c31c456fe7f7c9')
         pass
     
     

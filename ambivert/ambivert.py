@@ -394,6 +394,8 @@ class AmpliconData(object):
         '##FILTER=<ID=cover,Description="more than {cover} reads at variant position">'.format(cover=max(self.threshold,min_cover)),
         '##FILTER=<ID=freq,Description="more than {min_freq}% of reads support variant">'.format(min_freq=min_freq*100),
         '##FILTER=<ID=primer,Description="involves primer sequence">',
+        '##FILTER=<ID=homopoly5,Description="homopolymer of length > 5 at mutation site">',
+        '##FILTER=<ID=homopoly10,Description="homopolymer of length > 10 at mutation site">',
         '##INFO=<ID=DP,Number=1,Type=Integer,Description="Read depth excluding soft masked primers at variant site">',
         '##INFO=<ID=AC,Number=1,Type=Integer,Description="Alt allele supporting read count">',
         '##INFO=<ID=AF,Number=1,Type=Float,Description="Alt allele frequency">',
@@ -403,12 +405,17 @@ class AmpliconData(object):
         ]
         print("\n".join(vcf_header),file=outfile)
         for variant in self.get_filtered_variants(min_cover=min_cover,min_reads=min_reads,min_freq=min_freq):
+            soft_filter_name = 'PASS'
+            if self.is_homopolymer_at_position(variant[0].chromosome,variant[0].vcf_start +1, minimum=5):
+                soft_filter_name = 'homopoly5'
+            if self.is_homopolymer_at_position(variant[0].chromosome,variant[0].vcf_start +1, minimum=10):
+                soft_filter_name = 'homopoly10'
             print(variant[0].chromosome,
                 variant[0].vcf_start,
                 ".",
                 variant[0].ref_allele,
                 variant[0].alt_allele,
-                '.','PASS',
+                '.',soft_filter_name,
                 'DP={DP};AC={AC};AF={AF:.3};ALTAMPS={ALTAMPS};REFAMPS={REFAMPS}'.format(DP=variant[2],
                                                                                     AC=variant[1],
                                                                                     AF=variant[3],
@@ -435,14 +442,15 @@ class AmpliconData(object):
 
     def get_reference_overlapping(self,chrom, pos, length=1):
         """Returns a list of reference identifiers that overlap a chromosomal position"""
+        #self.reference_sequences = {} # dictionary of reference sequences. Key is (name, chromosome, start, end, strand)
         result = []
         pos = int(pos)
         length = int(length)
-        for key in self.reference:
-            if chrom != self.reference[key][0]:
+        for key in self.reference_sequences:
+            if chrom != key[1]:
                 continue
-            start = int(self.reference[key][1])
-            end = int(self.reference[key][2])
+            start = int(key[2])
+            end = int(key[3])
             if not ( (pos+length-1 < start) or (pos > end) ):
                 result.append(key)
         return result
@@ -473,6 +481,24 @@ class AmpliconData(object):
             print('+',file=reversefile)
             print(r_qual,file=reversefile)
         pass
+    
+    def is_homopolymer_at_position(self,chrom, pos, minimum = 5):
+        #get identifiers for reference amplicons that overlap
+        reference_ids = self.get_reference_overlapping(chrom, pos, length=1)
+        ref = sorted(reference_ids)[-1] # get right most overlapping reference
+        ref_start = int(ref[2])
+        if ref[4] == '-':
+            ref_seq = reverse_complement(self.reference_sequences[ref])
+        else:
+            ref_seq = self.reference_sequences[ref]
+        i = pos - ref_start
+        firstbase = ref_seq[i].upper()
+        while i < len(ref_seq) and ref_seq[i].upper() == firstbase:
+            i +=1
+        if i - (pos - ref_start) >= minimum:
+            return True
+        else:
+            return False
     
 def process_commandline_args(): #pragma no cover
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
