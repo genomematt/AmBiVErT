@@ -538,7 +538,8 @@ def process_commandline_args(): #pragma no cover
     parser.add_argument('--threshold',
                         type=int,
                         default=20,
-                        help='the minimum occurance threshold.  Unique amplicon sequence variants that occur fewer than threshold times are ignored. Default 20')    
+                        help='the minimum occurance threshold.  Unique amplicon sequence variants that occur fewer than threshold times are ignored.\
+                             For complex variable mixtures of sequences (eg FFPE samples) this parameter should be set to zero.  Default 20')    
     parser.add_argument('--min_cover',
                         type=int,
                         default=0,
