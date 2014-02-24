@@ -388,8 +388,8 @@ class AmpliconData(object):
             self.consolidate_variants()
         
         vcf_header = [
-        "##fileformat=VCF4.1",
-        "##source=AmBiVeRT0.1.8",
+        "##fileformat=VCFv4.2",
+        "##source=AmBiVeRT{version}".format(version=__version__),
         '##FILTER=<ID=depth,Description="more than {threshold} variant supporting reads">'.format(threshold=max(self.threshold,min_reads)),
         '##FILTER=<ID=cover,Description="more than {cover} reads at variant position">'.format(cover=max(self.threshold,min_cover)),
         '##FILTER=<ID=freq,Description="more than {min_freq}% of reads support variant">'.format(min_freq=min_freq*100),

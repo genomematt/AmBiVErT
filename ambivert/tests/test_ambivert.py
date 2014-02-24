@@ -363,7 +363,7 @@ class test_ambivert(unittest.TestCase):
         outfile = io.StringIO()
         amplicons.print_consolidated_vcf(outfile=outfile)
         #print(outfile.getvalue())
-        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'8c132f329a65a01fc7c31c456fe7f7c9')
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'7f5d91c21169160cd8d816585050599f')
         pass
     
     
