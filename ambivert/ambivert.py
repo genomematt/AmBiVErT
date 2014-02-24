@@ -82,6 +82,36 @@ def smith_waterman(seq1,seq2):
         frag = frag.next
     plumb.bob.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
+
+def needleman_wunsch(seq1,seq2):
+    alignment =  plumb.bob.global_align(bytes(seq1,'ascii'), len(seq1),
+                                bytes(seq2.upper(),'ascii'), len(seq2),
+                                plumb.bob.DNA_MAP[0],
+                                plumb.bob.DNA_MAP[1], 
+                                plumb.bob.DNA_SCORE,
+                                -7, -1 #gap open, gap extend
+                                )
+    start_seq1 = 0
+    start_seq2 = 0
+    frag = alignment[0].align_frag
+    align_seq1 = ''
+    align_seq2 = ''
+    while frag:
+        frag = frag[0]
+        if frag.type == plumb.bob.MATCH:
+            f1 = seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
+            f2 = seq2[frag.sb_start:frag.sb_start + frag.hsp_len]
+            align_seq1 += f1
+            align_seq2 += f2
+        elif frag.type == plumb.bob.A_GAP:
+            align_seq1 += '-' * frag.hsp_len
+            align_seq2 += seq2[frag.sb_start:frag.sb_start + frag.hsp_len]
+        elif frag.type == plumb.bob.B_GAP:
+            align_seq1 += seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
+            align_seq2 += '-' * frag.hsp_len
+        frag = frag.next
+    plumb.bob.alignment_free(alignment)
+    return align_seq1,align_seq2,start_seq1,start_seq2
     
 
 
@@ -179,7 +209,7 @@ class AmpliconData(object):
             self.reference_sequences[tuple(name.split())] = sequence
         pass
     
-    def match_to_reference(self, min_score = 0.1, trim_primers=0):
+    def match_to_reference(self, min_score = 0.1, trim_primers=0, global_align=True):
         def match_by_edit(merged_key,ref_keys): #pragma no cover
             #depreciated
             best_score = 0
@@ -192,7 +222,7 @@ class AmpliconData(object):
                 if score > best_score:
                     best_score = score
                     best_hit = ref_key
-            return best_hit,score
+            return best_hit,best_score
         
         def match_by_smith_waterman(merged_key,ref_keys):
             best_score = 0
@@ -214,7 +244,29 @@ class AmpliconData(object):
                 if score > best_score:
                     best_score = score
                     best_hit = ref_key
-            return best_hit,score
+            return best_hit,best_score
+
+        def match_by_needleman_wunsch(merged_key,ref_keys):
+            best_score = int(-1000000)
+            best_hit = ''
+            for ref_key in ref_keys:
+                if trim_primers:
+                    seq1 = self.merged[merged_key][trim_primers:-trim_primers]
+                else:
+                    seq1 = self.merged[merged_key]
+                alignment =  plumb.bob.global_align(bytes(seq1, 'ascii'), len(seq1),
+                                bytes(self.reference_sequences[ref_key].upper(),'ascii'), len(self.reference_sequences[ref_key]),
+                                plumb.bob.DNA_MAP[0],
+                                plumb.bob.DNA_MAP[1], 
+                                plumb.bob.DNA_SCORE,
+                                -7, -1 #gap open, gap extend
+                                )
+                score = int(alignment[0].score)
+                plumb.bob.alignment_free(alignment)
+                if score > best_score:
+                    best_score = score
+                    best_hit = ref_key
+            return best_hit,best_score
 
                 
         print('Matching read bins to references',file=logfile)
@@ -223,7 +275,10 @@ class AmpliconData(object):
                 print(',',end='',file=logfile)
                 logfile.flush()
                 continue
-            best_hit,best_score = match_by_smith_waterman(merged_key,self.reference_sequences)
+            if global_align:
+                best_hit,best_score = match_by_needleman_wunsch(merged_key,self.reference_sequences)
+            else:
+                best_hit,best_score = match_by_smith_waterman(merged_key,self.reference_sequences)
             if best_hit and best_score > min_score:
                 self.reference[merged_key]= best_hit
                 print('.',end='',file=logfile)
@@ -235,7 +290,7 @@ class AmpliconData(object):
         print(file=logfile)        
         pass
     
-    def align_to_reference(self):
+    def align_to_reference(self, global_align=True):
         for merged_key in self.reference: #use reference to restrict to matched merged pairs
             if not merged_key in self.merged:
                 continue #occurs when matched in cached file but not present in data set
@@ -246,7 +301,10 @@ class AmpliconData(object):
             else:
                 query_seq = self.merged[merged_key]
                 ref_seq = self.reference_sequences[self.reference[merged_key]]
-            aligned_sample_seq,aligned_ref_seq,sample_start,ref_start = smith_waterman(query_seq,ref_seq)
+            if global_align:
+                aligned_sample_seq,aligned_ref_seq,sample_start,ref_start = needleman_wunsch(query_seq,ref_seq)
+            else:
+                aligned_sample_seq,aligned_ref_seq,sample_start,ref_start = smith_waterman(query_seq,ref_seq)
             if aligned_ref_seq.upper() != aligned_sample_seq:
                 self.potential_variants.append(merged_key)
                 #print(aligned_ref_seq, file=logfile)
