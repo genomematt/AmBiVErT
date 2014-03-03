@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='AmBiVErT',
-    version='0.1.8',
+    version='0.1.9',
     author='Matthew Wakefield',
     author_email='matthew.wakefield@unimelb.edu.au',
     packages=['ambivert'],

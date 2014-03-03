@@ -22,7 +22,7 @@ __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield","Graham Taylor"]
 __license__ = "GPL"
-__version__ = "0.1"
+__version__ = "0.1.9"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
@@ -162,9 +162,9 @@ def call_variants_to_vcf(variant_amplicon, reference, chromosome, ref_start=1, o
 
 def make_vcf_header(threshold):
     return "##fileformat=VCF4.1\n\
-##source=AmBiVeRT0.1.0\n\
+##source=AmBiVeRT{version}\n\
 ##FILTER=<ID=depth,Description=more than {threshold} variant supporting reads>\n\
-#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO".format(threshold=threshold)
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO".format(version=__version__,threshold=threshold)
 
 if __name__ == '__main__':
     pass
