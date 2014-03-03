@@ -248,7 +248,7 @@ def fix_softmasked_expanded_cigar(expanded_cigar, start = 0):
         start += len(initial_softmask_string)
         final_softmask_string = final_SDI_block.replace('D','').replace('I','S')
         length_in_ref = len(expanded_cigar) - (len(initial_SDI_block) + len(final_SDI_block))
-        fixed_expanded_cigar = initial_softmask_string + expanded_cigar[len(initial_SDI_block):len(expanded_cigar)-len(final_SDI_block)+1] + final_softmask_string
+        fixed_expanded_cigar = initial_softmask_string + expanded_cigar[len(initial_SDI_block):len(expanded_cigar)-len(final_SDI_block)] + final_softmask_string
         ### TODO find any MSM blocks
         ### TODO replace internal S with M
     else:
@@ -274,7 +274,7 @@ def gapped_alignment_to_cigar(aligned_reference,aligned_sample, gap='-', snv='M'
         elif aligned_reference[i] == gap:
             xcigar.append('I')
         elif aligned_sample[i] == gap:
-            xcigar.append('I')
+            xcigar.append('D')
         else:
             raise(RuntimeError, 'Invalid alignment state \n{0}\n{1}'.format(aligned_reference[i],aligned_sample[i]))
     fixed_xcigar, start, length = fix_softmasked_expanded_cigar(xcigar)
