@@ -36,7 +36,7 @@ import sys, os
 import itertools, difflib, argparse
 import hashlib, pickle
 from collections import defaultdict
-from ambivert.sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment, open_potentially_gzipped
+from ambivert.sequence_utilities import *
 from ambivert.truseq_manifest import parse_truseq_manifest, make_sequences
 from ambivert.call_variants import call_variants, call_variants_to_vcf, make_vcf_header
 import plumb.bob
@@ -540,6 +540,30 @@ class AmpliconData(object):
             print(r_qual,file=reversefile)
         pass
     
+    def print_to_sam(self, key, samfile=sys.stdout):
+        """Output aligned sequences as SAM with constant quality"""
+        # This may be expanded to deal with quality scores in future versions
+        # Implemented to allow comparisons on IGV with other programs
+        # Output should be run through samtools calmd/fillmd and converted to bam
+        aligned_sample_seq, aligned_ref_seq = self.aligned[key]
+        cigar, start, length = gapped_alignment_to_cigar(aligned_ref_seq,aligned_sample_seq)
+        rname, amplicon_start, amplicon_end, strand = self.location[key]
+        pos = amplicon_start + start
+        flag = '0'
+        seq = aligned_sample_seq.replace('-','')
+        qual = 'I'*len(seq)
+        for x in range(self.get_amplicon_count(key)):
+            qname = '{0}_{1}'.format(key,x+1)
+            print(qname,flag,rname,pos,'0',cigar,'*','0',length,seq,qual,sep='\t',file=samfile)
+        pass
+    
+    def printall_to_sam(self, samfile=sys.stdout):
+        print('@HQ\tVN:1.5',file=samfile)
+        print('@PG\tID:AmBiVErT\tVN:{version}'.format(version=__version__),file=samfile)
+        for key in self.aligned:
+            self.print_to_sam(key, samfile=samfile)
+        pass
+    
     def is_homopolymer_at_position(self,chrom, pos, minimum = 5):
         #get identifiers for reference amplicons that overlap
         reference_ids = self.get_reference_overlapping(chrom, pos, length=1)
@@ -631,6 +655,10 @@ def process_commandline_args(): #pragma no cover
                         type=str,
                         default='',
                         help='Print a formatted text version of variant containing alignments to a file. "-" will print to stderr')    
+    parser.add_argument('--sam',
+                        type=argparse.FileType('wt'),
+                        help='Output a sam format alignment of the aligned amplicons.  Uses constant quality scores,\
+                             ignores amplicon strand and does not produce md tag calls')    
     parser.add_argument('--fastqamplicon',
                         type=str,
                         default='',
@@ -749,6 +777,8 @@ def main(): #pragma no cover
     
     amplicons.print_consolidated_vcf(min_cover=args.min_cover, min_reads=args.min_reads, min_freq=args.min_freq, outfile=args.output)
     
+    if args.sam:
+        amplicons.printall_to_sam(samfile=args.sam)
     pass
 
 if __name__ == '__main__': #pragma no cover

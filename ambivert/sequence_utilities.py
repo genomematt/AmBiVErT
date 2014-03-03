@@ -7,7 +7,8 @@ Created by Matthew Wakefield on 2013-05-02.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 """
 #from __future__ import print_function, division, unicode_literals
-import sys, os, io
+import sys, os, io, re
+from string import ascii_uppercase, ascii_lowercase
 #import itertools
 import gzip
 
@@ -178,6 +179,108 @@ def get_tag(read,tag):
         if x.startswith(tag):
             return x.split(':')[-1]
     return None
+
+def compact_cigar(expanded_cigar):
+    result = []
+    last_state = expanded_cigar[0]
+    count = 0
+    for state in expanded_cigar:
+        if state == last_state:
+            count +=1
+        else:
+            result.append(str(count)+last_state)
+            last_state = state
+            count = 1
+    result.append(str(count)+state)
+    return "".join(result)
+
+def expand_cigar(cigar):
+    return "".join([x[1]*int(x[0]) for x in re.findall(r'([0-9]+)([MIDNSHPX=])',cigar)])
+
+def engap(seq, cigar, delete='D', insert='I', match='M', gap='-'):
+    """Convert a match/delete/insert string and sequence into gapped sequence
+    To convert the target sequence swap delete and insert symbols.
+        Arguments:
+            o   seq : a sequence string
+            o   cigar : a cigar string eg 80M5D10M10I
+            o   delete : deletion state character Default = 'D'
+            o   insert : insertion state character Default = 'I'
+            o   match : match state character Default = 'M'
+            o   gap : output gap character Default = '-'
+        Returns:
+            o   string : gapped seqeunce
+    """
+    gapped = []
+    xcigar = expand_cigar(cigar)
+    assert len(seq) == xcigar.count(match) + xcigar.count(insert)
+    seq = list(seq)
+    for symbol in xcigar:
+        if symbol == delete:
+            gapped.append('-')
+        else:
+            gapped.append(seq.pop(0))
+    return "".join(gapped)
+
+def cigar_trimmer(cigar,trim_from_start=0,trim_from_end=0):
+    xcigar = expand_cigar(cigar)
+    result = []
+    sequence_length = len(xcigar) - xcigar.count('D')
+    position_in_sequence = 0
+    for state in xcigar:
+        if not (state == 'D' or state == 'S'):
+            position_in_sequence +=1
+        if position_in_sequence > trim_from_start and position_in_sequence <= sequence_length - trim_from_end:
+            result.append(state)
+    return compact_cigar(result)
+
+def fix_softmasked_expanded_cigar(expanded_cigar, start = 0):
+    #fix SDS and SIS states
+    if isinstance(expanded_cigar, list):
+        expanded_cigar = ''.join(expanded_cigar)
+    if 'S' in expanded_cigar:
+        ##These versions trim insert delete states adjacent to softmask
+        ##This produces more valid cigar strings, but may softmask variants
+        #initial_SDI_block = re.findall(r'^([SDI]*)',expanded_cigar)[0]
+        #final_SDI_block = re.findall(r'([SDI]*$)',expanded_cigar)[0]
+        initial_SDI_block = re.findall(r'^([SDI]*S)',expanded_cigar)[0]
+        final_SDI_block = re.findall(r'(S[SDI]*$)',expanded_cigar)[0]
+        initial_softmask_string = initial_SDI_block.replace('D','').replace('I','S')
+        start += len(initial_softmask_string)
+        final_softmask_string = final_SDI_block.replace('D','').replace('I','S')
+        length_in_ref = len(expanded_cigar) - (len(initial_SDI_block) + len(final_SDI_block))
+        fixed_expanded_cigar = initial_softmask_string + expanded_cigar[len(initial_SDI_block):len(expanded_cigar)-len(final_SDI_block)+1] + final_softmask_string
+        ### TODO find any MSM blocks
+        ### TODO replace internal S with M
+    else:
+        fixed_expanded_cigar = expanded_cigar
+        length_in_ref = len([x for x in expanded_cigar if x in 'MD'])
+    return fixed_expanded_cigar, start, length_in_ref
+    
+def gapped_alignment_to_cigar(aligned_reference,aligned_sample, gap='-', snv='M'):
+    if len(aligned_reference) != len(aligned_sample):
+        raise(RuntimeError, 'Unequal sequences lengths - not correctly aligned \n    {0}\n    {1}'.format(aligned_reference,aligned_sample))
+    xcigar = []
+    for i in range(len(aligned_reference)):
+        if aligned_reference[i] == aligned_sample[i]:
+            xcigar.append('M')
+        elif aligned_reference[i] in ascii_uppercase and \
+            aligned_sample[i] in ascii_uppercase:
+            xcigar.append(snv)
+        elif aligned_reference[i] in ascii_lowercase:
+            if not aligned_sample[i] == gap:
+                xcigar.append('S')
+            else:
+                xcigar.append('D')
+        elif aligned_reference[i] == gap:
+            xcigar.append('I')
+        elif aligned_sample[i] == gap:
+            xcigar.append('I')
+        else:
+            raise(RuntimeError, 'Invalid alignment state \n{0}\n{1}'.format(aligned_reference[i],aligned_sample[i]))
+    fixed_xcigar, start, length = fix_softmasked_expanded_cigar(xcigar)
+    return compact_cigar(fixed_xcigar), start, length
+        
+        
 
 
 #if __name__ == '__main__':
