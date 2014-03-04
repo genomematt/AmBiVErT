@@ -22,6 +22,10 @@ class test_sequence_utilities(unittest.TestCase):
                         ('SSSSMMMMMMMMSSSS', 4, 8))
         self.assertEqual(fix_softmasked_expanded_cigar(['S', 'S', 'D', 'S', 'M', 'M', 'M', 'I', 'M', 'D', 'M', 'M', 'S', 'I', 'S', 'S']),
                         ('SSSMMMIMDMMSSSS', 3, 8))
+        self.assertEqual(fix_softmasked_expanded_cigar(['S', 'S', 'D', 'S', 'M', 'M', 'M', 'I', 'M', 'D', 'M', 'M']),
+                        ('SSSMMMIMDMM', 3, 8))
+        self.assertEqual(fix_softmasked_expanded_cigar(['M', 'M', 'M', 'I', 'M', 'D', 'M', 'M', 'S', 'I', 'S', 'S']),
+                        ('MMMIMDMMSSSS', 0, 8))
         pass
         
     def test_gapped_alignment_to_cigar(self):

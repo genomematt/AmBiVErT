@@ -242,8 +242,10 @@ def fix_softmasked_expanded_cigar(expanded_cigar, start = 0):
         ##This produces more valid cigar strings, but may softmask variants
         #initial_SDI_block = re.findall(r'^([SDI]*)',expanded_cigar)[0]
         #final_SDI_block = re.findall(r'([SDI]*$)',expanded_cigar)[0]
-        initial_SDI_block = re.findall(r'^([SDI]*S)',expanded_cigar)[0]
-        final_SDI_block = re.findall(r'(S[SDI]*$)',expanded_cigar)[0]
+        leading_matches = re.findall(r'^([SDI]*S)',expanded_cigar)
+        initial_SDI_block = leading_matches[0] if leading_matches else ''
+        trailing_matches = re.findall(r'(S[SDI]*$)',expanded_cigar)
+        final_SDI_block = trailing_matches[0] if trailing_matches else ''
         initial_softmask_string = initial_SDI_block.replace('D','').replace('I','S')
         start += len(initial_softmask_string)
         final_softmask_string = final_SDI_block.replace('D','').replace('I','S')
@@ -255,7 +257,7 @@ def fix_softmasked_expanded_cigar(expanded_cigar, start = 0):
         fixed_expanded_cigar = expanded_cigar
         length_in_ref = len([x for x in expanded_cigar if x in 'MD'])
     return fixed_expanded_cigar, start, length_in_ref
-    
+
 def gapped_alignment_to_cigar(aligned_reference,aligned_sample, gap='-', snv='M'):
     if len(aligned_reference) != len(aligned_sample):
         raise(RuntimeError, 'Unequal sequences lengths - not correctly aligned \n    {0}\n    {1}'.format(aligned_reference,aligned_sample))
