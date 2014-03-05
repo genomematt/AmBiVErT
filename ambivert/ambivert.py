@@ -554,7 +554,7 @@ class AmpliconData(object):
         qual = 'I'*len(seq)
         for x in range(self.get_amplicon_count(key)):
             qname = '{0}_{1}'.format(key,x+1)
-            print(qname,flag,rname,pos,'0',cigar,'*','0',length,seq,qual,sep='\t',file=samfile)
+            print(qname,flag,rname,pos,'40',cigar,'*','0',length,seq,qual,sep='\t',file=samfile)
         pass
     
     def printall_to_sam(self, samfile=sys.stdout):
@@ -584,6 +584,7 @@ class AmpliconData(object):
         print('@SQ\tSN:chrX\tLN:155270560',file=samfile)
         print('@SQ\tSN:chrY\tLN:59373566',file=samfile)
         print('@SQ\tSN:chrM\tLN:16571',file=samfile)
+        print('@SQ\tSN:chr3_PATCH_NW_003871060.1\tLN:173151',file=samfile)
         print('@PG\tID:AmBiVErT\tVN:{version}'.format(version=__version__),file=samfile)
         for key in self.aligned:
             self.print_to_sam(key, samfile=samfile)
