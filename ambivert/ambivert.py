@@ -59,6 +59,14 @@ __status__ = "Development"
 logfile = sys.stderr
 
 def smith_waterman(seq1,seq2):
+    """Wrapper method for Smith-Waterman alignment using
+    the plumb.bob C implementation
+    
+    Arguments:
+        - seq1 : an ascii DNA sequence string.  This is the query
+                 sequence and must be all upper case
+        - seq2 : an ascii DNA sequence string.  This is the reference
+                 sequence and may contain lower case soft masking """
     alignment =  plumb.bob.local_align(bytes(seq1,'ascii'), len(seq1),
                                 bytes(seq2.upper(),'ascii'), len(seq2),
                                 plumb.bob.DNA_MAP[0],
@@ -89,6 +97,14 @@ def smith_waterman(seq1,seq2):
     return align_seq1,align_seq2,start_seq1,start_seq2
 
 def needleman_wunsch(seq1,seq2):
+    """Wrapper method for Needleman-Wunsch alignment using
+    the plumb.bob C implementation
+    
+    Arguments:
+        - seq1 : an ascii DNA sequence string.  This is the query
+                 sequence and must be all upper case
+        - seq2 : an ascii DNA sequence string.  This is the reference
+                 sequence and may contain lower case soft masking """
     alignment =  plumb.bob.global_align(bytes(seq1,'ascii'), len(seq1),
                                 bytes(seq2.upper(),'ascii'), len(seq2),
                                 plumb.bob.DNA_MAP[0],
@@ -129,7 +145,7 @@ class AmpliconData(object):
         - trim3   : number of bases to trim from 3' for key default = None
     """
     def __init__(self, trim5=None, trim3=None):
-        self.data = defaultdict(list)
+        self.data = defaultdict(list) #{md5hexdigest:[((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)),]}
         self.merged = {} # a dictionary of overlapped merged sequences with same key as self.data
         self.unmergable = [] # a list of keys (to self.data) for which merging failed
         self.aligned = {} # a dictionary of aligned (ref,sample) sequence tuples with same key as self.data
@@ -148,6 +164,7 @@ class AmpliconData(object):
         pass
     
     def __str__(self):
+        """Returns a description of object content and settings"""
         result = ""
         result += "Data file names: \n"
         for filename in self.input_filenames:
@@ -162,12 +179,35 @@ class AmpliconData(object):
         return result
     
     def add_reads(self, f_name, f_seq, f_qual,r_name, r_seq, r_qual):
+        """Add read sequence pairs to amplicon object representation
+        Reads are stored internally as tuples of tuples in a dictionary of lists.
+        The dictionary is keyed by the 16 character MD5 hexdigest of the concatinated
+        forward and reverse sequences.
+        ie  {md5hexdigest:[((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)),]}
+        
+        Arguments:
+            f_name  :   forward read name (ascii string)
+            f_seq   :   forward sequence (ascii string)
+            f_qual  :   forward quality scores (ascii string)
+            r_name  :   reverse read name (ascii string)
+            r_seq   :   reverse sequence (ascii string)
+            r_qual  :   reverse quality scores (ascii string)
+        """
         amplicon_key = hashlib.md5(bytes(f_seq[self.trim5:self.trim3]+r_seq[self.trim5:self.trim3], 'ascii')).hexdigest()
         self.data[amplicon_key].append(((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)))
         self.readpairs += 1
         pass
     
     def process_twofile_readpairs(self, forward_file, reverse_file, parser=parse_fastq):
+        """Parse two file fastq format read pairs and add readpairs to amplicon object
+        by calling AmpliconData.add_reads
+        
+        Arguments:
+            forwardfile : a file object containing fastq formatted forward reads
+            reversefile : a file object containing matched reverse reads
+            parser      : an parser function that yields (name,sequence,quality) from
+                          a fastqfile.  Default ambivert.sequence_utilities.parse_fastq
+        """
         print('Reading data...', file=logfile)
         if hasattr(forward_file,'name'):
             self.input_filenames.append(forward_file.name)
@@ -181,13 +221,30 @@ class AmpliconData(object):
         print('Read',self.readpairs,'read pairs', file=logfile)
         pass
     
-    #def process_interleaved_readpairs(parser=parse_fastq, filename):
-    #    pass
-    
     def get_above_threshold(self, threshold=1):
+        """Returns groups of reads with identical forward and reverse
+        sequences that occur more times than a threshold
+        Arguments:
+            threshold   : The number of occurences that must be exceeded
+        Returns:
+            a list of md5 hexdigest keys to read groups in AmpliconData.data
+        """
         return [x for x in self.data if len(self.data[x]) > threshold]
     
     def merge_overlaps(self, threshold=0, minimum_overlap=10):
+        """Uses Smith-Waterman alignment to overlap the ends of paired reads
+        from AmpliconData.data creating AmpliconData.merged which maintains
+        the same md5 hexdigest key as AmpliconData.data and a string of
+        the merged sequence.
+        Reads that do not overlap between forward and reverse are excluded and
+        their md5 hexdigest key added to AmpliconData.unmergable
+        Arguments:
+            threshold   : The number of occurences that must be exceeded before
+                          attempting to merge.  Default = 0
+            minimum_overlap : The minimum number of bases that must overlap
+                          for a merge to occur
+        """
+        #uses reverse_complement & flatten_paired_alignment from ambivert.sequence_utilities
         self.threshold = threshold #record in object data
         total = len(self.get_above_threshold(threshold))
         completed = 0
@@ -205,17 +262,59 @@ class AmpliconData(object):
         pass
     
     def add_references_from_fasta(self, fastafile):
+        """Add reference sequences from a fasta file
+        Reference sequences should include the entire amplicon
+        sequence.  Regions that should not be called (eg primers)
+        should be soft masked in lower case.  All other bases
+        should be upper case.
+        Additional annotation details are required on the name line
+        and should be tab separated in the format:
+        >amplicon_name    chromosome    start    end    strand(+/-)
+        
+        Arguments:
+            fastafile : a file object containg fasta entries
+            
+        Data stored in AmpliconData.reference_sequences with key
+        (name, chromosome, start, end, strand)
+        """
         for name,sequence in parse_fasta(fastafile):
             self.reference_sequences[tuple(name.split())] = sequence
         pass
     
     def add_references_from_manifest(self, manifestfile):
+        """Add reference sequences from an Illumina TruSeq amplicon
+        manifest file.  Lightly tested for impact on variation in the
+        implementation.
+        Currently strictly asserts for presence of expected column header
+        even when these columns are not required
+        See ambivert.truseq_manifest for details
+        """
         for name,sequence in make_sequences(*parse_truseq_manifest(manifestfile), with_probes=True, softmask_probes=True, all_plus=False):
             self.reference_sequences[tuple(name.split())] = sequence
         pass
     
     def match_to_reference(self, min_score = 0.1, trim_primers=0, global_align=True):
+        """Assign read groups to reference sequences by competitive alignment
+        Does not do reverse complementing or alignment formatting and relies
+        only on score to match
+        Checks AmpliconData.reference for cached results to avoid redundant calculation
+        Stores results in AmpliconData.reference keyed by md5 hexdigest in
+        as keys to AmpliconData.reference_sequences in format 
+        (name, chromosome, start, end, strand)
+        
+        Arguments:
+            min_score :         The minimum alignment score to be considered a match
+                                Default = 0.1
+            trim_primers:       A fixed size to be trimmed prior to matching
+                                Default = 0
+            global_alignment:   Use global Needleman-Wunsch alignment instead of
+                                Smith-Waterman.  Default = True
+        """
         def match_by_edit(merged_key,ref_keys): #pragma no cover
+            """original matching method using edit distances
+            inaccurate handeling of indels results in frequent
+            misassignment.
+            DEPRECIATED - DO NOT USE"""
             #depreciated
             best_score = 0
             best_hit = ''
@@ -230,6 +329,12 @@ class AmpliconData(object):
             return best_hit,best_score
         
         def match_by_smith_waterman(merged_key,ref_keys):
+            """Match merged amplicon to reference by local alignment
+            Arguments:
+                merged_key : a md5 hexdigest key to AmpliconData.merged
+                ref_keys   : a list of keys to AmpliconData.reference_sequences
+                             in format [(name, chromosome, start, end, strand),]
+            """
             best_score = 0
             best_hit = ''
             for ref_key in ref_keys:
@@ -252,6 +357,12 @@ class AmpliconData(object):
             return best_hit,best_score
 
         def match_by_needleman_wunsch(merged_key,ref_keys):
+            """Match merged amplicon to reference by global alignment
+            Arguments:
+                merged_key : a md5 hexdigest key to AmpliconData.merged
+                ref_keys   : a list of keys to AmpliconData.reference_sequences
+                             in format [(name, chromosome, start, end, strand),]
+            """
             best_score = int(-1000000)
             best_hit = ''
             for ref_key in ref_keys:
@@ -296,6 +407,18 @@ class AmpliconData(object):
         pass
     
     def align_to_reference(self, global_align=True):
+        """Perform reverse complementation if necessary and 
+        full alignment to produce left aligned plus strand
+        reference and query sequences.
+        Arguments:
+            global_alignment:   Use global Needleman-Wunsch alignment instead of
+                                Smith-Waterman.  Default = True
+        
+        Stores (aligned_sample_seq, aligned_ref_seq) in AmpliconData.aligned
+        and (chromosome, int(start), int(end), ref_start) in AmpliconData.location
+        ref_start will be 0 for global and alignment offset in reference for local
+        keyed by the same md5 hexdigest key as AmpliconData.data and AmpliconData.merged
+        """
         for merged_key in self.reference: #use reference to restrict to matched merged pairs
             if not merged_key in self.merged:
                 continue #occurs when matched in cached file but not present in data set
