@@ -5,6 +5,11 @@ mpileup.py
 
 Created by Matthew Wakefield on 2013-05-01.
 Copyright (c) 2013  Matthew Wakefield and The Walter and The University of Melbourne. All rights reserved.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 """
 from __future__ import print_function
 import sys

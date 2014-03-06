@@ -1,10 +1,17 @@
 #!/usr/bin/env python2.7
 # encoding: utf-8
 """
-ambivert.py
+call_variants.py
 
 Created by Matthew Wakefield and Graham Taylor.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
+
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
 """
 from __future__ import print_function
 import sys, os

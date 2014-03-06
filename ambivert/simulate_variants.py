@@ -5,6 +5,11 @@ simulate_variants.py
 
 Created by Matthew Wakefield on 2013-05-03.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 """
 import os, sys
 import re
@@ -479,8 +484,14 @@ def amplicons_to_mutated_reads(forward_outfile = sys.stdout,
     pass
 
 def command_line_interface(*args,**kw):
-    parser = argparse.ArgumentParser(description='A script for simulating paired end reads with variants\
-                                                 from an amplicon target file')
+    parser = argparse.ArgumentParser(description="""A script for simulating paired end reads with variants
+                         from an amplicon target file
+   
+                         This program is distributed in the hope that it will be useful,
+                         but WITHOUT ANY WARRANTY; without even the implied warranty of
+                         MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+                                                 """)
     parser.add_argument('--manifest',
                         type=argparse.FileType('U'),
                         default=None,

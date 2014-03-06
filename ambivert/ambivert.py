@@ -31,6 +31,11 @@ All lines of code [will be/are] covered by unit tests unless marked with #pragma
 
 Created by Matthew Wakefield and Graham Taylor.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 """
 import sys, os
 import itertools, difflib, argparse
@@ -615,7 +620,14 @@ def process_commandline_args(): #pragma no cover
         reduces the number of amplicon products that must be assigned to target regions & assessed for variant calls.
         AmBiVErT overlaps forward and reverse reads from the same amplicon and preserves local phasing information.
         Typical running time for first use is several hours, which reduces to less than 10 minutes when the
-        hash table calculated on a previous run is supplied for analysis of subsequent samples with the same amplicons.""")
+        hash table calculated on a previous run is supplied for analysis of subsequent samples with the same amplicons.
+        
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+        
+        This software is provided for research use only.
+        """)
     parser.add_argument('-f','--forward',
                         type=str,
                         help='a fastq format file of forward direction amplicon reads. \
