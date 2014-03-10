@@ -442,9 +442,27 @@ class AmpliconData(object):
         pass
     
     def get_amplicon_count(self, key):
+        """Return the number of times a specific amplicon sequence
+        occurs in the data.
+        Arguments:
+            key:    An md5 hexdigest amplicon identifier
+                    Note that these are unique for full sequence
+                    of the amplicon including trimmed sequence.
+        Returns:
+            integer count of amplicons if greater than threshold.
+            zero if less than threshold.
+        """
         return len(self.data[key])
     
     def get_amplicon_counts(self):
+        """Get a dictionary of amplicon sequence occurance counts
+        for all amplicons that have been assigned to the reference.
+        Returns:
+            a dictionary of {key:occurance} where
+            key = An md5 hexdigest amplicon identifier from self.reference
+            occurance = integer count of amplicons if greater than threshold.
+            zero if less than threshold.
+        """
         amplicon_counts = {key:0 for key in self.reference_sequences}
         if not self.reference:
             self.align_to_reference()
@@ -456,6 +474,12 @@ class AmpliconData(object):
     
     
     def save_hash_table(self,newhashfile):
+        """Save a lookup table with precomputed assignment
+        of amplicon sequences to reference locations.
+        Only saves assignments that have no potential variants.
+        Arguments:
+            newhashfile:    a writable python3 binary file
+        """
         reference_sha224 = hashlib.sha224(repr(sorted(self.reference_sequences)).encode('latin-1')).hexdigest()
         with newhashfile as outfile:
             hash_dictionary = {merged_key:self.reference[merged_key] for merged_key in self.reference if merged_key not in self.potential_variants} 
@@ -463,6 +487,13 @@ class AmpliconData(object):
         pass
     
     def load_hash_table(self,hashfile):
+        """Load a lookup table with precomputed assignment
+        of amplicon sequences to reference locations.
+        Arguments:
+            newhashfile:    a readable python3 binary file
+                            with a pickled data structure
+                            from AmpliconData.save_hash_table
+        """
         with hashfile as infile:
             reference_sha224,refdict = pickle.load(infile)
             if reference_sha224 == hashlib.sha224(repr(sorted(self.reference_sequences)).encode('latin-1')).hexdigest():
@@ -474,6 +505,16 @@ class AmpliconData(object):
         pass
     
     def print_variants_as_alignments(self, outfile=sys.stdout):
+        """Print a human readable alignment of potentially
+        variant containing amplicons.  These amplicons are
+        pre variant calling and filtering and contain all
+        amplicons that differ from the reference - including
+        in softmasked regions.
+        
+        Arguments:
+            outfile:    a writable python3 text file object
+                        Default = sys.stdout
+        """
         for key in sorted(self.potential_variants):
             aligned_sample_seq, aligned_ref_seq = self.aligned[key]
             print(key,file=outfile)
@@ -481,7 +522,7 @@ class AmpliconData(object):
             print(aligned_ref_seq,file=outfile)
             matches = ''
             for a,b in zip(aligned_ref_seq, aligned_sample_seq):
-                if a == b or a in 'abcdghkmnrstuvwy':
+                if a == b or a in 'abcdghkmnrstuvwy': #softmasked or match
                     matches += '.'
                 else:
                     matches += b
@@ -491,6 +532,11 @@ class AmpliconData(object):
         pass
     
     def call_amplicon_variants(self):
+        """Call variants in amplicons
+        Takes input from AmpliconData.potential_variants
+        Outputs to AmpliconData.called_variants
+        """
+        # uses call_variants from ambivert.call_variants
         for key in self.potential_variants:
             aligned_sample_seq, aligned_ref_seq = self.aligned[key]
             name, chromosome, amplicon_position, end, strand = self.reference[key]
@@ -498,6 +544,11 @@ class AmpliconData(object):
         pass
     
     def get_variant_positions(self):
+        """Get variants position in reference coordinates
+        Returns:
+            a sorted list of tuples of the form
+            (chromosome, start_positions, end_position)
+        """
         variant_positions = []
         for amplicon_id in self.called_variants:
             for variant in self.called_variants[amplicon_id]:
@@ -505,6 +556,16 @@ class AmpliconData(object):
         return sorted(list(set(variant_positions)))
     
     def consolidate_variants(self, exclude_softmasked_coverage=True):
+        """Consolidate and normalize variant calls
+        Takes input from AmpliconData.called_variants
+        Outputs to AmpliconData.consolidated_variants
+        
+        Arguments:
+            exclude_softmasked_coverage: boolian flag to exclude
+                                         variants that overlap softmasked
+                                         (lower case in reference) sequence
+                                         Default = True
+        """
         positions = self.get_variant_positions()
         for (chrom, start, end) in positions:
             if exclude_softmasked_coverage:
@@ -552,6 +613,19 @@ class AmpliconData(object):
         pass
         
     def get_filtered_variants(self, min_cover=0, min_reads=0, min_freq=0.1):
+        """Get variants that match filtering conditions
+        Arguments:
+            min_cover:  minimum total coverage of all amplicons
+                        at the variant postion (int) Default = 0
+            min_reads:  minimum coverage of variant amplicons (int)
+                        Default = 0
+            min_freq:   minimum frequence of variant (float 0.0 - 1.0)
+                        Default = 0.1
+        
+        Note that the minimum effective value of min_cover and min_reads
+        is bound by AmpliconData.threshold.  Setting min_cover or 
+        min_reads to less than AmpliconData.threshold will have no effect.
+        """
         def is_softmasked(allele):
             return bool([base for base in allele if base.islower()])
         
@@ -568,6 +642,24 @@ class AmpliconData(object):
                yield variant
         
     def print_consolidated_vcf(self, min_cover=0, min_reads=0, min_freq=0.1, outfile=sys.stdout):
+        """Print variants that match filtering conditions in VCF Format
+        
+        Arguments:
+            min_cover:  minimum total coverage of all amplicons
+                        at the variant postion (int) Default = 0
+            min_reads:  minimum coverage of variant amplicons (int)
+                        Default = 0
+            min_freq:   minimum frequence of variant (float 0.0 - 1.0)
+                        Default = 0.1
+            outfile:    a writeable text format file. Default = sys.stdout
+        
+        Note that the minimum effective value of min_cover and min_reads
+        is bound by AmpliconData.threshold.  Setting min_cover or 
+        min_reads to less than AmpliconData.threshold will have no effect
+        and the values for these parameters will be reported as threshold
+        in the VCF header.
+        """
+        
         if not self.called_variants:
             self.call_amplicon_variants()
         if not self.consolidated_variants:
@@ -613,7 +705,16 @@ class AmpliconData(object):
             
 
     def get_amplicons_overlapping(self,chrom, pos, length=1):
-        """Returns a list of amplicon ids for amplicons that overlap a reference position"""
+        """Returns a list of amplicon ids for amplicons that overlap a reference position
+        Arguments:
+            chrom:  The reference chromosome
+            pos:    The reference chromosome base position
+            length: Length of the region for overlap
+                    Default = 1
+        Returns:
+            a list of md5 hexdigest keys to AmpliconData.location
+            These keys are shared with AmpliconData.data, .aligned and .called_variants
+        """
         result = []
         pos = int(pos)
         length = int(length)
@@ -627,8 +728,17 @@ class AmpliconData(object):
         return result
 
     def get_reference_overlapping(self,chrom, pos, length=1):
-        """Returns a list of reference identifiers that overlap a chromosomal position"""
-        #self.reference_sequences = {} # dictionary of reference sequences. Key is (name, chromosome, start, end, strand)
+        """Returns a list of reference identifiers that overlap a chromosomal position
+        Arguments:
+            chrom:  The reference chromosome
+            pos:    The reference chromosome base position
+            length: Length of the region for overlap
+                    Default = 1
+        Returns:
+            a list of keys to AmpliconData.reference_sequences of the
+            format (name, chromosome, start, end, strand)
+        """
+        #self.reference_sequences = {(name, chromosome, start, end, strand): ref_seq,}
         result = []
         pos = int(pos)
         length = int(length)
@@ -643,7 +753,16 @@ class AmpliconData(object):
 
     def get_amplicons_overlapping_without_softmasking(self,chrom, pos, length=1):
         """Returns a list of amplicon ids for amplicons that overlap a reference position
-        where the reference bases are not softmasked (represented by lower case)"""
+        where the reference bases are not softmasked (represented by lower case)
+        Arguments:
+            chrom:  The reference chromosome
+            pos:    The reference chromosome base position
+            length: Length of the region for overlap
+                    Default = 1
+        Returns:
+            a list of md5 hexdigest keys to AmpliconData.location
+            These keys are shared with AmpliconData.data, .aligned and .called_variants
+        """
         result = []
         pos = int(pos)
         length = int(length)
@@ -656,7 +775,14 @@ class AmpliconData(object):
         return result
     
     def print_to_fastq(self, key, forwardfile=sys.stdout, reversefile=sys.stdout):
-        """Print fastq of amplicons reads - intended for debugging purposes"""
+        """Print fastq of amplicons reads - intended for debugging purposes
+        Arguments:
+            key:            an md5 hexdigest key to AmpliconData.data
+            forwardfile:    a writable text format file
+                            Default: sys.stdout
+            reversefile:    a writable text format file
+                            Default: sys.stdout
+        """
         for ((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)) in self.data[key]:
             print('@'+f_name,file=forwardfile)
             print(f_seq,file=forwardfile)
@@ -669,7 +795,12 @@ class AmpliconData(object):
         pass
     
     def print_to_sam(self, key, samfile=sys.stdout):
-        """Output aligned sequences as SAM with constant quality"""
+        """Output aligned sequences as SAM with constant quality
+        Arguments:
+            key:        an md5 hexdigest key to AmpliconData.data
+            samfile:    a writable text format file
+                        Default: sys.stdout
+        """
         # This may be expanded to deal with quality scores in future versions
         # Implemented to allow comparisons on IGV with other programs
         # Output should be run through samtools calmd/fillmd and converted to bam
@@ -686,6 +817,14 @@ class AmpliconData(object):
         pass
     
     def printall_to_sam(self, samfile=sys.stdout):
+        """Output all aligned sequences as SAM with constant quality
+        Currently uses a hardcoded human GRCh37 reference header for @SQ
+        which will need manual editing for other references
+        Arguments:
+            samfile:    a writable text format file
+                        Default: sys.stdout
+        """
+        ### TODO The header should be configurable without editing the code
         print('@HQ\tVN:1.5\tSO:unsorted',file=samfile)
         print('@SQ\tSN:chr1\tLN:249250621',file=samfile)
         print('@SQ\tSN:chr2\tLN:243199373',file=samfile)
