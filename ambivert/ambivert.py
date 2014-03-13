@@ -858,6 +858,14 @@ class AmpliconData(object):
         pass
     
     def is_homopolymer_at_position(self,chrom, pos, minimum = 5):
+        """Test if a homopolymer extends to the right of a sequence position
+        Arguments:
+            chrom:      Reference chromosome
+            pos:        Position on reference chromosome
+            minimum:    the minimum number of repeats to be 
+                        considered a homopolymer
+                        Default = 5
+        """
         #get identifiers for reference amplicons that overlap
         reference_ids = self.get_reference_overlapping(chrom, pos, length=1)
         ref = sorted(reference_ids)[-1] # get right most overlapping reference
@@ -876,6 +884,9 @@ class AmpliconData(object):
             return False
     
 def process_commandline_args(): #pragma no cover
+    """Processes command line arguments and returns args object
+    Use ambivert --help for details of arguments
+    """
     parser = argparse.ArgumentParser(description="""AmBiVErT: A program for binned analysis of amplicon data
         AmBiVErT clusters identical amplicon sequences and thresholds based on read frequency to remove technical errors.
         Due to sequencing errors occuring with a more random distribution than low frequency variants this approach
@@ -914,9 +925,6 @@ def process_commandline_args(): #pragma no cover
                         type=argparse.FileType('w'),
                         help='output of occurance counts per amplicon.  Includes all counts that map to the reference amplicon.\
                              This count does not include reads that occured at frequencies below --threshold <default=20>')    
-    #parser.add_argument('--mpileup',
-    #                    type=argparse.FileType('w'),
-    #                    help='output mpileup files with filenames of the format "<name_provided_as_argument>_<amplicon_name>.mpileup"')    
     parser.add_argument('--threshold',
                         type=int,
                         default=20,
@@ -940,11 +948,6 @@ def process_commandline_args(): #pragma no cover
                         type=int,
                         default=20,
                         help='The minimum overlap required between forward and reverse sequences to merge. Default 20bp')    
-    #parser.add_argument('--primer',
-    #                    type=int,
-    #                    default=0,
-    #                    help='The size of the smallest primer.  This number of bases is trimmed from the end of the merged sequences \
-    #                         to reduce the possibility that small amplicons will fail to match due to primer mismatch')    
     parser.add_argument('--hashtable',
                         type=argparse.FileType('rb'),
                         help='Filename for a precomputed hash table of exact matches of amplicons to references.  Generate with --savehashtable')    
@@ -1009,6 +1012,46 @@ def process_amplicon_data(forward_file, reverse_file,
                           threshold=50, overlap=20, 
                           savehashtable=None, hashtable=None,
                           ):
+    """Read amplicon data from fastq files and return
+    an AmpliconData object with overlapped and aligned
+    to reference amplicons
+    
+    Arguments:
+        forward_file : a filename string or file object containing fastq
+                       format forward amplicon reads.  Can be gzipped.
+        reverse_file : a filename string or file object containing fastq
+                       format reverse amplicon reads.  Can be gzipped.
+        manifest     : an Illumina TruSeq amplicon manifest file
+        fasta        : a file object containg fasta entries of reference
+                       sequences.  Reference sequences should include the 
+                       entire amplicon sequence.  Regions that should not
+                       be called (eg primers) should be soft masked in
+                       lower case.  All other bases should be upper case.
+                       Additional annotation details are required on the 
+                       name line and should be tab separated in the format:
+                       >amplicon_name chromosome start end strand(+/-)
+                       
+                       One of manifest or fasta must be specified.
+                       If both manifest and fasta are specified all
+                       reference sequences from both files will be used.
+        
+        threshold    : the minimum number of occurances of an amplicon
+                       with a specific sequence required to process.
+                       This value limits the calling parameters min_reads
+                       and min_depth.  Smaller values will increase time
+                       required to process data by limiting complexity
+                       reduction.
+                       Default: 50.
+        overlap      : the minimum number of bases required for forward and
+                       reverse reads to be considered overlapping.
+        savehashtable: a writable binary format file for saving the mapping
+                       to reference lookup table
+        hashtable    : a readable binary format file containing a previously
+                       saved mapping to reference lookup table.
+    
+    Returns:
+        An ambivert.ambivert.AmpliconData object.
+    """
     amplicons = AmpliconData()
     amplicons.process_twofile_readpairs(open_potentially_gzipped(forward_file),
                                         open_potentially_gzipped(reverse_file))
@@ -1026,6 +1069,9 @@ def process_amplicon_data(forward_file, reverse_file,
     return amplicons
 
 def call_variants_per_amplicon(amplicons, args): #pragma no cover
+    """Depreciated.  Use AmpliconData.print_consolidated_vcf or 
+    AmpliconData.call_amplicon_variants() and .consolidate_variants()
+    """
     #depreciated
     print(make_vcf_header(args.threshold),file=args.output)
     for key in amplicons.potential_variants:
@@ -1071,9 +1117,9 @@ def main(): #pragma no cover
     if args.alignments:
         amplicons.print_variants_as_alignments(outfile=args.alignments)
     
+    #These are called in amplicons.print_consolidated_vcf
     #amplicons.call_amplicon_variants()
     #amplicons.consolidate_variants()
-    #call_variants_per_amplicon(amplicons,args)
     
     amplicons.print_consolidated_vcf(min_cover=args.min_cover, min_reads=args.min_reads, min_freq=args.min_freq, outfile=args.output)
     
