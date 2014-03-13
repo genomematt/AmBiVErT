@@ -816,42 +816,46 @@ class AmpliconData(object):
             print(qname,flag,rname,pos,'40',cigar,'*','0',length,seq,qual,sep='\t',file=samfile)
         pass
     
-    def printall_to_sam(self, samfile=sys.stdout):
+    def printall_to_sam(self, samfile=sys.stdout
+                        sq_header = [
+                            '@SQ\tSN:chr1\tLN:249250621',
+                            '@SQ\tSN:chr2\tLN:243199373',
+                            '@SQ\tSN:chr3\tLN:198022430',
+                            '@SQ\tSN:chr4\tLN:191154276',
+                            '@SQ\tSN:chr5\tLN:180915260',
+                            '@SQ\tSN:chr6\tLN:171115067',
+                            '@SQ\tSN:chr7\tLN:159138663',
+                            '@SQ\tSN:chr8\tLN:146364022',
+                            '@SQ\tSN:chr9\tLN:141213431',
+                            '@SQ\tSN:chr10\tLN:135534747',
+                            '@SQ\tSN:chr11\tLN:135006516',
+                            '@SQ\tSN:chr12\tLN:133851895',
+                            '@SQ\tSN:chr13\tLN:115169878',
+                            '@SQ\tSN:chr14\tLN:107349540',
+                            '@SQ\tSN:chr15\tLN:102531392',
+                            '@SQ\tSN:chr16\tLN:90354753',
+                            '@SQ\tSN:chr17\tLN:81195210',
+                            '@SQ\tSN:chr18\tLN:78077248',
+                            '@SQ\tSN:chr19\tLN:59128983',
+                            '@SQ\tSN:chr20\tLN:63025520',
+                            '@SQ\tSN:chr21\tLN:48129895',
+                            '@SQ\tSN:chr22\tLN:51304566',
+                            '@SQ\tSN:chrX\tLN:155270560',
+                            '@SQ\tSN:chrY\tLN:59373566',
+                            '@SQ\tSN:chrM\tLN:16571',
+                            '@SQ\tSN:chr3_PATCH_NW_003871060.1\tLN:173151',
+                        ]):
         """Output all aligned sequences as SAM with constant quality
-        Currently uses a hardcoded human GRCh37 reference header for @SQ
-        which will need manual editing for other references
         Arguments:
             samfile:    a writable text format file
                         Default: sys.stdout
+            sq_header:  a list of SAM @SQ header lines in the format
+                        ['@SQ\tSN:chr1\tLN:249250621',]
+                        Default: human GRCh37
         """
-        ### TODO The header should be configurable without editing the code
         print('@HQ\tVN:1.5\tSO:unsorted',file=samfile)
-        print('@SQ\tSN:chr1\tLN:249250621',file=samfile)
-        print('@SQ\tSN:chr2\tLN:243199373',file=samfile)
-        print('@SQ\tSN:chr3\tLN:198022430',file=samfile)
-        print('@SQ\tSN:chr4\tLN:191154276',file=samfile)
-        print('@SQ\tSN:chr5\tLN:180915260',file=samfile)
-        print('@SQ\tSN:chr6\tLN:171115067',file=samfile)
-        print('@SQ\tSN:chr7\tLN:159138663',file=samfile)
-        print('@SQ\tSN:chr8\tLN:146364022',file=samfile)
-        print('@SQ\tSN:chr9\tLN:141213431',file=samfile)
-        print('@SQ\tSN:chr10\tLN:135534747',file=samfile)
-        print('@SQ\tSN:chr11\tLN:135006516',file=samfile)
-        print('@SQ\tSN:chr12\tLN:133851895',file=samfile)
-        print('@SQ\tSN:chr13\tLN:115169878',file=samfile)
-        print('@SQ\tSN:chr14\tLN:107349540',file=samfile)
-        print('@SQ\tSN:chr15\tLN:102531392',file=samfile)
-        print('@SQ\tSN:chr16\tLN:90354753',file=samfile)
-        print('@SQ\tSN:chr17\tLN:81195210',file=samfile)
-        print('@SQ\tSN:chr18\tLN:78077248',file=samfile)
-        print('@SQ\tSN:chr19\tLN:59128983',file=samfile)
-        print('@SQ\tSN:chr20\tLN:63025520',file=samfile)
-        print('@SQ\tSN:chr21\tLN:48129895',file=samfile)
-        print('@SQ\tSN:chr22\tLN:51304566',file=samfile)
-        print('@SQ\tSN:chrX\tLN:155270560',file=samfile)
-        print('@SQ\tSN:chrY\tLN:59373566',file=samfile)
-        print('@SQ\tSN:chrM\tLN:16571',file=samfile)
-        print('@SQ\tSN:chr3_PATCH_NW_003871060.1\tLN:173151',file=samfile)
+        for sq_line in sq_header:
+            print(sq_line,file=samfile)
         print('@PG\tID:AmBiVErT\tVN:{version}'.format(version=__version__),file=samfile)
         for key in self.aligned:
             self.print_to_sam(key, samfile=samfile)
