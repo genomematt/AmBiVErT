@@ -816,7 +816,7 @@ class AmpliconData(object):
             print(qname,flag,rname,pos,'40',cigar,'*','0',length,seq,qual,sep='\t',file=samfile)
         pass
     
-    def printall_to_sam(self, samfile=sys.stdout
+    def printall_to_sam(self, samfile=sys.stdout,
                         sq_header = [
                             '@SQ\tSN:chr1\tLN:249250621',
                             '@SQ\tSN:chr2\tLN:243199373',
