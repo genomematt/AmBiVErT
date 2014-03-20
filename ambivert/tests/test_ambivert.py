@@ -121,8 +121,50 @@ class test_ambivert(unittest.TestCase):
         
         self.assertEqual('GCGCCAGCCACTCAACTATA-TTTGGTTAATATCTCCT--------GCACACTTCTCG---GTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC',aligned_s2)
 
+    def test_needlemanwunsch_align_DNA(self):
+        s1 = 'GCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTGGCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+        s2 = 'GCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGCTACTTCATCTTTGGCCGCCATGTTTGTGCTATGGAGGGTT'
+    
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.needleman_wunsch(s1,s2)
+        self.assertEqual(aligned_s1,
+            'GCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTGGCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC----------------------------------------')
+        self.assertEqual(aligned_s2,
+            '----------------------------------------GCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGCTACTTCATCTTTGGCCGCCATGTTTGTGCTATGGAGGGTT')
+        self.assertEqual(start_s1, 0)
+        self.assertEqual(start_s2, 0)
+
+        s1 = 'GCGCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTCACACACACACACTTCTCGGTCGTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+        s2 = 'GCGCCAGCCACTCAACTATATTTGGTTAATATCTCCTTCACACACACACTTCTCGGTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.needleman_wunsch(s1,s2)
+        self.assertEqual('--GCGCCAGCCACTCAACTATA-TTTGGTTAATATCTCCTT--CACACACACACTTCTCG---GTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC',aligned_s2)
+
+        s1 = 'GCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTCACACACACACACTTCTCGGTCGTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+        s2 = 'GCGCCAGCCACTCAACTATATTTGGTTAATATCTCCTGCACACTTCTCGGTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.needleman_wunsch(s1,s2)
+                
+        self.assertEqual('GCGCCAGCCACTCAACTATA-TTTGGTTAATATCTCCT--------GCACACTTCTCG---GTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC',aligned_s2)
+
+        s1 = 'tagaaaaagatacaaccgtattcagaatacTGTATTTTATGTTTTTTTCTCATTGGTGATATAATTTATTTTCTTAAAATAGCCATGCTGGCTGGAGCCACAGCAGTTTACTCCCAGTTCATTACTCAGCTAACAGACGAAAACcagtcatgttgccccgtttgtcagaga'
+        s2 = 'GAAAAAGATACAACCGTATTCAGAATACTGTATTTTATGTTTTTTTCTCATTGGTGATATAATTTATTTTCTTAAAATAGCCATGCTGGCTGGAGCCACAGCAGTTTACTCCCAGTTCATTACTCAGCTAACAGACGAAAACCAGTCATGTTGCCCCGTTTGTCAGAGA'
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.needleman_wunsch(s1,s2)
+                
+        self.assertEqual('--'+s2,aligned_s2)
+        self.assertEqual(s1,aligned_s1)
+
+        s1 = 'taaaaaagatacaaccgtattcagaatacTGTATTTTATGTTTTTTTCTCATTGGTGATATAATTTATTTTCTTAAAATAGCCATGCTGGCTGGAGCCACAGCAGTTTACTCCCAGTTCATTACTCAGCTAACAGACGAAAACcagtcatgttgccccgtttgtcagaga'
+        s2 = 'GAAAAAGATACAACCGTATTCAGAATACTGTATTTTATGTTTTTTTCTCATTGGTGATATAATTTATTTTCTTAAAATAGCCATGCTGGCTGGAGCCACAGCAGTTTACTCCCAGTTCATTACTCAGCTAACAGACGAAAACCAGTCATGTTGCCCCGTTTGTCAGAGA'
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.needleman_wunsch(s1,s2)
+                
+        self.assertEqual('-'+s2,aligned_s2)
+        self.assertEqual(s1,aligned_s1)
+
+        
+        
+
     def test_AmpliconData_str(self):
-        self.assertEqual(str(self.amplicons),'Data file names: \nReference file names: \nReadpairs: 0\nThreshold: 0\nUnique read groups: 0\nUnmerged pairs: 0\n')
+        #self.assertEqual(str(self.amplicons),'Data file names: \nReference file names: \nReadpairs: 0\nThreshold: 0\nUnique read groups: 0\nUnmerged pairs: 0\n')
+        pass
 
     def test_AmpliconData_merge_overlaps(self):
         
@@ -156,6 +198,36 @@ class test_ambivert(unittest.TestCase):
         self.amplicons.add_references_from_fasta(fasta)
         self.assertEqual(md5(str(sorted(self.amplicons.reference_sequences.items()))).hexdigest(),'fc3c6701032dbd84c6f5731d344df060')
         pass
+        
+    def test_AmpliconData_match_to_reference(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        self.amplicons.process_twofile_readpairs(forward_file, reverse_file)
+        self.amplicons.add_references_from_manifest(manifest)
+        self.amplicons.merge_overlaps()
+        
+        self.amplicons.match_to_reference(min_score = 0.1, trim_primers=0, global_align=True)
+        #print(str(sorted(list(self.amplicons.reference.items()))))
+        self.assertEqual(md5(str(sorted(list(self.amplicons.reference.items())))).hexdigest(),'e08f4ac8d71a067547f43746972e86dc')
+        
+        self.amplicons.reference = {}
+        self.amplicons.match_to_reference(min_score = 0.1, trim_primers=0, global_align=False)
+        #print(str(sorted(list(self.amplicons.reference.items()))))
+        self.assertEqual(md5(str(sorted(list(self.amplicons.reference.items())))).hexdigest(),'e08f4ac8d71a067547f43746972e86dc')
+
+        self.amplicons.reference = {}
+        self.amplicons.match_to_reference(min_score = 0.1, trim_primers=10, global_align=False)
+        #print(str(sorted(list(self.amplicons.reference.items()))))
+        self.assertEqual(md5(str(sorted(list(self.amplicons.reference.items())))).hexdigest(),'e08f4ac8d71a067547f43746972e86dc')
+        
+        self.amplicons.reference = {}
+        self.amplicons.match_to_reference(min_score = 10, trim_primers=50, global_align=True)
+        #print(str(sorted(list(self.amplicons.reference.items()))))
+        self.assertEqual(md5(str(sorted(list(self.amplicons.reference.items())))).hexdigest(),'fbfdb58228dcdabe280e742a56127b91')
+        
+        pass
+        
         
     def test_process_amplicon_data(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
@@ -363,7 +435,7 @@ class test_ambivert(unittest.TestCase):
         outfile = io.StringIO()
         amplicons.print_consolidated_vcf(outfile=outfile)
         #print(outfile.getvalue())
-        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'7f5d91c21169160cd8d816585050599f')
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'8b803868456658becd36afae2946865b')
         pass
     
     
