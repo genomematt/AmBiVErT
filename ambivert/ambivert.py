@@ -95,7 +95,7 @@ def smith_waterman(seq1,seq2):
             align_seq1 += seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
             align_seq2 += '-' * frag.hsp_len
         frag = frag.next
-    assert len(seq1) == len(seq2)
+    assert len(align_seq1) == len(align_seq2)
     plumb.bob.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
 
@@ -136,7 +136,7 @@ def needleman_wunsch(seq1,seq2):
             align_seq1 += seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
             align_seq2 += '-' * frag.hsp_len
         frag = frag.next
-    assert len(seq1) == len(seq2)
+    assert len(align_seq1) == len(align_seq2)
     plumb.bob.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
     
