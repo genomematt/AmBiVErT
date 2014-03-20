@@ -265,7 +265,7 @@ def fix_softmasked_expanded_cigar(expanded_cigar, start = 0):
 
 def gapped_alignment_to_cigar(aligned_reference,aligned_sample, gap='-', snv='M'):
     if len(aligned_reference) != len(aligned_sample):
-        raise(RuntimeError, 'Unequal sequences lengths - not correctly aligned \n    {0}\n    {1}'.format(aligned_reference,aligned_sample))
+        raise RuntimeError('Unequal sequences lengths - not correctly aligned \n    {0}\n    {1}'.format(aligned_reference,aligned_sample))
     xcigar = []
     for i in range(len(aligned_reference)):
         if aligned_reference[i] == aligned_sample[i]:
@@ -283,7 +283,7 @@ def gapped_alignment_to_cigar(aligned_reference,aligned_sample, gap='-', snv='M'
         elif aligned_sample[i] == gap:
             xcigar.append('D')
         else:
-            raise(RuntimeError, 'Invalid alignment state \n{0}\n{1}'.format(aligned_reference[i],aligned_sample[i]))
+            raise RuntimeError('Invalid alignment state \n{0}\n{1}'.format(aligned_reference[i],aligned_sample[i]))
     fixed_xcigar, start, length = fix_softmasked_expanded_cigar(xcigar)
     return compact_cigar(fixed_xcigar), start, length
         
