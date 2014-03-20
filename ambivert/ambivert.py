@@ -74,6 +74,8 @@ def smith_waterman(seq1,seq2):
                                 plumb.bob.DNA_SCORE,
                                 -7, -1 #gap open, gap extend
                                 )
+    if '-' in seq1 or '-' in seq2:
+        raise RuntimeError('Aligning Sequences with gaps is not supported',seq1,seq2)
     start_seq1 = alignment.contents.align_frag.contents.sa_start
     start_seq2 = alignment.contents.align_frag.contents.sb_start
     frag = alignment[0].align_frag
@@ -93,6 +95,7 @@ def smith_waterman(seq1,seq2):
             align_seq1 += seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
             align_seq2 += '-' * frag.hsp_len
         frag = frag.next
+    assert len(seq1) == len(seq2)
     plumb.bob.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
 
@@ -112,6 +115,8 @@ def needleman_wunsch(seq1,seq2):
                                 plumb.bob.DNA_SCORE,
                                 -7, -1 #gap open, gap extend
                                 )
+    if '-' in seq1 or '-' in seq2:
+        raise RuntimeError('Aligning Sequences with gaps is not supported',seq1,seq2)
     start_seq1 = 0
     start_seq2 = 0
     frag = alignment[0].align_frag
@@ -131,6 +136,7 @@ def needleman_wunsch(seq1,seq2):
             align_seq1 += seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
             align_seq2 += '-' * frag.hsp_len
         frag = frag.next
+    assert len(seq1) == len(seq2)
     plumb.bob.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
     
@@ -1097,12 +1103,12 @@ def main(): #pragma no cover
     
     if args.fastqamplicon:
         amplicons = AmpliconData()
-        amplicons.process_twofile_readpairs(open_potentially_gzipped(forward_file),
-                                            open_potentially_gzipped(reverse_file))
+        amplicons.process_twofile_readpairs(open_potentially_gzipped(args.forward),
+                                            open_potentially_gzipped(args.reverse))
         amplicons.merge_overlaps(minimum_overlap=args.overlap, threshold=args.threshold)
         amplicons.print_to_fastq(args.fastqamplicon,
-                                forwardfile=args.fastqfilename+'_R1.fastq',
-                                reversefile=args.fastqfilename+'_R2.fastq')
+                                forwardfile=open(args.fastqfilename+'_R1.fastq','wt'),
+                                reversefile=open(args.fastqfilename+'_R2.fastq','wt'))
         sys.exit()
         
         
