@@ -252,7 +252,7 @@ class test_ambivert(unittest.TestCase):
                                   )
         self.assertEqual(md5(str(sorted(amplicons.potential_variants))).hexdigest(),'1a28f10a7a1e2ea430e79453e367a342')
     
-    def test_AmpliconData_test_get_amplicon_counts(self):
+    def test_AmpliconData_get_amplicon_counts(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -263,6 +263,9 @@ class test_ambivert(unittest.TestCase):
                                   )
         self.assertEqual(md5(str(sorted(amplicons.get_amplicon_counts()))).hexdigest(),'564424f9a9e909cb9323d5ceac93a559')
         
+        self.assertEqual(amplicons.get_amplicon_count('335eb2f760b98b4f25d281537400baf4'),144)
+        
+        amplicons.reference = {}
         self.assertEqual(amplicons.get_amplicon_count('335eb2f760b98b4f25d281537400baf4'),144)
     
     def test_save_hash_table(self):
@@ -280,6 +283,13 @@ class test_ambivert(unittest.TestCase):
         amplicons.reference = {}
         amplicons.load_hash_table(open(outfilename,mode='rb'))
         self.assertEqual(md5(str(sorted(amplicons.reference))).hexdigest(),'c5e174ffd7ee8cfbd47e162667c83796')
+        outfile.close()
+        
+        #test case where references dont match the hash table
+        amplicons.reference_sequences = {}
+        amplicons.load_hash_table(open(outfilename,mode='rb'))
+        self.assertWarns(UserWarning)
+        
         outfile.close()
         os.unlink(outfile.name)
         pass
