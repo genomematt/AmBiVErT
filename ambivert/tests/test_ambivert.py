@@ -14,7 +14,7 @@ ambivert/ambivert                305     21    93%   78-79, 120, 123, 202, 223-2
 """
 
 #from __future__ import division, print_function, unicode_literals
-import unittest, io, os
+import unittest, io, os, logging
 import hashlib
 from tempfile import NamedTemporaryFile
 from pkg_resources import resource_stream
@@ -440,4 +440,6 @@ class test_ambivert(unittest.TestCase):
     
     
 if __name__ == '__main__':
+    logging.disable(logging.CRITICAL)
     unittest.main()
+    logging.disable(logging.NOTSET)

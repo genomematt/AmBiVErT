@@ -37,7 +37,9 @@ Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All right
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 """
+
 import sys, os
+import warnings, logging
 import itertools, difflib, argparse
 import hashlib, pickle
 from collections import defaultdict
@@ -57,6 +59,9 @@ __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
 logfile = sys.stderr
+logging.basicConfig(format='%(levelname)s:%(message)s',level=logging.DEBUG)
+logging.disable(logging.DEBUG)
+
 
 def smith_waterman(seq1,seq2):
     """Wrapper method for Smith-Waterman alignment using
@@ -214,17 +219,21 @@ class AmpliconData(object):
             parser      : an parser function that yields (name,sequence,quality) from
                           a fastqfile.  Default ambivert.sequence_utilities.parse_fastq
         """
-        print('Reading data...', file=logfile)
+        logging.info('Reading data...')
+        #sys.stderr.flush()
         if hasattr(forward_file,'name'):
             self.input_filenames.append(forward_file.name)
-            print('    Forward read file: ', forward_file.name, file=logfile)
+            logging.info('    Forward read file: {0}'.format(forward_file.name))
+            #sys.stderr.flush()
         if hasattr(reverse_file,'name'):
             self.input_filenames.append(reverse_file.name)
-            print('    Reverse read file: ', reverse_file.name, file=logfile)
+            logging.info('    Reverse read file: {0}'.format(reverse_file.name))
+            #sys.stderr.flush()
         for (f_name, f_seq, f_qual),(r_name, r_seq, r_qual) in zip(parser(forward_file), parser(reverse_file)):
             assert f_name.split()[0] == r_name.split()[0]
             self.add_reads(f_name, f_seq, f_qual,r_name, r_seq, r_qual)
-        print('Read',self.readpairs,'read pairs', file=logfile)
+        logging.info('Read {0} read pairs'.format(self.readpairs))
+        #sys.stderr.flush()
         pass
     
     def get_above_threshold(self, threshold=1):
@@ -254,7 +263,8 @@ class AmpliconData(object):
         self.threshold = threshold #record in object data
         total = len(self.get_above_threshold(threshold))
         completed = 0
-        print('Merging overlaps for {0} unique pairs'.format(total),file=logfile)
+        logging.info('Merging overlaps for {0} unique pairs'.format(total))
+        #sys.stderr.flush()
         for key in self.get_above_threshold(threshold):
             fwd = self.data[key][0][0][1]
             rev = reverse_complement(self.data[key][0][1][1])
@@ -264,7 +274,8 @@ class AmpliconData(object):
             else:
                 self.merged[key] = fwd[:fwd_start]+flatten_paired_alignment(fwd_aligned,rev_aligned)+rev[rev_start+len(rev_aligned.replace('-','')):]
             completed += 1
-        print("\nSuccessfully merged {0} reads. {1} reads could not be merged".format(len(self.merged),len(self.unmergable)),file=logfile)
+        logging.info("\nSuccessfully merged {0} reads. {1} reads could not be merged".format(len(self.merged),len(self.unmergable)))
+        #sys.stderr.flush()
         pass
     
     def add_references_from_fasta(self, fastafile):
@@ -299,7 +310,7 @@ class AmpliconData(object):
             self.reference_sequences[tuple(name.split())] = sequence
         pass
     
-    def match_to_reference(self, min_score = 0.1, trim_primers=0, global_align=True):
+    def match_to_reference(self, min_score = 0.1, trim_primers=0, global_align=True, show_progress = False):
         """Assign read groups to reference sequences by competitive alignment
         Does not do reverse complementing or alignment formatting and relies
         only on score to match
@@ -391,11 +402,14 @@ class AmpliconData(object):
             return best_hit,best_score
 
                 
-        print('Matching read bins to references',file=logfile)
+        logging.info('Matching read bins to references - commas represent cached matches, periods matching by alignment')
+        #sys.stderr.flush()
         for merged_key in self.merged:
             if merged_key in self.reference:
-                print(',',end='',file=logfile)
-                logfile.flush()
+                if show_progress:
+                    print(',',end='',file=logfile)
+                    logfile.flush()
+                logging.debug("Matched in cached hashtable {0} to \n\t{1}\n\t{2}".format(self.merged[merged_key],best_hit,self.reference_sequences[best_hit]))
                 continue
             if global_align:
                 best_hit,best_score = match_by_needleman_wunsch(merged_key,self.reference_sequences)
@@ -403,13 +417,16 @@ class AmpliconData(object):
                 best_hit,best_score = match_by_smith_waterman(merged_key,self.reference_sequences)
             if best_hit and best_score > min_score:
                 self.reference[merged_key]= best_hit
-                print('.',end='',file=logfile)
-                logfile.flush()
-                #print("Matched", self.merged[merged_key], 'to', best_hit)
-                #print(self.reference_sequences[best_hit])
+                if show_progress:
+                    print('.',end='',file=logfile)
+                    logfile.flush()
+                logging.debug("Matched {0} to \n\t{1}\n\t{2}".format(self.merged[merged_key],best_hit,self.reference_sequences[best_hit]))
             else:
-                print("\nWARNING NO MATCH FOR ", self.merged[merged_key], file=logfile)
-        print(file=logfile)        
+                logging.warning("\nWARNING NO MATCH FOR {0}\n\
+                                Use ambivert --fastqamplicon {1} to retrieve reads from this amplicon\
+                                ".format(self.merged[merged_key],merged_key))
+        if show_progress:
+            print(file=logfile)
         pass
     
     def align_to_reference(self, global_align=True):
@@ -505,9 +522,9 @@ class AmpliconData(object):
             if reference_sha224 == hashlib.sha224(repr(sorted(self.reference_sequences)).encode('latin-1')).hexdigest():
                 self.reference = refdict
             else:
-                print('WARNING: loaded read to reference hash library does not match reference sequences\n'+ \
+                warnings.warn('WARNING: loaded read to reference hash library does not match reference sequences\n'+ \
                     'I really hope you know what you are doing... Check and if in doubt use --savehashtable\n'+ \
-                    'without specifying an existing hash file.',file=logfile)
+                    'without specifying an existing hash file.',UserWarning)
         pass
     
     def print_variants_as_alignments(self, outfile=sys.stdout):
@@ -603,7 +620,7 @@ class AmpliconData(object):
             indels = [variant for variant in alt.keys() if len(variant.alt_allele) > 1 or len(variant.ref_allele) > 1 ]
             for indel in indels:
                 variant_depth = sum([self.get_amplicon_count(amplicon_id) for amplicon_id in alt[indel]])
-                #print(indel,variant_depth, total_depth, variant_depth/total_depth, ref, alt[indel])
+                logging.debug(str((indel,variant_depth, total_depth, variant_depth/total_depth, ref, alt[indel])))
                 self.consolidated_variants.append((indel,variant_depth, total_depth, variant_depth/total_depth, tuple(ref), tuple(alt[indel])))
             
             #for now we do one variant per line for snps
@@ -611,7 +628,7 @@ class AmpliconData(object):
             snvs = [key for key in alt.keys() if len(key.alt_allele) == 1 and len(key.ref_allele) == 1 ]
             for snv in snvs:
                 variant_depth = sum([self.get_amplicon_count(key) for key in alt[snv]])
-                #print(snv,variant_depth, total_depth, variant_depth/total_depth, ref, alt[snv])
+                logging.debug(str((snv,variant_depth, total_depth, variant_depth/total_depth, ref, alt[snv])))
                 self.consolidated_variants.append((snv,variant_depth, total_depth, variant_depth/total_depth, tuple(sorted(ref)), tuple(sorted(alt[snv]))))
         #logic above does not preclude calling the same variant more than once
         #so we remove identical records
@@ -1072,7 +1089,7 @@ def process_amplicon_data(forward_file, reverse_file,
         amplicons.add_references_from_fasta(fasta)
     if hashtable:
         amplicons.load_hash_table(hashtable)
-    amplicons.match_to_reference()
+    amplicons.match_to_reference(show_progress = True)
     amplicons.align_to_reference()
     if savehashtable:
         amplicons.save_hash_table(savehashtable)
@@ -1082,7 +1099,8 @@ def call_variants_per_amplicon(amplicons, args): #pragma no cover
     """Depreciated.  Use AmpliconData.print_consolidated_vcf or 
     AmpliconData.call_amplicon_variants() and .consolidate_variants()
     """
-    #depreciated
+    #deprecated
+    warnings.warn('call_variants_per_amplicon is deprecated',DeprecationWarning)
     print(make_vcf_header(args.threshold),file=args.output)
     for key in amplicons.potential_variants:
             aligned_ref_seq, aligned_sample_seq = amplicons.aligned[key]
