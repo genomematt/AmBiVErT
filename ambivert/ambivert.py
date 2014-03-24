@@ -3,6 +3,12 @@
 """
 ambivert.py
 
+    ___              ____  _ _    ________    ______
+   /   |  ____ ___  / __ )(_) |  / / ____/___/_  __/
+  / /| | / __ `__ \/ __  / /| | / / __/ / ___// /   
+ / ___ |/ / / / / / /_/ / / | |/ / /___/ /   / /    
+/_/  |_/_/ /_/ /_/_____/_/  |___/_____/_/   /_/     
+                                                    
 AmBiVErT: A program for binned analysis of amplicon data
 
 AMplicon BInning Variant-caller with ERror Truncation
@@ -37,6 +43,8 @@ Copyright (c) 2013-2014  Matthew Wakefield and The University of Melbourne. All 
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 """
+# ambivert noun PSYCHOLOGY
+# a person who has a balance of extrovert and introvert features in their personality
 
 import sys, os
 import warnings, logging
@@ -52,7 +60,7 @@ import plumb.bob
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield","Graham Taylor"]
-__license__ = "GPL"
+__license__ = "GPLv3"
 __version__ = "0.1.10"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
@@ -145,8 +153,6 @@ def needleman_wunsch(seq1,seq2):
     assert len(align_seq1) == len(align_seq2)
     plumb.bob.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
-    
-
 
 class AmpliconData(object):
     """A Class for holding read data from amplicon experiments
@@ -490,13 +496,13 @@ class AmpliconData(object):
         """
         amplicon_counts = {key:0 for key in self.reference_sequences}
         if not self.reference:
+            logging.info('Amplicons were not aligned')
             self.align_to_reference()
         for merged_key in self.reference:
             counts = len(self.data[merged_key])
             if counts > self.threshold:
                 amplicon_counts[self.reference[merged_key]] += len(self.data[merged_key])
         return amplicon_counts
-    
     
     def save_hash_table(self,newhashfile):
         """Save a lookup table with precomputed assignment
@@ -636,7 +642,7 @@ class AmpliconData(object):
         #so we remove identical records
         self.consolidated_variants = sorted(list(set(self.consolidated_variants)))
         pass
-        
+    
     def get_filtered_variants(self, min_cover=0, min_reads=0, min_freq=0.1):
         """Get variants that match filtering conditions
         Arguments:
@@ -665,7 +671,7 @@ class AmpliconData(object):
                not is_softmasked(variant[0].ref_allele) and \
                not is_ambiguous(variant[0].alt_allele):
                yield variant
-        
+    
     def print_consolidated_vcf(self, min_cover=0, min_reads=0, min_freq=0.1, outfile=sys.stdout):
         """Print variants that match filtering conditions in VCF Format
         
@@ -727,8 +733,7 @@ class AmpliconData(object):
                                                                                     ),
                 sep='\t',file=outfile)
         pass
-            
-
+    
     def get_amplicons_overlapping(self,chrom, pos, length=1):
         """Returns a list of amplicon ids for amplicons that overlap a reference position
         Arguments:
@@ -751,7 +756,7 @@ class AmpliconData(object):
             if not ( (pos+length-1 < start) or (pos > end) ):
                 result.append(key)
         return result
-
+    
     def get_reference_overlapping(self,chrom, pos, length=1):
         """Returns a list of reference identifiers that overlap a chromosomal position
         Arguments:
@@ -775,7 +780,7 @@ class AmpliconData(object):
             if not ( (pos+length-1 < start) or (pos > end) ):
                 result.append(key)
         return result
-
+    
     def get_amplicons_overlapping_without_softmasking(self,chrom, pos, length=1):
         """Returns a list of amplicon ids for amplicons that overlap a reference position
         where the reference bases are not softmasked (represented by lower case)
@@ -809,14 +814,8 @@ class AmpliconData(object):
                             Default: sys.stdout
         """
         for ((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)) in self.data[key]:
-            print('@'+f_name,file=forwardfile)
-            print(f_seq,file=forwardfile)
-            print('+',file=forwardfile)
-            print(f_qual,file=forwardfile)
-            print('@'+r_name,file=reversefile)
-            print(r_seq,file=reversefile)
-            print('+',file=reversefile)
-            print(r_qual,file=reversefile)
+            print('@{0}\n{1}\n+\n{2}'.format(f_name,f_seq,f_qual),file=forwardfile)
+            print('@{0}\n{1}\n+\n{2}'.format(r_name,r_seq,r_qual),file=forwardfile)
         pass
     
     def print_to_sam(self, key, samfile=sys.stdout):
@@ -1002,7 +1001,8 @@ def process_commandline_args(): #pragma no cover
     parser.add_argument('--fastqfilename',
                         type=str,
                         default='',
-                        help='Base file name for forward and reverse fastqfiles for use with --fastqamplicon')    
+                        help='Base file name for forward and reverse fastqfiles for use with --fastqamplicon\
+                           Defaults to amplicon MD5 identifier')    
     parser.add_argument('--prefix',
                         type=str,
                         default='',
@@ -1035,8 +1035,7 @@ def process_commandline_args(): #pragma no cover
         parser.print_help()
         raise RuntimeError("ERROR: You must specify at least one of --manifest and --fasta")
     if args.fastqamplicon and not args.fastqfilename:
-        parser.print_help()
-        raise RuntimeError("ERROR: You must specify an output file with --fastqfilename when using --fastqamplicon")
+        args.fastqfilename = args.fastqamplicon
     return args
 
 def process_amplicon_data(forward_file, reverse_file,
@@ -1090,13 +1089,13 @@ def process_amplicon_data(forward_file, reverse_file,
     amplicons.merge_overlaps(minimum_overlap=overlap, threshold=threshold)
     if manifest:
         amplicons.add_references_from_manifest(manifest)
-    if fasta:
-        amplicons.add_references_from_fasta(fasta)
-    if hashtable:
+    if fasta: #pragma no cover
+        amplicons.add_references_from_fasta(fasta) 
+    if hashtable: #pragma no cover
         amplicons.load_hash_table(hashtable)
     amplicons.match_to_reference(show_progress = True)
     amplicons.align_to_reference()
-    if savehashtable:
+    if savehashtable: #pragma no cover
         amplicons.save_hash_table(savehashtable)
     return amplicons
 
@@ -1119,8 +1118,7 @@ def call_variants_per_amplicon(amplicons, args): #pragma no cover
                 print(file=sys.stderr)
                 raise
     pass
-    
-    
+
 def main(): #pragma no cover
     args = process_commandline_args()
     
