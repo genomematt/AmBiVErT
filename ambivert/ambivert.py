@@ -409,7 +409,7 @@ class AmpliconData(object):
                 if show_progress:
                     print(',',end='',file=logfile)
                     logfile.flush()
-                logging.debug("Matched in cached hashtable {0} to \n\t{1}\n\t{2}".format(self.merged[merged_key],best_hit,self.reference_sequences[best_hit]))
+                logging.debug("Matched in cached hashtable {0} to \n\t{1}\n\t{2}".format(self.merged[merged_key],self.reference[merged_key],self.reference_sequences[self.reference[merged_key]]))
                 continue
             if global_align:
                 best_hit,best_score = match_by_needleman_wunsch(merged_key,self.reference_sequences)
