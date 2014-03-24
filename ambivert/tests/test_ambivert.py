@@ -6,19 +6,16 @@ test_ambivert.py
 Created by Matthew Wakefield on 2013-11-04.
 Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights reserved.
 
-Incomplete test coverage of some conditional code.  Excludes command line interface code.  Current status:
-coverage3 report --show-missing
-Name                           Stmts   Miss  Cover   Missing
----------------------------------------------------------------------------------------------
-ambivert/ambivert                305     21    93%   78-79, 120, 123, 202, 223-224, 232, 239, 262, 284, 323, 348-350, 417, 435-437, 552, 554, 558
+Excludes command line interface code.  Skipped code marked with #pragma no cover
 """
-
+### TODO Coverage ambivert/ambivert 92-93, 130-131, 173, 176, 393-395, 426, 437, 470, 504, 576, 690, 692, 725, 749, 809-819, 858-864, 882, 1068, 1070, 1074
 #from __future__ import division, print_function, unicode_literals
 import unittest, io, os, logging
 import hashlib
 from tempfile import NamedTemporaryFile
 from pkg_resources import resource_stream
 from ambivert import ambivert
+from collections import namedtuple
 
 def md5(data):
     #python3 compatibility
@@ -121,6 +118,17 @@ class test_ambivert(unittest.TestCase):
         
         self.assertEqual('GCGCCAGCCACTCAACTATA-TTTGGTTAATATCTCCT--------GCACACTTCTCG---GTCGTCGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC',aligned_s2)
 
+        s1 = 'GCGCCAGCCACTCAACTATAGGTTAATATCTC'
+        s2 = 'GCGCCAGCCACTCAACTATATTTGGTTAATATCTC'
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.smith_waterman(s1,s2)
+        
+        self.assertEqual('GCGCCAGCCACTCAACTATA---GGTTAATATCTC',aligned_s1)
+        
+        s1 = 'G-C'
+        s2 = 'G-C'
+        self.assertRaises(RuntimeError,ambivert.smith_waterman,s1,s2)
+        
+
     def test_needlemanwunsch_align_DNA(self):
         s1 = 'GCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTGGCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
         s2 = 'GCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGCTACTTCATCTTTGGCCGCCATGTTTGTGCTATGGAGGGTT'
@@ -158,12 +166,25 @@ class test_ambivert(unittest.TestCase):
                 
         self.assertEqual('-'+s2,aligned_s2)
         self.assertEqual(s1,aligned_s1)
+        
+        s1 = 'GCGCCAGCCACTCAACTATAGGTTAATATCTC'
+        s2 = 'GCGCCAGCCACTCAACTATATTTGGTTAATATCTC'
+        aligned_s1, aligned_s2, start_s1, start_s2 = ambivert.needleman_wunsch(s1,s2)
+        
+        self.assertEqual('GCGCCAGCCACTCAACTATA---GGTTAATATCTC',aligned_s1)
+        
+        s1 = 'G-C'
+        s2 = 'G-C'
+        self.assertRaises(RuntimeError,ambivert.needleman_wunsch,s1,s2)
+        
 
         
         
 
     def test_AmpliconData_str(self):
-        #self.assertEqual(str(self.amplicons),'Data file names: \nReference file names: \nReadpairs: 0\nThreshold: 0\nUnique read groups: 0\nUnmerged pairs: 0\n')
+        self.amplicons.input_filenames=['foo_R1.fastq','foo_R2.fastq']
+        self.amplicons.reference_filenames=['bar.fasta','bar.manifest']
+        self.assertEqual(str(self.amplicons),'Data file names: \nfoo_R1.fastq\nfoo_R2.fastq\nReference file names: \nbar.fasta\nbar.manifest\nReadpairs: 0\nThreshold: 0\nUnique read groups: 0\nUnmerged pairs: 0\n')
         pass
 
     def test_AmpliconData_merge_overlaps(self):
@@ -226,6 +247,39 @@ class test_ambivert(unittest.TestCase):
         #print(str(sorted(list(self.amplicons.reference.items()))))
         self.assertEqual(md5(str(sorted(list(self.amplicons.reference.items())))).hexdigest(),'fbfdb58228dcdabe280e742a56127b91')
         
+        self.amplicons.reference = {'002b0ade8cda6a7bdc15f09ed5812126':('BRCA1_Exon9_UserDefined_(9825051)_7473614_chr17_41243841_41244065', 'chr17', '41243841', '41244065', '-'),
+                                    'randomfoo': ('MadeUp','chr99','1','100','+'),}
+        self.amplicons.match_to_reference(min_score = 10, trim_primers=0, global_align=True)
+        #print(str(sorted(list(self.amplicons.reference.items()))))
+        self.assertEqual(md5(str(sorted(list(self.amplicons.reference.items())))).hexdigest(),'a963bb251be3c27f4780b8292cdc3e13')
+        
+        pass
+    def test_AmpliconData_align_to_reference(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        self.amplicons.process_twofile_readpairs(forward_file, reverse_file)
+        self.amplicons.add_references_from_manifest(manifest)
+        self.amplicons.merge_overlaps()
+        
+        self.amplicons.reference = {'002b0ade8cda6a7bdc15f09ed5812126':('BRCA1_Exon9_UserDefined_(9825051)_7473614_chr17_41243841_41244065', 'chr17', '41243841', '41244065', '-'),
+                                    'randomfoo': ('MadeUp','chr99','1','100','+'),}
+        self.amplicons.match_to_reference(min_score = 10, trim_primers=0, global_align=True)
+        
+        self.amplicons.align_to_reference()
+        #print(str(sorted(list(self.amplicons.aligned.items()))))
+        #print(str(sorted(list(self.amplicons.location.items()))))
+        self.assertEqual(md5(str(sorted(list(self.amplicons.aligned.items())))).hexdigest(),'ffb3aa886476f377b485c9d967a844c7')
+        self.assertEqual(md5(str(sorted(list(self.amplicons.location.items())))).hexdigest(),'cd58f75e64192227c8c2c6beca7564cf')
+
+        self.amplicons.aligned = {}
+        self.amplicons.location = {}
+        self.amplicons.align_to_reference(global_align=False)
+        #print(str(sorted(list(self.amplicons.aligned.items()))))
+        #print(str(sorted(list(self.amplicons.location.items()))))
+        self.assertEqual(md5(str(sorted(list(self.amplicons.aligned.items())))).hexdigest(),'0bec5d7ad6ca3e6f0a5f3bd366ab1c66')
+        self.assertEqual(md5(str(sorted(list(self.amplicons.location.items())))).hexdigest(),'1058c4388032a963aec5a03679d5a899')
+        
         pass
         
         
@@ -267,6 +321,10 @@ class test_ambivert(unittest.TestCase):
         
         amplicons.reference = {}
         self.assertEqual(amplicons.get_amplicon_count('335eb2f760b98b4f25d281537400baf4'),144)
+        
+        amplicons.reference = {}
+        self.assertEqual(md5(str(sorted(amplicons.get_amplicon_counts()))).hexdigest(),'564424f9a9e909cb9323d5ceac93a559')
+        
     
     def test_save_hash_table(self):
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
@@ -346,9 +404,17 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, 
                                   savehashtable=None, hashtable=None,
                                   )
+        amplicons.location['testampliconidentifier'] =  ('chrY',1,50,'+')
+        amplicons.aligned['testampliconidentifier'] = ('AAAAAGACATGACATGACATGACATGACATGACATGACATGACATGACATTTTTT','aaaaaGACATGACATGACATGACAT-----GACATGACATGACATGACATttttt')
+        amplicons.reference_sequences[('chrY','1','50','+')] = 'aaaaaGACATGACATGACATGACATGACATGACATGACATGACATttttt'
+        amplicons.reference['testampliconidentifier'] = ('chrY','1','50','+')
         
         self.assertEqual(sorted(amplicons.get_amplicons_overlapping('chr17', '41245364')),['32ff3ea55601305b5e8b3bd266c4080a', '357199abf30c529a625b24916a341ff8', '4a2c50f29c387e9f5853d7e071c1d4ff'])
         self.assertEqual(sorted(amplicons.get_amplicons_overlapping_without_softmasking('chr17', '41245364')),['4a2c50f29c387e9f5853d7e071c1d4ff'])
+        
+        self.assertEqual(sorted(amplicons.get_amplicons_overlapping('chrY', '20')),['testampliconidentifier',])
+        self.assertEqual(sorted(amplicons.get_amplicons_overlapping_without_softmasking('chrY', '6')),['testampliconidentifier',])
+        self.assertEqual(sorted(amplicons.get_amplicons_overlapping_without_softmasking('chrY', '3')),[])
         
         pass
     
@@ -363,6 +429,11 @@ class test_ambivert(unittest.TestCase):
                                   )
         amplicons.call_amplicon_variants()
         amplicons.consolidate_variants()
+        #print(sorted(amplicons.consolidated_variants))
+        self.assertEqual(md5(str(sorted(amplicons.consolidated_variants))).hexdigest(),'a38f22f05f6c7d91f6615c404b206b2a')
+        
+        amplicons.consolidated_variants = []
+        amplicons.consolidate_variants(exclude_softmasked_coverage=False)
         #print(sorted(amplicons.consolidated_variants))
         self.assertEqual(md5(str(sorted(amplicons.consolidated_variants))).hexdigest(),'a38f22f05f6c7d91f6615c404b206b2a')
         pass
@@ -446,7 +517,41 @@ class test_ambivert(unittest.TestCase):
         amplicons.print_consolidated_vcf(outfile=outfile)
         #print(outfile.getvalue())
         self.assertEqual(md5(outfile.getvalue()).hexdigest(),'8b803868456658becd36afae2946865b')
+        outfile.close()
+        
+        amplicons.reference['homopolymertest'] = ('homopolymer', 'chrY', '1', '100', '+')
+        amplicons.reference_sequences[('homopolymer', 'chrY', '1', '100', '+')] = 'GACAT'*5 + 'A'*5 + 'GACAT'*5 + 'A'*45
+        AmpliconVariant = namedtuple('AmpliconVariant', 'chromosome, start, end, vcf_start, ref_allele, alt_allele')
+        amplicons.consolidated_variants.append((AmpliconVariant(chromosome='chrY', start=25, end=25, vcf_start=25, ref_allele='A', alt_allele='C'), 122, 193, 0.6321243523316062, ('c3ee13ce7e3e7973b37714187bd2019d',), ('1186cf52bcce24d9e5446675e896b90c', '268014b6f669772a4e97b99427563d6b')))
+        amplicons.consolidated_variants.append((AmpliconVariant(chromosome='chrY', start=55, end=55, vcf_start=55, ref_allele='A', alt_allele='C'), 122, 193, 0.6321243523316062, ('c3ee13ce7e3e7973b37714187bd2019d',), ('1186cf52bcce24d9e5446675e896b90c', '268014b6f669772a4e97b99427563d6b')))
+
+        outfile = io.StringIO()
+        amplicons.print_consolidated_vcf(outfile=outfile)
+        #print(outfile.getvalue())
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'56445881e3cfdffe6fb353ebaffde961')
         pass
+    
+    def test_AmpliconData_print_to_sam(self):
+        forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
+        reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
+        manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
+        amplicons = ambivert.process_amplicon_data(forward_file, reverse_file,
+                                  manifest=manifest, fasta=None,
+                                  threshold=50, overlap=20, 
+                                  savehashtable=None, hashtable=None,
+                                  )
+        outfile = io.StringIO()
+        amplicons.aligned = {}
+        amplicons.print_to_sam('32ff3ea55601305b5e8b3bd266c4080a',samfile=outfile)
+        #print(outfile.getvalue())
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'275aab1624c01fea59326e7889370fbd')
+        outfile.close()
+        
+        outfile = io.StringIO()
+        amplicons.printall_to_sam(samfile=outfile)
+        #print(outfile.getvalue())
+        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'0a879b5f8d996617f3f48da47ed18362')
+        outfile.close()
     
     
 if __name__ == '__main__':

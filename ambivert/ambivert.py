@@ -27,10 +27,10 @@ Our intended purpose for this software is as lightweight backup and quality assu
 complementing a more traditional variant calling pipeline, and to provide amplicon level
 phasing of multiple mutations that exist on the same amplicon.
 
-All lines of code [will be/are] covered by unit tests unless marked with #pragma no cover
+All lines of code are covered by unit tests unless marked with #pragma no cover
 
 Created by Matthew Wakefield and Graham Taylor.
-Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
+Copyright (c) 2013-2014  Matthew Wakefield and The University of Melbourne. All rights reserved.
    
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -50,7 +50,7 @@ import plumb.bob
     
 
 __author__ = "Matthew Wakefield"
-__copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
+__copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield","Graham Taylor"]
 __license__ = "GPL"
 __version__ = "0.1.10"
@@ -61,6 +61,7 @@ __status__ = "Development"
 logfile = sys.stderr
 logging.basicConfig(format='%(levelname)s:%(message)s',level=logging.DEBUG)
 logging.disable(logging.DEBUG)
+logging.captureWarnings(True)
 
 
 def smith_waterman(seq1,seq2):
@@ -406,10 +407,12 @@ class AmpliconData(object):
         #sys.stderr.flush()
         for merged_key in self.merged:
             if merged_key in self.reference:
-                if show_progress:
+                if show_progress: #pragma no cover
                     print(',',end='',file=logfile)
                     logfile.flush()
-                logging.debug("Matched in cached hashtable {0} to \n\t{1}\n\t{2}".format(self.merged[merged_key],self.reference[merged_key],self.reference_sequences[self.reference[merged_key]]))
+                logging.debug("Matched in cached hashtable {0} to \n\t{1}\n\t{2}".format(
+                            self.merged[merged_key],self.reference[merged_key],
+                            self.reference_sequences[self.reference[merged_key]]))
                 continue
             if global_align:
                 best_hit,best_score = match_by_needleman_wunsch(merged_key,self.reference_sequences)
@@ -417,10 +420,11 @@ class AmpliconData(object):
                 best_hit,best_score = match_by_smith_waterman(merged_key,self.reference_sequences)
             if best_hit and best_score > min_score:
                 self.reference[merged_key]= best_hit
-                if show_progress:
+                if show_progress: #pragma no cover
                     print('.',end='',file=logfile)
                     logfile.flush()
-                logging.debug("Matched {0} to \n\t{1}\n\t{2}".format(self.merged[merged_key],best_hit,self.reference_sequences[best_hit]))
+                logging.debug("Matched {0} to \n\t{1}\n\t{2}".format(
+                            self.merged[merged_key],best_hit,self.reference_sequences[best_hit]))
             else:
                 logging.warning("\nWARNING NO MATCH FOR {0}\n\
                                 Use ambivert --fastqamplicon {1} to retrieve reads from this amplicon\
@@ -458,8 +462,6 @@ class AmpliconData(object):
                 aligned_sample_seq,aligned_ref_seq,sample_start,ref_start = smith_waterman(query_seq,ref_seq)
             if aligned_ref_seq.upper() != aligned_sample_seq:
                 self.potential_variants.append(merged_key)
-                #print(aligned_ref_seq, file=logfile)
-                #print(aligned_sample_seq, file=logfile)
             self.aligned[merged_key] = (aligned_sample_seq, aligned_ref_seq) #plus strand
             self.location[merged_key] = (self.reference[merged_key][1], int(self.reference[merged_key][2]), int(self.reference[merged_key][3]), ref_start)
         pass
@@ -827,6 +829,9 @@ class AmpliconData(object):
         # This may be expanded to deal with quality scores in future versions
         # Implemented to allow comparisons on IGV with other programs
         # Output should be run through samtools calmd/fillmd and converted to bam
+        if not self.aligned:
+            logging.info('Amplicons were not aligned')
+            self.align_to_reference()
         aligned_sample_seq, aligned_ref_seq = self.aligned[key]
         cigar, start, length = gapped_alignment_to_cigar(aligned_ref_seq,aligned_sample_seq)
         rname, amplicon_start, amplicon_end, strand = self.location[key]
@@ -880,7 +885,7 @@ class AmpliconData(object):
         for sq_line in sq_header:
             print(sq_line,file=samfile)
         print('@PG\tID:AmBiVErT\tVN:{version}'.format(version=__version__),file=samfile)
-        for key in self.aligned:
+        for key in sorted(list(self.aligned)):
             self.print_to_sam(key, samfile=samfile)
         pass
     
