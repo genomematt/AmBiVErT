@@ -45,7 +45,7 @@ def caller(variant_amplicon, reference, gap='-',softmask = True):
     
     for site in range(len(variant_amplicon)):
         #ignore softmasked sites or gaps in softmasked sequence
-        if softmask and softmasked and reference[site] == reference[site].lower():
+        if softmask and softmasked and reference[site] == reference[site].lower() and not reference[site] == gap:
             #in upstream softmasking
             onebased_pos_in_ungapped_ref += 1
             continue
