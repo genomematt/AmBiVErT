@@ -244,45 +244,6 @@ def constant_quality(sequence, value="I"):
 def format_fastq_entry(name,sequence,q_generator=constant_quality):
     return "@{name}\n{seq}\n+\n{qual}\n".format(name=name,seq=sequence,qual="".join(q_generator(sequence)))
 
-def expand_cigar(cigar):
-    return "".join([x[1]*int(x[0]) for x in re.findall(r'([0-9]+)([MIDNSHPX=])',cigar)])
-
-def engap(seq, cigar, delete='D', insert='I', match='M', gap='-'):
-    """Convert a match/delete/insert string and sequence into gapped sequence
-    To convert the target sequence swap delete and insert symbols.
-        Arguments:
-            o   seq : a sequence string
-            o   cigar : a cigar string eg 80M5D10M10I
-            o   delete : deletion state character Default = 'D'
-            o   insert : insertion state character Default = 'I'
-            o   match : match state character Default = 'M'
-            o   gap : output gap character Default = '-'
-        Returns:
-            o   string : gapped seqeunce
-    """
-    gapped = []
-    xcigar = expand_cigar(cigar)
-    assert len(seq) == xcigar.count(match) + xcigar.count(insert)
-    seq = list(seq)
-    for symbol in xcigar:
-        if symbol == delete:
-            gapped.append('-')
-        else:
-            gapped.append(seq.pop(0))
-    return "".join(gapped)
-
-def cigar_trimmer(cigar,trim_from_start=0,trim_from_end=0):
-    xcigar = expand_cigar(cigar)
-    result = []
-    sequence_length = len(xcigar) - xcigar.count('D')
-    position_in_sequence = 0
-    for state in xcigar:
-        if not (state == 'D' or state == 'S'):
-            position_in_sequence +=1
-        if position_in_sequence > trim_from_start and position_in_sequence <= sequence_length - trim_from_end:
-            result.append(state)
-    return compact_cigar(result)
-
 def cigar_add_deletion(cigar,one_based_start=1,length=1):
     xcigar = expand_cigar(cigar)
     result = []
@@ -325,61 +286,6 @@ def mdtag_add_deletion(mdtag, seq, one_based_start=1, length=1):
             result.append(state)
             position_in_sequence += 1
     return compact_expanded_mdtag_tokens(result)
-
-def compact_cigar(expanded_cigar):
-    result = []
-    last_state = expanded_cigar[0]
-    count = 0
-    for state in expanded_cigar:
-        if state == last_state:
-            count +=1
-        else:
-            result.append(str(count)+last_state)
-            last_state = state
-            count = 1
-    result.append(str(count)+state)
-    return "".join(result)
-
-def expand_mdtag(mdtag):
-    mdtag_tokens = re.findall(r'(\d+|\D+)',mdtag)
-    result = []
-    for x in mdtag_tokens:
-        if x[0] in '1234567890':
-            result.extend(['',]*int(x))
-        elif x[0] == '^':
-            result.extend(list(x.lower()))
-        else:
-            result.extend(list(x))
-    return result
-
-def compact_expanded_mdtag_tokens(expanded_mdtag_tokens):
-    result = []
-    count = 0
-    in_deletion = False
-    for token in expanded_mdtag_tokens:
-        if token == '':
-            count += 1
-            in_deletion = False
-        elif count:
-            #exiting match
-            result.append(str(count))
-            count = 0
-            if token == '^':
-                in_deletion = True
-            result.append(token)
-        else:
-            #in mismatch or deletion states
-            if in_deletion and token == '^':
-                #adjacent deletions to be merged
-                continue
-            if in_deletion and (token in 'CAGTN'):
-                #have a mismatch adjacent to a deletion
-                result.append('0')
-                in_deletion = False
-            result.append(token)
-    if count: 
-            result.append(str(count))
-    return "".join(result).upper()
 
 def variant_detection_tag_trimmer(mdtag,trim_from_start=0,trim_from_end=0):
     #when trimming reads only non-standard state is deletions

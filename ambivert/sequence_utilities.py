@@ -28,6 +28,16 @@ __status__ = "Development"
 
 
 def open_potentially_gzipped(thefile):
+    """Use the name of a provided file to detect gzipped files and return
+    an appropriately handled file object.
+    Arguments:
+        thefile: a file object or filename string
+    Returns:
+        file object
+    Note that if this opens a file it will be in 'rb' mode
+    For concistency it is recommended you pass 'rb' mode files
+    as input arguments.
+    """
     if type(thefile) == str:
         thefile = io.open(thefile, mode='rb')
     if not hasattr(thefile,'name'):
@@ -40,12 +50,21 @@ def open_potentially_gzipped(thefile):
         return thefile
 
 def parse_fastq(thefile):
+    """A basic non-validating fastq file parser
+    Does not support multi-line sequence and/or multi-line quality entries.
+    Arguments:
+        thefile:    a binary mode file object
+            (although uncompressed fastq is text, gzipped files will be 
+             binary data. All files are delt with as binary for concistency.)
+    Returns:
+        (readname, sequence, quality)
+    """
     with thefile as fastqfile:
         name = True
         while name:
             name = str(fastqfile.readline(), encoding='latin-1').strip('\n')
             seq = str(fastqfile.readline(), encoding='latin-1').strip('\n')
-            fastqfile.readline()
+            fastqfile.readline() #could check starts with '+' as soft validation
             qual = str(fastqfile.readline(), encoding='latin-1').strip('\n')
             if name:
                 yield name[1:], seq, qual
@@ -55,8 +74,12 @@ def parse_fasta(filename, token='>'):
     Usage: for name,seq in fasta(open(filename)):
                 do something
            parse_fasta(open(filename)).next()
+    Arguments:
+        filename:   a read mode text file
+        token:      a character that indicates the header line
+                    Default: '>' (FASTA)
     """
-    with open_potentially_gzipped(filename) as f:
+    with filename as f:
         seq = None
         name = None   
         for line in f:
@@ -98,7 +121,17 @@ def reverse_complement(seqstring):
     return ''.join(result[::-1])
 
 def encode_ambiguous(bases):
+    """Encode a group of ambiguous bases with IUPAC symbol
+    Arguments:
+        bases:  a list, tuple or iterable of single characters
+    Returns:
+        IUPAC_code: a single upper case character from the set
+                RYSWKMBDHVN.  Will return N if any base is N
+                Will return input base if len(set(bases)) == 1
+    """
     bases = tuple(sorted(set([x.upper() for x in bases])))
+    if len(bases) == 1:
+        return bases
     iupac = {('A','G'):'R',
             ('C','T'):'Y',
             ('C','G'):'S',
@@ -185,6 +218,9 @@ def get_tag(read,tag):
             return x.split(':')[-1]
     return None
 
+def expand_cigar(cigar):
+    return "".join([x[1]*int(x[0]) for x in re.findall(r'([0-9]+)([MIDNSHPX=])',cigar)])
+
 def compact_cigar(expanded_cigar):
     result = []
     last_state = expanded_cigar[0]
@@ -198,9 +234,6 @@ def compact_cigar(expanded_cigar):
             count = 1
     result.append(str(count)+state)
     return "".join(result)
-
-def expand_cigar(cigar):
-    return "".join([x[1]*int(x[0]) for x in re.findall(r'([0-9]+)([MIDNSHPX=])',cigar)])
 
 def engap(seq, cigar, delete='D', insert='I', match='M', gap='-'):
     """Convert a match/delete/insert string and sequence into gapped sequence
@@ -287,6 +320,46 @@ def gapped_alignment_to_cigar(aligned_reference,aligned_sample, gap='-', snv='M'
     fixed_xcigar, start, length = fix_softmasked_expanded_cigar(xcigar)
     return compact_cigar(fixed_xcigar), start, length
         
+def expand_mdtag(mdtag):
+    mdtag_tokens = re.findall(r'(\d+|\D+)',mdtag)
+    result = []
+    for x in mdtag_tokens:
+        if x[0] in '1234567890':
+            result.extend(['',]*int(x))
+        elif x[0] == '^':
+            result.extend(list(x.lower()))
+        else:
+            result.extend(list(x))
+    return result
+
+def compact_expanded_mdtag_tokens(expanded_mdtag_tokens):
+    result = []
+    count = 0
+    in_deletion = False
+    for token in expanded_mdtag_tokens:
+        if token == '':
+            count += 1
+            in_deletion = False
+        elif count:
+            #exiting match
+            result.append(str(count))
+            count = 0
+            if token == '^':
+                in_deletion = True
+            result.append(token)
+        else:
+            #in mismatch or deletion states
+            if in_deletion and token == '^':
+                #adjacent deletions to be merged
+                continue
+            if in_deletion and (token in 'CAGTN'):
+                #have a mismatch adjacent to a deletion
+                result.append('0')
+                in_deletion = False
+            result.append(token)
+    if count: 
+            result.append(str(count))
+    return "".join(result).upper()
         
 
 
