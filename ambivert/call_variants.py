@@ -15,6 +15,7 @@ Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All right
 """
 from __future__ import print_function
 import sys, os
+import warnings,logging
 from collections import namedtuple
 #import itertools, difflib, argparse
 #import hashlib, cPickle
@@ -37,11 +38,29 @@ __status__ = "Development"
 logfile = sys.stderr
 
 def caller(variant_amplicon, reference, gap='-',softmask = True):
+    """Mutation calling code
+    Arguments:
+        variant_amplicon: aligned query sequence as an interable of bases
+                            ie a string or list of single characters
+        reference:        aligned reference sequence as an iterable of bases
+                          softmasked sequence is represented as lower case.
+                          
+    Returns:
+        a list of tuples of:
+            Muation type: 'I': Insertion, 'D': Deletion, 'X': Substitition
+            Start:        Zero based position in gapped sequence
+            Pos:          One based position in ungapped reference sequence
+            Bases:        Substituted, inserted or deleted sequence
+    """
+    
     mismatch = ''
     deletion = ''
     insertion = ''
     onebased_pos_in_ungapped_ref = 0
     softmasked = True
+    
+    if len(variant_amplicon) != len(reference): #pragma no cover #works correctly but assertRaises test fails
+        raise RuntimeError('Sequence lengths are not equal:\n{0}\n{1}'.format(variant_amplicon, reference))
     
     for site in range(len(variant_amplicon)):
         #ignore softmasked sites or gaps in softmasked sequence
@@ -63,7 +82,7 @@ def caller(variant_amplicon, reference, gap='-',softmask = True):
         else:
             #we have reached end of softmasking
             softmasked = False
-
+        
         if variant_amplicon[site].upper() == reference[site].upper() and not reference[site] == gap and not variant_amplicon[site] == gap:
             onebased_pos_in_ungapped_ref += 1
             if not mismatch and not deletion and not insertion:
@@ -83,7 +102,7 @@ def caller(variant_amplicon, reference, gap='-',softmask = True):
                 yield 'X', site-len(mismatch), onebased_pos_in_ungapped_ref-len(mismatch), mismatch
                 mismatch = ''
             elif deletion:
-                yield 'D', site-len(deletion), onebased_pos_in_ungapped_ref-len(deletion), deletion
+                yield 'D', site-len(deletion), onebased_pos_in_ungapped_ref-len(deletion)+1, deletion
                 deletion = ''
         elif variant_amplicon[site] == gap:
             deletion += reference[site]
@@ -110,13 +129,13 @@ def caller(variant_amplicon, reference, gap='-',softmask = True):
     #clean up non match states at end of sequence
     onebased_pos_in_ungapped_ref += 1
     if mismatch:
-        yield 'X', site-len(mismatch), onebased_pos_in_ungapped_ref-len(mismatch), mismatch
+        yield 'X', site-len(mismatch)+1, onebased_pos_in_ungapped_ref-len(mismatch), mismatch
         mismatch = ''
     if deletion:
-        yield 'D', site-len(deletion), onebased_pos_in_ungapped_ref-len(deletion), deletion
+        yield 'D', site-len(deletion)+1, onebased_pos_in_ungapped_ref-len(deletion), deletion
         deletion = ''
     if insertion:
-        yield 'I', site-len(insertion), onebased_pos_in_ungapped_ref, insertion
+        yield 'I', site-len(insertion)+1, onebased_pos_in_ungapped_ref, insertion
         insertion = ''
         
 def call_variants(variant_amplicon, reference, chromosome, ref_start=1, **kw):
@@ -167,11 +186,12 @@ def call_variants_to_vcf(variant_amplicon, reference, chromosome, ref_start=1, o
     format_as_vcf(call_variants(variant_amplicon, reference, chromosome, ref_start=ref_start, **kw), outfile=outfile)
     pass
 
-def make_vcf_header(threshold):
+def make_vcf_header(threshold): #pragma no cover
+    """depricated"""
     return "##fileformat=VCF4.1\n\
 ##source=AmBiVeRT{version}\n\
 ##FILTER=<ID=depth,Description=more than {threshold} variant supporting reads>\n\
 #CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO".format(version=__version__,threshold=threshold)
 
-if __name__ == '__main__':
+if __name__ == '__main__': #pragma no cover
     pass
