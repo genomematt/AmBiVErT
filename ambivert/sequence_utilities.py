@@ -3,25 +3,24 @@
 """
 sequence_utilities.py
 
-Created by Matthew Wakefield on 2013-05-02.
-Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
+Created by Matthew Wakefield.
+Copyright (c) 2013-2014  Matthew Wakefield and The University of Melbourne. All rights reserved.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 """
-#from __future__ import print_function, division, unicode_literals
+
 import sys, os, io, re
 from string import ascii_uppercase, ascii_lowercase
-#import itertools
 import gzip
 
 __author__ = "Matthew Wakefield"
-__copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
+__copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield",]
-__license__ = "GPL"
-__version__ = "0.1.10"
+__license__ = "GPLv3"
+__version__ = "0.1.11"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"

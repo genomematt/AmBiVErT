@@ -3,7 +3,7 @@
 """
 insert_variants.py
 
-Created by Matthew Wakefield on 2013-09-26.
+Created by Matthew Wakefield.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 
    This program is distributed in the hope that it will be useful,
@@ -21,7 +21,7 @@ __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield",]
 __license__ = "GPL"
-__version__ = "0.1.10"
+__version__ = "0.1.11"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"

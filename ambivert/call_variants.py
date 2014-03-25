@@ -4,7 +4,7 @@
 call_variants.py
 
 Created by Matthew Wakefield and Graham Taylor.
-Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
+Copyright (c) 2013-2014  Matthew Wakefield and The University of Melbourne. All rights reserved.
 
    
    This program is distributed in the hope that it will be useful,
@@ -17,20 +17,12 @@ from __future__ import print_function
 import sys, os
 import warnings,logging
 from collections import namedtuple
-#import itertools, difflib, argparse
-#import hashlib, cPickle
-#from collections import defaultdict
-##from cogent.align.algorithm import nw_align, sw_align
-#from sequence_utilities import parse_fastq, parse_fasta, reverse_complement, flatten_paired_alignment, format_alignment
-#from truseq_manifest import parse_truseq_manifest, make_sequences
-#import plumb.bob
-#    
 
 __author__ = "Matthew Wakefield"
-__copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
+__copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield","Graham Taylor"]
-__license__ = "GPL"
-__version__ = "0.1.10"
+__license__ = "GPLv3"
+__version__ = "0.1.11"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"

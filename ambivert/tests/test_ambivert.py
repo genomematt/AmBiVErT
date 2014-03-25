@@ -3,19 +3,30 @@
 """
 test_ambivert.py
 
-Created by Matthew Wakefield on 2013-11-04.
-Copyright (c) 2013 Matthew Wakefield and The University of Melbourne. All rights reserved.
+Created by Matthew Wakefield and Graham Taylor.
+Copyright (c) 2013-2014 Matthew Wakefield and The University of Melbourne. All rights reserved.
+   
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-Excludes command line interface code.  Skipped code marked with #pragma no cover
 """
-### TODO Coverage ambivert/ambivert 92-93, 130-131, 173, 176, 393-395, 426, 437, 470, 504, 576, 690, 692, 725, 749, 809-819, 858-864, 882, 1068, 1070, 1074
-#from __future__ import division, print_function, unicode_literals
+
 import unittest, io, os, logging
 import hashlib
 from tempfile import NamedTemporaryFile
 from pkg_resources import resource_stream
 from ambivert import ambivert
 from collections import namedtuple
+
+__author__ = "Matthew Wakefield"
+__copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
+__credits__ = ["Matthew Wakefield","Graham Taylor"]
+__license__ = "GPLv3"
+__version__ = "0.1.11"
+__maintainer__ = "Matthew Wakefield"
+__email__ = "matthew.wakefield@unimelb.edu.au"
+__status__ = "Development"
 
 def md5(data):
     #python3 compatibility

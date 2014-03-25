@@ -5,7 +5,7 @@ truseq_manifest.py
 
 Utilities for handling Illumina TruSeq amplicon manifest files
 
-Created by Matthew Wakefield on 2013-05-02.
+Created by Matthew Wakefield.
 Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
 
    This program is distributed in the hope that it will be useful,
@@ -23,7 +23,7 @@ __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield","Graham Taylor"]
 __license__ = "GPL"
-__version__ = "0.1.10"
+__version__ = "0.1.11"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
