@@ -516,6 +516,7 @@ class test_ambivert(unittest.TestCase):
         
     
     def test_print_consolidated_vcf(self):
+        self.maxDiff = None
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -527,7 +528,24 @@ class test_ambivert(unittest.TestCase):
         outfile = io.StringIO()
         amplicons.print_consolidated_vcf(outfile=outfile)
         #print(outfile.getvalue())
-        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'8b803868456658becd36afae2946865b')
+        canned_result = "##fileformat=VCFv4.2\n##source=AmBiVeRT{0}\n".format(__version__) + \
+            "##FILTER=<ID=depth,Description=\"more than 50 variant supporting reads\">\n" + \
+            "##FILTER=<ID=cover,Description=\"more than 50 reads at variant position\">\n" + \
+            "##FILTER=<ID=freq,Description=\"more than 10.0% of reads support variant\">\n" + \
+            "##FILTER=<ID=primer,Description=\"involves primer sequence\">\n" + \
+            "##FILTER=<ID=homopoly5,Description=\"homopolymer of length > 5 at mutation site\">\n" + \
+            "##FILTER=<ID=homopoly10,Description=\"homopolymer of length > 10 at mutation site\">\n" + \
+            "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Read depth excluding soft masked primers at variant site\">\n" + \
+            "##INFO=<ID=AC,Number=1,Type=Integer,Description=\"Alt allele supporting read count\">\n" + \
+            "##INFO=<ID=AF,Number=1,Type=Float,Description=\"Alt allele frequency\">\n" + \
+            "##INFO=<ID=ALTAMPS,Number=.,Type=String,Description=\"Unique identifiers for amplicons supporting alt allele\">\n" + \
+            "##INFO=<ID=REFAMPS,Number=.,Type=String,Description=\"Unique identifiers for amplicons supporting other alleles\">\n" + \
+            "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO\n" + \
+            "chr17	41244435	.	T	C	.	PASS	DP=193;AC=122;AF=0.632;ALTAMPS=1186cf52bcce24d9e5446675e896b90c,268014b6f669772a4e97b99427563d6b;REFAMPS=c3ee13ce7e3e7973b37714187bd2019d\n" + \
+            "chr17	41245466	.	G	A	.	PASS	DP=133;AC=61;AF=0.459;ALTAMPS=357199abf30c529a625b24916a341ff8;REFAMPS=32ff3ea55601305b5e8b3bd266c4080a\n" + \
+            "chr17	41245471	.	C	T	.	PASS	DP=133;AC=61;AF=0.459;ALTAMPS=357199abf30c529a625b24916a341ff8;REFAMPS=32ff3ea55601305b5e8b3bd266c4080a\n"
+        self.assertEqual(outfile.getvalue(),canned_result)
+        #self.assertEqual(md5(outfile.getvalue()).hexdigest(),'8b803868456658becd36afae2946865b')
         outfile.close()
         
         amplicons.reference['homopolymertest'] = ('homopolymer', 'chrY', '1', '100', '+')
@@ -539,7 +557,26 @@ class test_ambivert(unittest.TestCase):
         outfile = io.StringIO()
         amplicons.print_consolidated_vcf(outfile=outfile)
         #print(outfile.getvalue())
-        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'56445881e3cfdffe6fb353ebaffde961')
+        canned_result = "##fileformat=VCFv4.2\n##source=AmBiVeRT{0}\n".format(__version__) + \
+            "##FILTER=<ID=depth,Description=\"more than 50 variant supporting reads\">\n" + \
+            "##FILTER=<ID=cover,Description=\"more than 50 reads at variant position\">\n" + \
+            "##FILTER=<ID=freq,Description=\"more than 10.0% of reads support variant\">\n" + \
+            "##FILTER=<ID=primer,Description=\"involves primer sequence\">\n" + \
+            "##FILTER=<ID=homopoly5,Description=\"homopolymer of length > 5 at mutation site\">\n" + \
+            "##FILTER=<ID=homopoly10,Description=\"homopolymer of length > 10 at mutation site\">\n" + \
+            "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Read depth excluding soft masked primers at variant site\">\n" + \
+            "##INFO=<ID=AC,Number=1,Type=Integer,Description=\"Alt allele supporting read count\">\n" + \
+            "##INFO=<ID=AF,Number=1,Type=Float,Description=\"Alt allele frequency\">\n" + \
+            "##INFO=<ID=ALTAMPS,Number=.,Type=String,Description=\"Unique identifiers for amplicons supporting alt allele\">\n" + \
+            "##INFO=<ID=REFAMPS,Number=.,Type=String,Description=\"Unique identifiers for amplicons supporting other alleles\">\n" + \
+            "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO\n" + \
+            "chr17	41244435	.	T	C	.	PASS	DP=193;AC=122;AF=0.632;ALTAMPS=1186cf52bcce24d9e5446675e896b90c,268014b6f669772a4e97b99427563d6b;REFAMPS=c3ee13ce7e3e7973b37714187bd2019d\n" + \
+            "chr17	41245466	.	G	A	.	PASS	DP=133;AC=61;AF=0.459;ALTAMPS=357199abf30c529a625b24916a341ff8;REFAMPS=32ff3ea55601305b5e8b3bd266c4080a\n" + \
+            "chr17	41245471	.	C	T	.	PASS	DP=133;AC=61;AF=0.459;ALTAMPS=357199abf30c529a625b24916a341ff8;REFAMPS=32ff3ea55601305b5e8b3bd266c4080a\n" + \
+            "chrY	25	.	A	C	.	homopoly5	DP=193;AC=122;AF=0.632;ALTAMPS=1186cf52bcce24d9e5446675e896b90c,268014b6f669772a4e97b99427563d6b;REFAMPS=c3ee13ce7e3e7973b37714187bd2019d\n" + \
+            "chrY	55	.	A	C	.	homopoly10	DP=193;AC=122;AF=0.632;ALTAMPS=1186cf52bcce24d9e5446675e896b90c,268014b6f669772a4e97b99427563d6b;REFAMPS=c3ee13ce7e3e7973b37714187bd2019d\n"
+        self.assertEqual(outfile.getvalue(),canned_result)
+        #self.assertEqual(md5(outfile.getvalue()).hexdigest(),'56445881e3cfdffe6fb353ebaffde961')
         pass
     
     def test_AmpliconData_print_to_sam(self):
@@ -560,8 +597,13 @@ class test_ambivert(unittest.TestCase):
         
         outfile = io.StringIO()
         amplicons.printall_to_sam(samfile=outfile)
-        #print(outfile.getvalue())
-        self.assertEqual(md5(outfile.getvalue()).hexdigest(),'0a879b5f8d996617f3f48da47ed18362')
+        #print(outfile.getvalue().split('\n')[:27])
+        #print(outfile.getvalue().split('\n')[27])
+        #print(outfile.getvalue().split('\n')[28:])
+        self.assertEqual(md5(repr(outfile.getvalue().split('\n')[:27])).hexdigest(),'5c5ab03009ec9d805ef09979e5bae3c4')
+        self.assertEqual(outfile.getvalue().split('\n')[27],'@PG\tID:AmBiVErT\tVN:{0}'.format(__version__))
+        self.assertEqual(md5(repr(outfile.getvalue().split('\n')[28:])).hexdigest(),'462c330929084d6a88d51679318e37e2')
+        #self.assertEqual(md5(outfile.getvalue()).hexdigest(),'0a879b5f8d996617f3f48da47ed18362')
         outfile.close()
     
     
