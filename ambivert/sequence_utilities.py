@@ -26,7 +26,7 @@ __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
 
-def open_potentially_gzipped(thefile):
+def open_potentially_gzipped(thefile):#pragma no cover
     """Use the name of a provided file to detect gzipped files and return
     an appropriately handled file object.
     Arguments:
@@ -93,13 +93,12 @@ def parse_fasta(filename, token='>'):
         if name:
             yield (name, seq)
 
-def reverse_complement(seqstring):
+def complement(seqstring):
     """Case sensitive IUPAC complement
         Arguments:
         o seqstring - an iterable object of characters (eg a string)
-        o reverse   - optional boolean flag for reversing order of returned result default=False
         
-        Returns a string
+        Returns a string of complemented sequence
     """
     result=[]
     complement={'a':'t', 'c':'g', 'g':'c', 't':'a',
@@ -117,7 +116,16 @@ def reverse_complement(seqstring):
             result.append(complement[base])
         except KeyError:
             result.append('n')
-    return ''.join(result[::-1])
+    return ''.join(result)
+
+def reverse_complement(seqstring):
+    """Case sensitive IUPAC reverse complement
+        Arguments:
+        o seqstring - an iterable object of characters (eg a string)
+        
+        Returns a string of reverse complemented sequence
+    """
+    return complement(seqstring)[::-1]
 
 def encode_ambiguous(bases):
     """Encode a group of ambiguous bases with IUPAC symbol
@@ -130,7 +138,7 @@ def encode_ambiguous(bases):
     """
     bases = tuple(sorted(set([x.upper() for x in bases])))
     if len(bases) == 1:
-        return bases
+        return bases[0]
     iupac = {('A','G'):'R',
             ('C','T'):'Y',
             ('C','G'):'S',
@@ -180,19 +188,6 @@ def format_fasta(name,seq, block_size=80):
     """returns a string in fasta format"""
     return '>'+name+'\n'+slice_string_in_blocks(seq,block_size)
 
-def format_alignment(sequences):
-    align={}
-    result = ''
-    for (name, seq) in sequences:
-        align[name]=make_blocklist(seq, block_size=50)
-    for i in range(len(align.values()[0])):
-        for key in align:
-            result +='%30s\t' % key
-            if align[key][i]:
-                result += align[key][i]+'\n'
-        result += '\n'
-    return result
-
 def get_sam_header(samfile):
     line = "@"
     header = []
@@ -204,12 +199,6 @@ def get_sam_header(samfile):
             header.append(line)
     samfile.seek(pointer)
     return header
-
-def process_sam_headers(input_file, outfiles):
-    header = "\n".join(get_sam_header(input_file))
-    for outfile in outfiles:
-        print(header, file=outfile)
-    pass
 
 def get_tag(read,tag):
     for x in read[11:]:
@@ -301,6 +290,8 @@ def gapped_alignment_to_cigar(aligned_reference,aligned_sample, gap='-', snv='M'
     xcigar = []
     for i in range(len(aligned_reference)):
         if aligned_reference[i] == aligned_sample[i]:
+            if aligned_reference[i] == gap:
+                raise RuntimeError('Invalid alignment state \n{0}\n{1}'.format(aligned_reference[i],aligned_sample[i]))
             xcigar.append('M')
         elif aligned_reference[i] in ascii_uppercase and \
             aligned_sample[i] in ascii_uppercase:
@@ -314,7 +305,7 @@ def gapped_alignment_to_cigar(aligned_reference,aligned_sample, gap='-', snv='M'
             xcigar.append('I')
         elif aligned_sample[i] == gap:
             xcigar.append('D')
-        else:
+        else: #pragma no cover # I cant think of a way to get here but complex so dont want to default to a valid state
             raise RuntimeError('Invalid alignment state \n{0}\n{1}'.format(aligned_reference[i],aligned_sample[i]))
     fixed_xcigar, start, length = fix_softmasked_expanded_cigar(xcigar)
     return compact_cigar(fixed_xcigar), start, length

@@ -12,7 +12,9 @@ Copyright (c) 2013-2014  Matthew Wakefield and The University of Melbourne. All 
 
 """
 
+import io
 import unittest
+from string import ascii_uppercase, ascii_lowercase
 from ambivert.sequence_utilities import *
 
 __author__ = "Matthew Wakefield"
@@ -24,13 +26,85 @@ __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
-def md5(data):
-    #python3 compatibility
-    return hashlib.md5(bytes(data,'ascii'))
+SAMDATA = """@HQ\tVN:1.5\tSO:unsorted
+@SQ\tSN:chr1\tLN:249250621
+@SQ\tSN:chr2\tLN:243199373
+@PG	ID:AmBiVErT	VN:0.1.11
+1186cf52bcce24d9e5446675e896b90c_1	0	chr17	41244429	40	3S16M2S	*	0	16	CTGGAACCTACTTCATTAATA	IIIIIIIIIIIIIIIIIIIII
+1186cf52bcce24d9e5446675e896b90c_2	0	chr17	41244429	40	3S16M2S	*	0	16	CTGGAACCTACTTCATTAATA	IIIIIIIIIIIIIIIIIIIII
+1186cf52bcce24d9e5446675e896b90c_3	0	chr17	41244429	40	3S16M2S	*	0	16	CTGGAACCTACTTCATTAATA	IIIIIIIIIIIIIIIIIIIII
+HWI-ST960:63:D0CYJACXX:4:1201:14988:16838	16	MT	1	3	21S29M	*	0	0	CTTATTTAAGGGGAACGTGTGGATCACAGGTCTATCACCCTATTAACCAC	AIGEHGDF>IIHEHGAIGIIIGGEEFHIIGHHFAFEAHHDHHFFDDFCC@	AS:i:58	XS:i:44XN:i:0	XM:i:0	XO:i:0	XG:i:0	NM:i:0	MD:Z:29	YT:Z:UU
+"""
 
 class test_sequence_utilities(unittest.TestCase):
     def setUp(self):
         pass
+    
+    def test_open_potentially_gzipped_file(self):
+        pass
+        
+    def test_parse_fastq(self):
+        testdata = io.BytesIO(b'\n'.join([b"@firstreadname",b"GACAT",b'+',b'IAB+@',
+                               b"@secondreadname:1_2 1:2",b"GNATCAT",b'+',b'IAB+@EE'])+b'\n')
+        result = list(parse_fastq(testdata))
+        self.assertEqual(result, [('firstreadname', 'GACAT', 'IAB+@'), ('secondreadname:1_2 1:2', 'GNATCAT', 'IAB+@EE')])
+    
+    def test_parse_fasta(self):
+        testdata = io.StringIO('>firstsequence\nGACAT\n>secondsequence\nGNATCAT')
+        self.assertEqual(list(parse_fasta(testdata)),[('firstsequence', 'GACAT'), ('secondsequence', 'GNATCAT')])
+    
+    def test_complement(self):
+        self.assertEqual(complement('ACBDGHKMmNSRUTWVYnacbdghk-.srutwvy'),'TGVHCDMKkNSYAAWBRntgvhcdm-.syaawbr')
+        self.assertEqual(complement('ACBDGHKMmNSRUTWVYInacbdghk-.srutwvy'),'TGVHCDMKkNSYAAWBRnntgvhcdm-.syaawbr')
+
+    def test_reverse_complement(self):
+        self.assertEqual(reverse_complement('ACBDGHKMmNSRUTWVYnacbdghk-.srutwvy'),'rbwaays.-mdchvgtnRBWAAYSNkKMDCHVGT')
+    
+    def test_encode_ambiguous(self):
+        self.assertEqual([encode_ambiguous(x) for x in ['CG','AGT','ACG','GT','CGT','AT','ACT','ACGT','AC','AG','CT','ANT','A','C','T','G','N']],
+                        ['S', 'D', 'V', 'K', 'B', 'W', 'H', 'N', 'M', 'R', 'Y', 'N','A','C','T','G','N'])
+    
+    def test_flatten_paired_alignment(self):
+        testdata = [('GATC---',
+                     '---GATC',
+                     'GATSATC'),
+                    ('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGA----------------------------',
+                     '--------------------------------CTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG',
+                     'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG'),
+                    ('--------------------------------CTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG',
+                     'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGA----------------------------',
+                     'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG'),
+                    ('CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCC---CGGCCTGAAGA----------------------------',
+                     '--------------------------------CTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG',
+                     'CAGGACTGGCTGCCGGCCCTTCTCTCCAGGTACTGGCCCCACGGCCTGAAGACTTCATGCGGCCCAGACGTGTTCAGCGG'),
+                    ]
+        for (seq1,seq2,flat) in testdata:
+            self.assertEqual(flatten_paired_alignment(seq1,seq2),flat)
+    
+    def test_make_blocklist(self):
+        canned_result = ['abcdefghij', 'klmnopqrst', 'uvwxyzABCD',
+                        'EFGHIJKLMN', 'OPQRSTUVWX', 'YZ']
+        result = make_blocklist(ascii_lowercase+ascii_uppercase, 10)
+        self.assertEqual(canned_result, result)
+    
+    def test_slice_string_in_blocks(self):
+        canned_result = 'abcdefghij\nklmnopqrst\nuvwxyzABCD\nEFGHIJKLMN\nOPQRSTUVWX\nYZ\n'
+        result = slice_string_in_blocks(ascii_lowercase+ascii_uppercase, 10)
+        self.assertEqual(canned_result, result)
+    
+    def test_format_fasta(self):
+        canned_result = '>fooGene\nabcdefghij\nklmnopqrst\nuvwxyzABCD\nEFGHIJKLMN\nOPQRSTUVWX\nYZ\n'
+        result = format_fasta('fooGene',ascii_lowercase+ascii_uppercase, 10)
+        self.assertEqual(canned_result, result)
+    
+    def test_get_sam_header(self):
+        self.assertEqual(get_sam_header(io.StringIO(SAMDATA)),
+                ['@HQ\tVN:1.5\tSO:unsorted', '@SQ\tSN:chr1\tLN:249250621', '@SQ\tSN:chr2\tLN:243199373', '@PG\tID:AmBiVErT\tVN:0.1.11'])
+    
+    def test_get_tag(self):
+        data = SAMDATA.split('\n')[5:]
+        self.assertEqual([get_tag(x.split('\t'),'MD') for x in data],[None, None, '29', None])
+    
     def test_fix_softmasked_expanded_cigar(self):
         self.assertEqual(fix_softmasked_expanded_cigar(['S', 'S', 'S', 'S', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'S', 'S', 'S', 'S']),
                         ('SSSSMMMMMMMMSSSS', 4, 8))
@@ -40,8 +114,10 @@ class test_sequence_utilities(unittest.TestCase):
                         ('SSSMMMIMDMM', 3, 8))
         self.assertEqual(fix_softmasked_expanded_cigar(['M', 'M', 'M', 'I', 'M', 'D', 'M', 'M', 'S', 'I', 'S', 'S']),
                         ('MMMIMDMMSSSS', 0, 8))
+        self.assertEqual(fix_softmasked_expanded_cigar(['M', 'M', 'M', 'I', 'M', 'D', 'M', 'M', 'M', 'M', 'M', 'M']),
+                        ('MMMIMDMMMMMM', 0, 11))
         pass
-        
+    
     def test_gapped_alignment_to_cigar(self):
         self.assertEqual(gapped_alignment_to_cigar('gtacACGTACGTgtac','GTACACGTACGTGTAC'),
                         ('4S8M4S', 4, 8)
@@ -49,6 +125,12 @@ class test_sequence_utilities(unittest.TestCase):
         self.assertEqual(gapped_alignment_to_cigar('gtacACG-ACGTg-ac','GT-CACGTA-GTGTAC'),
                         ('3S3M1I1M1D2M4S', 3, 8)
                         )
+        self.assertEqual(gapped_alignment_to_cigar('gtacACGAACGTg-ac','GT-CACGTA-GTGTAC',snv='X'),
+                        ('3S3M1X1M1D2M4S', 3, 8)
+                        )
+        
+        self.assertRaises(RuntimeError,gapped_alignment_to_cigar,'gtacACG-ACGTg-ac','GT-CACGTA-GTG')
+        self.assertRaises(RuntimeError,gapped_alignment_to_cigar,'gtacACG-ACGTg-ac','gtacACG-ACGTg-ac')
         pass
     
     def test_expand_cigar(self):
