@@ -52,11 +52,9 @@ import itertools, difflib, argparse
 import hashlib, pickle
 from collections import defaultdict
 import plumb.bob
-import unittest
 from ambivert.sequence_utilities import *
 from ambivert.truseq_manifest import make_sequences, parse_truseq_manifest
 from ambivert.call_variants import call_variants, call_variants_to_vcf, make_vcf_header
-import ambivert.tests.test_ambivert
     
 
 __author__ = "Matthew Wakefield"
@@ -1020,20 +1018,24 @@ def process_commandline_args(): #pragma no cover
                         action='store_true',
                         help='run tests before starting, and quit if they don\'t pass')
     args = parser.parse_args()
+    if args.test:
+        import unittest
+        import ambivert.tests.test_ambivert
+        logging.info('Running test suite to confirm correct functionality')
+        logging.disable(logging.CRITICAL)
+        loader = unittest.TestLoader()
+        tests = loader.loadTestsFromModule(ambivert.tests.test_ambivert)
+        ambivert_test_output=io.StringIO()
+        runner = unittest.TextTestRunner(ambivert_test_output)
+        result = runner.run(tests)
+        logging.disable(logging.NOTSET)
+        if not result.wasSuccessful():
+            raise RuntimeError('Error in executing tests - this is most likely an installation issue\n{0}'.format(ambivert_test_output.getvalue()))
+        else:
+            logging.info('Tests completed successfully')
     if args.version:
         print(__version__)
         sys.exit()
-    if args.test:
-        import unittest
-
-        loader = unittest.TestLoader()
-        import ambivert.tests
-        tests = loader.loadTestsFromModule(ambivert.tests)
-        runner = unittest.TextTestRunner()
-        result = runner.run(tests)
-
-        if not result.wasSuccessful():
-            sys.exit(1)
     if args.prefix:
         args.countfile = open(args.prefix + '.counts','w')
         args.output = open(args.prefix + '.vcf','w')
@@ -1136,15 +1138,6 @@ def call_variants_per_amplicon(amplicons, args): #pragma no cover
     pass
 
 def main(): #pragma no cover
-    logging.info('Running test suite to confirm correct functionality')
-    logging.disable(logging.CRITICAL)
-    ambivert_test_output=io.StringIO()
-    ambivert_test_runner=unittest.TextTestRunner(ambivert_test_output)
-    unittest.main(module='ambivert.tests.test_ambivert',testRunner=ambivert_test_runner,exit=False)#,verbosity=0,buffer=True)
-    if ambivert_test_output.getvalue().split('\n')[-2] != 'OK':
-        raise RuntimeError('Testing of AmBiVErT failed - there is probably an installation issue:\n{0}'.format(ambivert_test_output.getvalue()))
-    logging.disable(logging.NOTSET)
-    
     args = process_commandline_args()
     
     if args.fastqamplicon:
