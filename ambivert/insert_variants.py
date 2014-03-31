@@ -12,10 +12,12 @@ Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All right
 
 """
 from __future__ import print_function
+from __future__ import absolute_import
+
 import sys
 import os
-from sequence_utilities import *
-from simulate_variants import expand_cigar, engap
+from .sequence_utilities import *
+from .simulate_variants import expand_cigar, engap
 
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"

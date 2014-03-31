@@ -1016,10 +1016,24 @@ def process_commandline_args(): #pragma no cover
     parser.add_argument('--version',
                         action='store_true',
                         help='print version information and exit')
+    parser.add_argument('--test',
+                        action='store_true',
+                        help='run tests before starting, and quit if they don\'t pass')
     args = parser.parse_args()
     if args.version:
         print(__version__)
         sys.exit()
+    if args.test:
+        import unittest
+
+        loader = unittest.TestLoader()
+        import ambivert.tests
+        tests = loader.loadTestsFromModule(ambivert.tests)
+        runner = unittest.TextTestRunner()
+        result = runner.run(tests)
+
+        if not result.wasSuccessful():
+            sys.exit(1)
     if args.prefix:
         args.countfile = open(args.prefix + '.counts','w')
         args.output = open(args.prefix + '.vcf','w')
