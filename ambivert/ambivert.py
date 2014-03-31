@@ -46,15 +46,17 @@ Copyright (c) 2013-2014  Matthew Wakefield and The University of Melbourne. All 
 # ambivert noun PSYCHOLOGY
 # a person who has a balance of extrovert and introvert features in their personality
 
-import sys, os
+import sys, os, io
 import warnings, logging
 import itertools, difflib, argparse
 import hashlib, pickle
 from collections import defaultdict
-from ambivert.sequence_utilities import *
-from ambivert.truseq_manifest import parse_truseq_manifest, make_sequences
-from ambivert.call_variants import call_variants, call_variants_to_vcf, make_vcf_header
 import plumb.bob
+import unittest
+from ambivert.sequence_utilities import *
+from ambivert.truseq_manifest import make_sequences, parse_truseq_manifest
+from ambivert.call_variants import call_variants, call_variants_to_vcf, make_vcf_header
+import ambivert.tests.test_ambivert
     
 
 __author__ = "Matthew Wakefield"
@@ -67,7 +69,7 @@ __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
 logfile = sys.stderr
-logging.basicConfig(format='%(levelname)s:%(message)s',level=logging.DEBUG)
+logging.basicConfig(format='%(levelname)s:AmBiVErT:%(message)s',level=logging.DEBUG)
 logging.disable(logging.DEBUG)
 logging.captureWarnings(True)
 
@@ -1120,6 +1122,11 @@ def call_variants_per_amplicon(amplicons, args): #pragma no cover
     pass
 
 def main(): #pragma no cover
+    logging.info('Running test suite to confirm correct functionality')
+    logging.disable(logging.CRITICAL)
+    unittest.main(module='ambivert.tests.test_ambivert',verbosity=0,exit=False,buffer=True)
+    logging.disable(logging.NOTSET)
+    
     args = process_commandline_args()
     
     if args.fastqamplicon:

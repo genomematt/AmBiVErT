@@ -16,8 +16,8 @@ import unittest, io, os, logging
 import hashlib
 from tempfile import NamedTemporaryFile
 from pkg_resources import resource_stream
-from ambivert import ambivert
 from collections import namedtuple
+from ambivert.ambivert import *
 
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
@@ -70,6 +70,7 @@ def make_testdata_fastq(amplicons): #pragma no cover
 
 class test_ambivert(unittest.TestCase):
     def setUp(self):
+        from ambivert import ambivert
         self.amplicons = ambivert.AmpliconData()
         pass
     
@@ -108,6 +109,7 @@ class test_ambivert(unittest.TestCase):
         pass
         
     def test_smithwaterman_align_DNA(self):
+        from ambivert import ambivert
         s1 = 'GCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTGGCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
         s2 = 'GCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGCTACTTCATCTTTGGCCGCCATGTTTGTGCTATGGAGGGTT'
     
@@ -141,6 +143,7 @@ class test_ambivert(unittest.TestCase):
         
 
     def test_needlemanwunsch_align_DNA(self):
+        from ambivert import ambivert
         s1 = 'GCGCCAGCCACTCAACTATATTTTGGTTAATATCTCCTTGGCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGC'
         s2 = 'GCTGGTTTCATCTACTGCATCTTCTCGGTCTTCACTGTCTTCATCTCTAGCTCCCAAGGCTACTTCATCTTTGGCCGCCATGTTTGTGCTATGGAGGGTT'
     
@@ -295,6 +298,7 @@ class test_ambivert(unittest.TestCase):
         
         
     def test_process_amplicon_data(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -307,6 +311,7 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_process_amplicon_data(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -318,6 +323,7 @@ class test_ambivert(unittest.TestCase):
         self.assertEqual(md5(str(sorted(amplicons.potential_variants))).hexdigest(),'1a28f10a7a1e2ea430e79453e367a342')
     
     def test_AmpliconData_get_amplicon_counts(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -338,6 +344,7 @@ class test_ambivert(unittest.TestCase):
         
     
     def test_save_hash_table(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -364,6 +371,7 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_print_variants_as_alignments(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -379,6 +387,7 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_call_amplicon_variants(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -393,6 +402,7 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_get_variant_positions(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -407,6 +417,7 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_get_amplicons_overlapping(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -430,6 +441,7 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_consolidate_variants(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -450,6 +462,7 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_get_filtered_variants(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -465,6 +478,7 @@ class test_ambivert(unittest.TestCase):
         pass
 
     def test_get_filtered_variants_filtering_ambiguous(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -481,6 +495,7 @@ class test_ambivert(unittest.TestCase):
 
     
     def test_print_to_fastq(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -496,6 +511,7 @@ class test_ambivert(unittest.TestCase):
         pass
 
     def test_is_homopolymer_at_position(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
@@ -516,6 +532,7 @@ class test_ambivert(unittest.TestCase):
         
     
     def test_print_consolidated_vcf(self):
+        from ambivert import ambivert
         self.maxDiff = None
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
@@ -580,6 +597,7 @@ class test_ambivert(unittest.TestCase):
         pass
     
     def test_AmpliconData_print_to_sam(self):
+        from ambivert import ambivert
         forward_file = resource_stream(__name__, 'data/testdata_R1.fastq')
         reverse_file = resource_stream(__name__, 'data/testdata_R2.fastq')
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
