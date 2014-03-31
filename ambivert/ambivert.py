@@ -1124,7 +1124,11 @@ def call_variants_per_amplicon(amplicons, args): #pragma no cover
 def main(): #pragma no cover
     logging.info('Running test suite to confirm correct functionality')
     logging.disable(logging.CRITICAL)
-    unittest.main(module='ambivert.tests.test_ambivert',verbosity=0,exit=False,buffer=True)
+    ambivert_test_output=io.StringIO()
+    ambivert_test_runner=unittest.TextTestRunner(ambivert_test_output)
+    unittest.main(module='ambivert.tests.test_ambivert',testRunner=ambivert_test_runner,exit=False)#,verbosity=0,buffer=True)
+    if ambivert_test_output.getvalue().split('\n')[-2] != 'OK':
+        raise RuntimeError('Testing of AmBiVErT failed - there is probably an installation issue:\n{0}'.format(ambivert_test_output.getvalue()))
     logging.disable(logging.NOTSET)
     
     args = process_commandline_args()
