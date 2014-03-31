@@ -10,7 +10,7 @@ setup(
     packages=['ambivert'],
     include_package_data = True,
     url='https://git@bitbucket.org/genomematt/ambivert.git',
-    license='GPL',
+    license='GPLv3',
     entry_points={
         'console_scripts': ['ambivert = ambivert.ambivert:main',
                             'truseq_manifest = ambivert.truseq_manifest:main',
