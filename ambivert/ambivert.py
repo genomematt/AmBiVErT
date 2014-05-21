@@ -815,7 +815,7 @@ class AmpliconData(object):
         """
         for ((f_name, f_seq, f_qual),(r_name, r_seq, r_qual)) in self.data[key]:
             print('@{0}\n{1}\n+\n{2}'.format(f_name,f_seq,f_qual),file=forwardfile)
-            print('@{0}\n{1}\n+\n{2}'.format(r_name,r_seq,r_qual),file=forwardfile)
+            print('@{0}\n{1}\n+\n{2}'.format(r_name,r_seq,r_qual),file=reversefile)
         pass
     
     def print_to_sam(self, key, samfile=sys.stdout):
