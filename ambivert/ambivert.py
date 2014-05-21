@@ -715,9 +715,9 @@ class AmpliconData(object):
         print("\n".join(vcf_header),file=outfile)
         for variant in self.get_filtered_variants(min_cover=min_cover,min_reads=min_reads,min_freq=min_freq):
             soft_filter_name = 'PASS'
-            if self.is_homopolymer_at_position(variant[0].chromosome,variant[0].vcf_start +1, minimum=5):
+            if self.is_homopolymer_at_position(variant[0].chromosome,variant[0].start, minimum=5):
                 soft_filter_name = 'homopoly5'
-            if self.is_homopolymer_at_position(variant[0].chromosome,variant[0].vcf_start +1, minimum=10):
+            if self.is_homopolymer_at_position(variant[0].chromosome,variant[0].start, minimum=10):
                 soft_filter_name = 'homopoly10'
             print(variant[0].chromosome,
                 variant[0].vcf_start,
@@ -899,7 +899,10 @@ class AmpliconData(object):
         """
         #get identifiers for reference amplicons that overlap
         reference_ids = self.get_reference_overlapping(chrom, pos, length=1)
-        ref = sorted(reference_ids)[-1] # get right most overlapping reference
+        try:
+            ref = sorted(reference_ids)[-1] # get right most overlapping reference
+        except IndexError:
+            raise IndexError('No reference amplicons overlapping {0} {1}'.format(chrom, pos))
         ref_start = int(ref[2])
         if ref[4] == '-':
             ref_seq = reverse_complement(self.reference_sequences[ref])
