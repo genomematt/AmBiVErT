@@ -15,6 +15,15 @@ import hashlib
 from ambivert.truseq_manifest import *
 from pkg_resources import resource_stream
 
+__author__ = "Matthew Wakefield"
+__copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
+__credits__ = ["Matthew Wakefield",]
+__license__ = "GPLv3"
+__version__ = "0.1.12"
+__maintainer__ = "Matthew Wakefield"
+__email__ = "matthew.wakefield@unimelb.edu.au"
+__status__ = "Development"
+
 MANIFEST = u"""[Header]
 Customer Name	Joseph Bloggs
 Product Type	15026626

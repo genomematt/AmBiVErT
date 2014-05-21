@@ -12,6 +12,15 @@ import io
 from ambivert.insert_variants import *
 from ambivert.sequence_utilities import reverse_complement
 
+__author__ = "Matthew Wakefield"
+__copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
+__credits__ = ["Matthew Wakefield",]
+__license__ = "GPLv3"
+__version__ = "0.1.12"
+__maintainer__ = "Matthew Wakefield"
+__email__ = "matthew.wakefield@unimelb.edu.au"
+__status__ = "Development"
+
 SAMFILE = u"""@SQ	SN:chr13	LN:115169878
 @SQ	SN:chr17	LN:81195210
 chr17_41243153_122M_15G106_chr17_41243200_123M_123	99	chr17	41243153	60	122M	=	41243200	170	TCACACAAAATGATTGAATTCCTTGCTTTGGGACACCTGGATTTGCTTTTATAAAATGAAACCAGAAGTAAGTCCACCAGTAATTAGGATGTTAAAGCTCATTCAGTCAAAGATGACGTCCT	0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJK	NM:i:1	AS:i:117	XS:i:19
