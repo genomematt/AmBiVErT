@@ -154,6 +154,20 @@ def needleman_wunsch(seq1,seq2):
     plumb.bob.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
 
+def calculate_score(args):
+    ref_key, seq1, reference_sequence = args
+    alignment =  plumb.bob.global_align(bytes(seq1, 'ascii'), len(seq1),
+                    bytes(reference_sequence.upper(),'ascii'), len(reference_sequence),
+                    plumb.bob.DNA_MAP[0],
+                    plumb.bob.DNA_MAP[1], 
+                    plumb.bob.DNA_SCORE,
+                    -7, -1 #gap open, gap extend
+                    )
+    score = int(alignment[0].score)
+    plumb.bob.alignment_free(alignment)
+    return (ref_key,score)
+
+
 class AmpliconData(object):
     """A Class for holding read data from amplicon experiments
     Reads are indexed by hashes of both the forward and reverse reads
@@ -408,7 +422,34 @@ class AmpliconData(object):
                     best_hit = ref_key
             return best_hit,best_score
 
-                
+        def parallel_match_by_needleman_wunsch(merged_key,ref_keys,processes=9):
+            """Match merged amplicon to reference by global alignment
+            using pythons multiprocessing to match in parallel
+            Arguments:
+                merged_key : a md5 hexdigest key to AmpliconData.merged
+                ref_keys   : a list of keys to AmpliconData.reference_sequences
+                             in format [(name, chromosome, start, end, strand),]
+            """
+            from multiprocessing.dummy import Pool
+
+            if trim_primers:
+                seq1 = self.merged[merged_key][trim_primers:-trim_primers]
+            else:
+                seq1 = self.merged[merged_key]
+                        
+            pool = Pool(processes)
+            scores = pool.map(calculate_score, [(x, seq1, self.reference_sequences[x]) for x in ref_keys])
+            pool.close()
+            
+            best_score = int(-1000000)
+            best_hit = ''
+            
+            for ref_key, score in scores:
+                if score > best_score:
+                    best_score = score
+                    best_hit = ref_key
+            return best_hit,best_score
+        
         logging.info('Matching read bins to references - commas represent cached matches, periods matching by alignment')
         #sys.stderr.flush()
         for merged_key in self.merged:
@@ -421,7 +462,7 @@ class AmpliconData(object):
                             self.reference_sequences[self.reference[merged_key]]))
                 continue
             if global_align:
-                best_hit,best_score = match_by_needleman_wunsch(merged_key,self.reference_sequences)
+                best_hit,best_score = parallel_match_by_needleman_wunsch(merged_key,self.reference_sequences)
             else:
                 best_hit,best_score = match_by_smith_waterman(merged_key,self.reference_sequences)
             if best_hit and best_score > min_score:
