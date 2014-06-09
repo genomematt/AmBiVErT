@@ -398,13 +398,15 @@ class AmpliconData(object):
                     best_hit = ref_key
             return best_hit,best_score
         
-        def match_by_smith_waterman(merged_key,ref_keys):
+        def match_by_smith_waterman(merged_key,ref_keys):#pragma no cover
             """Match merged amplicon to reference by local alignment
             Arguments:
                 merged_key : a md5 hexdigest key to AmpliconData.merged
                 ref_keys   : a list of keys to AmpliconData.reference_sequences
                              in format [(name, chromosome, start, end, strand),]
+            DEPRECIATED - USE PARALLEL VERSION
             """
+            #DEPRECIATED
             best_score = 0
             best_hit = ''
             for ref_key in ref_keys:
@@ -426,13 +428,15 @@ class AmpliconData(object):
                     best_hit = ref_key
             return best_hit,best_score
 
-        def match_by_needleman_wunsch(merged_key,ref_keys):
+        def match_by_needleman_wunsch(merged_key,ref_keys):#pragma no cover
             """Match merged amplicon to reference by global alignment
             Arguments:
                 merged_key : a md5 hexdigest key to AmpliconData.merged
                 ref_keys   : a list of keys to AmpliconData.reference_sequences
                              in format [(name, chromosome, start, end, strand),]
+            DEPRECIATED - USE PARALLEL VERSION
             """
+            #DEPRECIATED
             best_score = int(-1000000)
             best_hit = ''
             for ref_key in ref_keys:
@@ -998,7 +1002,7 @@ class AmpliconData(object):
         reference_ids = self.get_reference_overlapping(chrom, pos, length=1)
         try:
             ref = sorted(reference_ids)[-1] # get right most overlapping reference
-        except IndexError:
+        except IndexError: #pragma no cover
             raise IndexError('No reference amplicons overlapping {0} {1}'.format(chrom, pos))
         ref_start = int(ref[2])
         if ref[4] == '-':
