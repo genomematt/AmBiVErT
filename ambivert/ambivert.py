@@ -51,11 +51,11 @@ import warnings, logging
 import itertools, difflib, argparse
 import hashlib, pickle
 from collections import defaultdict
+from multiprocessing.dummy import Pool #Threaded rather than process version of multiprocessing
 import plumb.bob
 from ambivert.sequence_utilities import *
 from ambivert.truseq_manifest import make_sequences, parse_truseq_manifest
 from ambivert.call_variants import call_variants, call_variants_to_vcf, make_vcf_header
-    
 
 __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
@@ -154,7 +154,38 @@ def needleman_wunsch(seq1,seq2):
     plumb.bob.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
 
-def calculate_score(args):
+def calculate_global_score(args):
+    """Calculate alignment score for amplicon to reference
+    comparison using global Needleman-Wunsch alignment.
+    Argument:
+        a tuple of (ref_key, query_sequence, reference_sequence)
+        The arguments are constructed as tuple to support use 
+        with the map function allowing pool.map for concurrency
+    Returns:
+        a tuple of (ref_key,score)
+    """
+    ref_key, seq1, reference_sequence = args
+    alignment =  plumb.bob.global_align(bytes(seq1, 'ascii'), len(seq1),
+                    bytes(reference_sequence.upper(),'ascii'), len(reference_sequence),
+                    plumb.bob.DNA_MAP[0],
+                    plumb.bob.DNA_MAP[1], 
+                    plumb.bob.DNA_SCORE,
+                    -7, -1 #gap open, gap extend
+                    )
+    score = int(alignment[0].score)
+    plumb.bob.alignment_free(alignment)
+    return (ref_key,score)
+
+def calculate_local_score(args):
+    """Calculate alignment score for amplicon to reference
+    comparison using local Smith-Waterman alignment.
+    Argument:
+        a tuple of (ref_key, query_sequence, reference_sequence)
+        The arguments are constructed as tuple to support use 
+        with the map function allowing pool.map for concurrency
+    Returns:
+        a tuple of (ref_key,score)
+    """
     ref_key, seq1, reference_sequence = args
     alignment =  plumb.bob.global_align(bytes(seq1, 'ascii'), len(seq1),
                     bytes(reference_sequence.upper(),'ascii'), len(reference_sequence),
@@ -331,11 +362,12 @@ class AmpliconData(object):
             self.reference_sequences[tuple(name.split())] = sequence
         pass
     
-    def match_to_reference(self, min_score = 0.1, trim_primers=0, global_align=True, show_progress = False):
+    def match_to_reference(self, min_score=0.1, trim_primers=0, global_align=True, show_progress=False, threads=1):
         """Assign read groups to reference sequences by competitive alignment
         Does not do reverse complementing or alignment formatting and relies
         only on score to match
-        Checks AmpliconData.reference for cached results to avoid redundant calculation
+        Checks AmpliconData.reference for cached results to avoid
+        redundant calculation
         Stores results in AmpliconData.reference keyed by md5 hexdigest in
         as keys to AmpliconData.reference_sequences in format 
         (name, chromosome, start, end, strand)
@@ -422,7 +454,7 @@ class AmpliconData(object):
                     best_hit = ref_key
             return best_hit,best_score
 
-        def parallel_match_by_needleman_wunsch(merged_key,ref_keys,processes=9):
+        def parallel_match_by_needleman_wunsch(merged_key,ref_keys,threads=threads):
             """Match merged amplicon to reference by global alignment
             using pythons multiprocessing to match in parallel
             Arguments:
@@ -430,18 +462,42 @@ class AmpliconData(object):
                 ref_keys   : a list of keys to AmpliconData.reference_sequences
                              in format [(name, chromosome, start, end, strand),]
             """
-            from multiprocessing.dummy import Pool
-
             if trim_primers:
                 seq1 = self.merged[merged_key][trim_primers:-trim_primers]
             else:
                 seq1 = self.merged[merged_key]
                         
-            pool = Pool(processes)
-            scores = pool.map(calculate_score, [(x, seq1, self.reference_sequences[x]) for x in ref_keys])
+            pool = Pool(threads)
+            scores = pool.map(calculate_global_score, [(x, seq1, self.reference_sequences[x]) for x in ref_keys])
             pool.close()
             
             best_score = int(-1000000)
+            best_hit = ''
+            
+            for ref_key, score in scores:
+                if score > best_score:
+                    best_score = score
+                    best_hit = ref_key
+            return best_hit,best_score
+        
+        def parallel_match_by_smith_waterman(merged_key,ref_keys,threads=threads):
+            """Match merged amplicon to reference by global alignment
+            using pythons multiprocessing to match in parallel
+            Arguments:
+                merged_key : a md5 hexdigest key to AmpliconData.merged
+                ref_keys   : a list of keys to AmpliconData.reference_sequences
+                             in format [(name, chromosome, start, end, strand),]
+            """
+            if trim_primers:
+                seq1 = self.merged[merged_key][trim_primers:-trim_primers]
+            else:
+                seq1 = self.merged[merged_key]
+                        
+            pool = Pool(threads)
+            scores = pool.map(calculate_local_score, [(x, seq1, self.reference_sequences[x]) for x in ref_keys])
+            pool.close()
+            
+            best_score = 0
             best_hit = ''
             
             for ref_key, score in scores:
@@ -462,9 +518,9 @@ class AmpliconData(object):
                             self.reference_sequences[self.reference[merged_key]]))
                 continue
             if global_align:
-                best_hit,best_score = parallel_match_by_needleman_wunsch(merged_key,self.reference_sequences)
+                best_hit,best_score = parallel_match_by_needleman_wunsch(merged_key,self.reference_sequences, threads=threads)
             else:
-                best_hit,best_score = match_by_smith_waterman(merged_key,self.reference_sequences)
+                best_hit,best_score = parallel_match_by_smith_waterman(merged_key,self.reference_sequences, threads=threads)
             if best_hit and best_score > min_score:
                 self.reference[merged_key]= best_hit
                 if show_progress: #pragma no cover
@@ -1029,6 +1085,10 @@ def process_commandline_args(): #pragma no cover
     parser.add_argument('--savehashtable',
                         type=argparse.FileType('wb'),
                         help='Output a precomputed hash table that matches amplicons exactly to references.  Used to speed up matching with --hashtable')    
+    parser.add_argument('--threads',
+                        type=int,
+                        default=1,
+                        help='Number of concurrent threads to use for mapping amplicons to references.  Default 1')    
     parser.add_argument('--alignments',
                         type=str,
                         default='',
@@ -1104,7 +1164,7 @@ def process_amplicon_data(forward_file, reverse_file,
                           manifest=None, fasta=None,
                           threshold=50, overlap=20, 
                           savehashtable=None, hashtable=None,
-                          ):
+                          threads=1):
     """Read amplicon data from fastq files and return
     an AmpliconData object with overlapped and aligned
     to reference amplicons
@@ -1141,6 +1201,8 @@ def process_amplicon_data(forward_file, reverse_file,
                        to reference lookup table
         hashtable    : a readable binary format file containing a previously
                        saved mapping to reference lookup table.
+        threads      : Number of concurrent threads to use for mapping 
+                       amplicons to references. Default: 1
     
     Returns:
         An ambivert.ambivert.AmpliconData object.
@@ -1155,7 +1217,7 @@ def process_amplicon_data(forward_file, reverse_file,
         amplicons.add_references_from_fasta(fasta) 
     if hashtable: #pragma no cover
         amplicons.load_hash_table(hashtable)
-    amplicons.match_to_reference(show_progress = True)
+    amplicons.match_to_reference(show_progress = True, threads = threads)
     amplicons.align_to_reference()
     if savehashtable: #pragma no cover
         amplicons.save_hash_table(savehashtable)
@@ -1199,7 +1261,7 @@ def main(): #pragma no cover
                                       args.manifest,args.fasta,
                                       args.threshold,args.overlap,
                                       args.savehashtable,args.hashtable,
-                                      )
+                                      args.threads)
     
     if args.countfile:
         with args.countfile as outfile:
