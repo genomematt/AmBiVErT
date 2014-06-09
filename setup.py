@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='AmBiVErT',
-    version='0.1.11',
+    version='0.2.dev1',
     author='Matthew Wakefield',
     author_email='matthew.wakefield@unimelb.edu.au',
     packages=['ambivert'],
@@ -27,7 +27,9 @@ setup(
           'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
           'Operating System :: POSIX',
           'Programming Language :: Python :: 3.3',
+          'Programming Language :: Python :: 3.4',
           'Topic :: Scientific/Engineering :: Bio-Informatics',
+          'Private :: Not yet ready for uploading to PyPI',
     ],
 
 )
