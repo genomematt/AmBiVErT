@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-# from distutils.core import setup
 from setuptools import setup
 
 setup(
     name='AmBiVErT',
     version='0.2.dev1',
+    version='0.1.12',
     author='Matthew Wakefield',
     author_email='matthew.wakefield@unimelb.edu.au',
     packages=['ambivert'],
@@ -16,6 +16,7 @@ setup(
         'console_scripts': ['ambivert = ambivert.ambivert:main',
                             'truseq_manifest = ambivert.truseq_manifest:main',
                             'simulate_variants = ambivert.simulate_variants:main',
+                            'insert_variants = ambivert.insert_variants:main',
                            ]
     },
 
