@@ -23,7 +23,7 @@ __author__ = "Matthew Wakefield"
 __copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield","Graham Taylor"]
 __license__ = "GPLv3"
-__version__ = "0.1.12"
+__version__ = "0.2.dev1"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
@@ -227,7 +227,7 @@ class test_ambivert(unittest.TestCase):
     def test_add_references_from_manifest_and_fasta(self):
         manifest = io.TextIOWrapper(resource_stream(__name__, 'data/testdatamanifest.txt'))
         self.amplicons.add_references_from_manifest(manifest)
-        self.assertEqual(md5(str(sorted(self.amplicons.reference_sequences.items()))).hexdigest(),'fc3c6701032dbd84c6f5731d344df060')
+        self.assertEqual(md5(str(sorted(self.amplicons.reference_sequences.items()))).hexdigest(),'c899019b1ac4ccdb6e3ebc19f40add63')
         fasta = io.TextIOWrapper(resource_stream(__name__, 'data/testdatareferences.fasta'))
         self.amplicons.reference_sequences = {}
         self.amplicons.add_references_from_fasta(fasta)
@@ -332,15 +332,13 @@ class test_ambivert(unittest.TestCase):
                                   threshold=50, overlap=20, 
                                   savehashtable=None, hashtable=None,
                                   )
-        self.assertEqual(md5(str(sorted(amplicons.get_amplicon_counts()))).hexdigest(),'564424f9a9e909cb9323d5ceac93a559')
+        #print(str(sorted(amplicons.get_amplicon_counts().items())))
+        self.assertEqual(md5(str(sorted(amplicons.get_amplicon_counts().items()))).hexdigest(),'4d247c3ede8923bd475d8240271e0b36')
         
         self.assertEqual(amplicons.get_amplicon_count('335eb2f760b98b4f25d281537400baf4'),144)
         
         amplicons.reference = {}
         self.assertEqual(amplicons.get_amplicon_count('335eb2f760b98b4f25d281537400baf4'),144)
-        
-        amplicons.reference = {}
-        self.assertEqual(md5(str(sorted(amplicons.get_amplicon_counts()))).hexdigest(),'564424f9a9e909cb9323d5ceac93a559')
         
     
     def test_save_hash_table(self):
