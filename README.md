@@ -11,6 +11,7 @@ The approach used is to batch reads derived from each amplicon together in a
 clustering step prior to aligning the sequence to a reference genome.
 
 Steps:
+
     1)  Cluster similar reads
     2)  Align for overlap
     3)  Align to reference target sequences
@@ -19,7 +20,7 @@ Steps:
 
 
 Created by Matthew Wakefield and Graham Taylor.
-Copyright (c) 2013  Matthew Wakefield and The University of Melbourne. All rights reserved.
+Copyright (c) 2013-2015  Matthew Wakefield and The University of Melbourne. All rights reserved.
 
     $ ambivert --help
     usage: ambivert [-h] [-f FORWARD] [-r REVERSE] [-m MANIFEST] [--fasta FASTA]
