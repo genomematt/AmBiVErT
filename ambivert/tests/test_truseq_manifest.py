@@ -4,7 +4,7 @@
 test_truseq_manifest.py
 
 Created by Matthew Wakefield on 2013-09-23.
-Copyright (c) 2013 The Walter and Eliza Hall Institute. All rights reserved.
+Copyright (c) 2013-2015 The Walter and Eliza Hall Institute. All rights reserved.
 """
 
 from __future__ import print_function
@@ -16,10 +16,10 @@ from ambivert.truseq_manifest import *
 from pkg_resources import resource_stream
 
 __author__ = "Matthew Wakefield"
-__copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
+__copyright__ = "Copyright 2013-2015,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield",]
 __license__ = "GPLv3"
-__version__ = "0.1.12"
+__version__ = "0.5b1"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"

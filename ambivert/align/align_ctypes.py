@@ -1,14 +1,30 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+"""
+align_ctypes.py
+
+Created by Toby Sargeant.
+Copyright (c) 2013-2015  Toby Sargeant and The University of Melbourne. All rights reserved.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+"""
 from ctypes import *
 import os
 import sys
 
 from distutils.ccompiler import new_compiler
 
-# Installation of shared libraries is a mess with current packaging changes in python
-# The following has been tested to work on clean installs of python 2.7 and PyPy 2.1 on MacOS10.8.3 and MacOS10.9
-# This includes system python on 10.9 and homebrew installed versions.  PyPy was a homebrew keg only install.
-# It probably wont work on installations that had pre-1.1.6 versions of setuptools previously installed
-# The install works correctly on Python3.3 however the bytes/str differences prevent it from working.
+__author__ = "Toby Sargeant"
+__copyright__ = "Copyright 2013-2015, Toby Sargeant and The University of Melbourne"
+__credits__ = ["Toby Sargeant","Matthew Wakefield",]
+__license__ = "GPLv3"
+__version__ = "0.5b1"
+__maintainer__ = "Matthew Wakefield"
+__email__ = "matthew.wakefield@unimelb.edu.au"
+__status__ = "Development"
 
 if hasattr(sys, 'pypy_version_info'):
     align_c = cdll.LoadLibrary(

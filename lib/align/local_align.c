@@ -1,3 +1,22 @@
+/*
+local_align.c
+
+Created by Toby Sargeant.
+Copyright (c) 2013-2015  Toby Sargeant and The University of Melbourne. All rights reserved.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+__author__ = "Toby Sargeant"
+__copyright__ = "Copyright 2013-2015, Toby Sargeant and The University of Melbourne"
+__credits__ = ["Toby Sargeant","Matthew Wakefield",]
+__license__ = "GPLv3"
+__version__ = "0.5b1"
+__maintainer__ = "Matthew Wakefield"
+__email__ = "matthew.wakefield@unimelb.edu.au"
+__status__ = "Development"
+*/
 #include "align.h"
 
 // ============================================================================

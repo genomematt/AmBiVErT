@@ -18,10 +18,10 @@ from ambivert.simulate_variants import *
 import hashlib
 
 __author__ = "Matthew Wakefield"
-__copyright__ = "Copyright 2013,  Matthew Wakefield and The University of Melbourne"
+__copyright__ = "Copyright 2013-2015,  Matthew Wakefield and The University of Melbourne"
 __credits__ = ["Matthew Wakefield",]
 __license__ = "GPLv3"
-__version__ = "0.2.dev2"
+__version__ = "0.5b1"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"

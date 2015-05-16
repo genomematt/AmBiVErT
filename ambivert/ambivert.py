@@ -36,7 +36,7 @@ phasing of multiple mutations that exist on the same amplicon.
 All lines of code are covered by unit tests unless marked with #pragma no cover
 
 Created by Matthew Wakefield and Graham Taylor.
-Copyright (c) 2013-2014  Matthew Wakefield and The University of Melbourne. All rights reserved.
+Copyright (c) 2013-2015  Matthew Wakefield and The University of Melbourne. All rights reserved.
    
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -58,10 +58,10 @@ from ambivert.truseq_manifest import make_sequences, parse_truseq_manifest
 from ambivert.call_variants import call_variants, call_variants_to_vcf, make_vcf_header
 
 __author__ = "Matthew Wakefield"
-__copyright__ = "Copyright 2013-2014,  Matthew Wakefield and The University of Melbourne"
-__credits__ = ["Matthew Wakefield","Graham Taylor"]
+__copyright__ = "Copyright 2013-2015,  Matthew Wakefield and The University of Melbourne"
+__credits__ = ["Matthew Wakefield","Graham Taylor","Toby Sargeant"]
 __license__ = "GPLv3"
-__version__ = "0.2.dev2"
+__version__ = "0.5b1"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"

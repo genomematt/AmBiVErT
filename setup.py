@@ -21,7 +21,7 @@ except:
 
 setup(
     name='AmBiVErT',
-    version='0.2.dev2',
+    version='0.5b1',
     author='Matthew Wakefield',
     author_email='matthew.wakefield@unimelb.edu.au',
     packages=['ambivert',
