@@ -2,6 +2,23 @@
 
 from setuptools import setup
 
+try:
+    from setuptools.extension import Library
+except ImportError:
+    from setuptools import Library
+
+import glob
+
+try:
+    from platform import linux_distribution
+    from os import environ 
+    if linux_distribution()[0] == 'CentOS':
+        environ['CFLAGS'] = "-std=gnu99"
+        print('setting environ["CFLAGS"] = "-std=gnu99"')
+except:
+    pass
+
+
 setup(
     name='AmBiVErT',
     version='0.2.dev2',
@@ -10,6 +27,13 @@ setup(
     packages=['ambivert',
               'ambivert.tests',
               ],
+    ext_modules = [
+      Library(
+        'ambivert.align.align_c',
+        sources = glob.glob('lib/align/*.c'),
+        depends = glob.glob('lib/align/*.h')
+      ),
+    ],
     include_package_data = True,
     url='https://git@bitbucket.org/genomematt/ambivert.git',
     license='GPLv3',

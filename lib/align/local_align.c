@@ -1,0 +1,256 @@
+#include "align.h"
+
+// ============================================================================
+static AlignFrag *traceback(const unsigned char *sa,
+                            int sa_len,
+                            const unsigned char *sb,
+                            int sb_len,
+                            int *dir_matrix,
+                            int s_col,
+                            int s_row) {
+  AlignFrag *result = NULL;
+
+  while (s_col >= 0 && s_row >= 0) {
+    AlignFrag *temp;
+    int d = dir_matrix[s_col * sb_len + s_row];
+    if (d == INT_MIN) {
+      break;
+    }
+
+    temp = malloc(sizeof(AlignFrag));
+    if (!temp) {
+      align_frag_free(result);
+      return NULL;
+    }
+
+    if (d < 0) {
+      s_row -= -d;
+      temp->type = A_GAP;
+      temp->hsp_len = -d;
+    } else if (d > 0) {
+      s_col -= +d;
+      temp->type = B_GAP;
+      temp->hsp_len = +d;
+    } else {
+      int count = 0;
+      do {
+        --s_col;
+        --s_row;
+        count++;
+      } while(s_col >= 0 && s_row >= 0 &&
+              (d = dir_matrix[s_col * sb_len + s_row]) == 0);
+      temp->type = MATCH;
+      temp->hsp_len = count;
+    }
+    temp->sa_start = s_col + 1;
+    temp->sb_start = s_row + 1;
+
+    temp->next = result;
+    result = temp;
+  }
+
+  return result;
+}
+
+// ============================================================================
+Alignment *local_align_raw(const unsigned char *sa,
+                           int sa_len,
+                           const unsigned char *sb,
+                           int sb_len,
+                           int alpha_len,
+                           int *score_matrix,
+                           int gap_open,
+                           int gap_extend) {
+  Alignment *result = NULL;
+
+#define SCORE(a,b) score_matrix[(a) * alpha_len + (b)]
+
+  int score, dir;
+  int row, col;
+  int vgap_pos;
+  int vgap_score;
+  int max_score, max_row, max_col;
+
+  int *curr_score = NULL;
+  int *prev_score = NULL;
+  int *dir_matrix = NULL;
+  int *hgap_pos = NULL;
+  int *hgap_score = NULL;
+
+  int *dirp = NULL;
+
+  if (sa_len <= 0 || sb_len <= 0 ||
+      !sa || !sb ||
+      !score_matrix || gap_open > 0 || gap_extend > 0) {
+    goto fail;
+  }
+
+  curr_score = malloc(sb_len * sizeof(int));
+  prev_score = malloc(sb_len * sizeof(int));
+  dir_matrix = malloc(sa_len * sb_len * sizeof(int));
+  hgap_pos   = malloc(sb_len * sizeof(int));
+  hgap_score = malloc(sb_len * sizeof(int));
+
+  if (!curr_score || !prev_score || !dir_matrix || !hgap_pos || !hgap_score) {
+    goto fail; 
+  }
+
+  dirp = dir_matrix;
+
+  max_score = score = 0;
+  max_row = 0;
+  max_col = 0;
+
+  for (row = 0; row < sb_len; row++) {
+    hgap_pos[row] = -1;
+    hgap_score[row] = gap_open;
+
+    prev_score[row] = 0;
+  }
+
+  // fprintf(stderr, "\n");
+
+  for (col = 0; col < sa_len; col++) {
+    row = 0;
+    vgap_pos = -1;
+    vgap_score = gap_open;
+
+    score = SCORE(sa[col], sb[0]);
+    dir = 0;
+
+    if (score < vgap_score)  {
+      score = vgap_score;
+      dir = -(row - vgap_pos);
+    }
+
+    if (score < hgap_score[0]) {
+      score = hgap_score[0];
+      dir = col - hgap_pos[0];
+    }
+
+    if (score < 0) {
+      curr_score[0] = score = 0;
+      dirp[0] = dir = INT_MIN;
+    } else {
+      curr_score[0] = score;
+      dirp[0] = dir;
+      if (score >= max_score) {
+        max_row = 0;
+        max_col = col;
+        max_score = score;
+      }
+    }
+    // if (dirp[0] == INT_MIN)
+    //   fprintf(stderr, "%2d,%2d %2d/%2d:XX  ", sa[col], sb[0], SCORE(sa[col], sb[0]), curr_score[0]);
+    // else
+    //   fprintf(stderr, "%2d,%2d %2d/%2d:%2d  ", sa[col], sb[0], SCORE(sa[col], sb[0]), curr_score[0], dirp[0]);
+
+    if (score + gap_open >= vgap_score + gap_extend) {
+      vgap_score = score + gap_open;
+      vgap_pos = row;
+    } else {
+      vgap_score += gap_extend;
+    }
+
+    if (score + gap_open >= hgap_score[0] + gap_extend) {
+      hgap_score[0] = score + gap_open;
+      hgap_pos[0] = col;
+    } else {
+      hgap_score[0] += gap_extend;
+    }
+
+    for (row = 1; row < sb_len; row++) {
+      score = prev_score[row - 1] + SCORE(sa[col], sb[row]);
+      dir = 0;
+
+      if (score < vgap_score)  {
+        score = vgap_score;
+        dir = -(row - vgap_pos);
+      }
+
+      if (score < hgap_score[row]) {
+        score = hgap_score[row];
+        dir = col - hgap_pos[row];
+      }
+
+      if (score < 0) {
+        curr_score[row] = score = 0;
+        dirp[row] = dir = INT_MIN;
+      } else {
+        curr_score[row] = score;
+        dirp[row] = dir;
+
+        if (score >= max_score) {
+          max_row = row;
+          max_col = col;
+          max_score = score;
+        }
+      }
+      // if (dirp[row] == INT_MIN)
+      //   fprintf(stderr, "%2d,%2d %2d/%2d:XX  ", sa[col], sb[row], SCORE(sa[col], sb[row]), curr_score[row]);
+      // else
+      //   fprintf(stderr, "%2d,%2d %2d/%2d:%2d  ", sa[col], sb[row], SCORE(sa[col], sb[row]), curr_score[row], dirp[row]);
+
+      if (score + gap_open >= vgap_score + gap_extend) {
+        vgap_score = score + gap_open;
+        vgap_pos = row;
+      } else {
+        vgap_score += gap_extend;
+      }
+
+      if (score + gap_open >= hgap_score[row] + gap_extend) {
+        hgap_score[row] = score + gap_open;
+        hgap_pos[row] = col;
+      } else {
+        hgap_score[row] += gap_extend;
+      }
+    }
+    // fprintf(stderr, "\n");
+
+    dirp = dirp + sb_len;
+    SWAP(curr_score, prev_score);
+  }
+
+  result = alignment_new(traceback(sa, sa_len, sb, sb_len, dir_matrix, max_col, max_row), max_score);
+
+ fail:
+  if (curr_score) free(curr_score);
+  if (prev_score) free(prev_score);
+  if (dir_matrix) free(dir_matrix);
+  if (hgap_pos) free(hgap_pos);
+  if (hgap_score) free(hgap_score);
+
+  return result;
+#undef SCORE
+}
+
+// ============================================================================
+Alignment *local_align(const char *seqa,
+                       int sa_len,
+                       const char *seqb,
+                       int sb_len,
+                       int alpha_len,
+                       const unsigned char *map,
+                       int *score_matrix,
+                       int gap_open,
+                       int gap_extend) {
+  Alignment *result = NULL;
+
+  unsigned char *sa;
+  unsigned char *sb;
+
+  sa = malloc(sa_len);
+  sb = malloc(sb_len);
+
+  if (!sa || !sb) goto fail;
+
+  to_raw(seqa, sa, sa_len, map);
+  to_raw(seqb, sb, sb_len, map);
+
+  result = local_align_raw(sa, sa_len, sb, sb_len, alpha_len, score_matrix, gap_open, gap_extend);
+
+ fail:
+  if (sa) free(sa);
+  if (sb) free(sb);
+  return result;
+}

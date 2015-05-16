@@ -52,7 +52,7 @@ import itertools, difflib, argparse
 import hashlib, pickle
 from collections import defaultdict
 from multiprocessing.dummy import Pool #Threaded rather than process version of multiprocessing
-import plumb.bob
+import ambivert.align
 from ambivert.sequence_utilities import *
 from ambivert.truseq_manifest import make_sequences, parse_truseq_manifest
 from ambivert.call_variants import call_variants, call_variants_to_vcf, make_vcf_header
@@ -81,11 +81,11 @@ def smith_waterman(seq1,seq2):
                  sequence and must be all upper case
         - seq2 : an ascii DNA sequence string.  This is the reference
                  sequence and may contain lower case soft masking """
-    alignment =  plumb.bob.local_align(bytes(seq1,'ascii'), len(seq1),
+    alignment =  ambivert.align.local_align(bytes(seq1,'ascii'), len(seq1),
                                 bytes(seq2.upper(),'ascii'), len(seq2),
-                                plumb.bob.DNA_MAP[0],
-                                plumb.bob.DNA_MAP[1], 
-                                plumb.bob.DNA_SCORE,
+                                ambivert.align.DNA_MAP[0],
+                                ambivert.align.DNA_MAP[1], 
+                                ambivert.align.DNA_SCORE,
                                 -7, -1 #gap open, gap extend
                                 )
     if '-' in seq1 or '-' in seq2:
@@ -97,20 +97,20 @@ def smith_waterman(seq1,seq2):
     align_seq2 = ''
     while frag:
         frag = frag[0]
-        if frag.type == plumb.bob.MATCH:
+        if frag.type == ambivert.align.MATCH:
             f1 = seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
             f2 = seq2[frag.sb_start:frag.sb_start + frag.hsp_len]
             align_seq1 += f1
             align_seq2 += f2
-        elif frag.type == plumb.bob.A_GAP:
+        elif frag.type == ambivert.align.A_GAP:
             align_seq1 += '-' * frag.hsp_len
             align_seq2 += seq2[frag.sb_start:frag.sb_start + frag.hsp_len]
-        elif frag.type == plumb.bob.B_GAP:
+        elif frag.type == ambivert.align.B_GAP:
             align_seq1 += seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
             align_seq2 += '-' * frag.hsp_len
         frag = frag.next
     assert len(align_seq1) == len(align_seq2)
-    plumb.bob.alignment_free(alignment)
+    ambivert.align.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
 
 def needleman_wunsch(seq1,seq2):
@@ -122,11 +122,11 @@ def needleman_wunsch(seq1,seq2):
                  sequence and must be all upper case
         - seq2 : an ascii DNA sequence string.  This is the reference
                  sequence and may contain lower case soft masking """
-    alignment =  plumb.bob.global_align(bytes(seq1,'ascii'), len(seq1),
+    alignment =  ambivert.align.global_align(bytes(seq1,'ascii'), len(seq1),
                                 bytes(seq2.upper(),'ascii'), len(seq2),
-                                plumb.bob.DNA_MAP[0],
-                                plumb.bob.DNA_MAP[1], 
-                                plumb.bob.DNA_SCORE,
+                                ambivert.align.DNA_MAP[0],
+                                ambivert.align.DNA_MAP[1], 
+                                ambivert.align.DNA_SCORE,
                                 -7, -1 #gap open, gap extend
                                 )
     if '-' in seq1 or '-' in seq2:
@@ -138,20 +138,20 @@ def needleman_wunsch(seq1,seq2):
     align_seq2 = ''
     while frag:
         frag = frag[0]
-        if frag.type == plumb.bob.MATCH:
+        if frag.type == ambivert.align.MATCH:
             f1 = seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
             f2 = seq2[frag.sb_start:frag.sb_start + frag.hsp_len]
             align_seq1 += f1
             align_seq2 += f2
-        elif frag.type == plumb.bob.A_GAP:
+        elif frag.type == ambivert.align.A_GAP:
             align_seq1 += '-' * frag.hsp_len
             align_seq2 += seq2[frag.sb_start:frag.sb_start + frag.hsp_len]
-        elif frag.type == plumb.bob.B_GAP:
+        elif frag.type == ambivert.align.B_GAP:
             align_seq1 += seq1[frag.sa_start:frag.sa_start + frag.hsp_len]
             align_seq2 += '-' * frag.hsp_len
         frag = frag.next
     assert len(align_seq1) == len(align_seq2)
-    plumb.bob.alignment_free(alignment)
+    ambivert.align.alignment_free(alignment)
     return align_seq1,align_seq2,start_seq1,start_seq2
 
 def calculate_global_score(args):
@@ -165,15 +165,15 @@ def calculate_global_score(args):
         a tuple of (ref_key,score)
     """
     ref_key, seq1, reference_sequence = args
-    alignment =  plumb.bob.global_align(bytes(seq1, 'ascii'), len(seq1),
+    alignment =  ambivert.align.global_align(bytes(seq1, 'ascii'), len(seq1),
                     bytes(reference_sequence.upper(),'ascii'), len(reference_sequence),
-                    plumb.bob.DNA_MAP[0],
-                    plumb.bob.DNA_MAP[1], 
-                    plumb.bob.DNA_SCORE,
+                    ambivert.align.DNA_MAP[0],
+                    ambivert.align.DNA_MAP[1], 
+                    ambivert.align.DNA_SCORE,
                     -7, -1 #gap open, gap extend
                     )
     score = int(alignment[0].score)
-    plumb.bob.alignment_free(alignment)
+    ambivert.align.alignment_free(alignment)
     return (ref_key,score)
 
 def calculate_local_score(args):
@@ -187,15 +187,15 @@ def calculate_local_score(args):
         a tuple of (ref_key,score)
     """
     ref_key, seq1, reference_sequence = args
-    alignment =  plumb.bob.global_align(bytes(seq1, 'ascii'), len(seq1),
+    alignment =  ambivert.align.global_align(bytes(seq1, 'ascii'), len(seq1),
                     bytes(reference_sequence.upper(),'ascii'), len(reference_sequence),
-                    plumb.bob.DNA_MAP[0],
-                    plumb.bob.DNA_MAP[1], 
-                    plumb.bob.DNA_SCORE,
+                    ambivert.align.DNA_MAP[0],
+                    ambivert.align.DNA_MAP[1], 
+                    ambivert.align.DNA_SCORE,
                     -7, -1 #gap open, gap extend
                     )
     score = int(alignment[0].score)
-    plumb.bob.alignment_free(alignment)
+    ambivert.align.alignment_free(alignment)
     return (ref_key,score)
 
 
@@ -414,15 +414,15 @@ class AmpliconData(object):
                     seq1 = self.merged[merged_key][trim_primers:-trim_primers]
                 else:
                     seq1 = self.merged[merged_key]
-                alignment =  plumb.bob.local_align(bytes(seq1, 'ascii'), len(seq1),
+                alignment =  ambivert.align.local_align(bytes(seq1, 'ascii'), len(seq1),
                                 bytes(self.reference_sequences[ref_key].upper(),'ascii'), len(self.reference_sequences[ref_key]),
-                                plumb.bob.DNA_MAP[0],
-                                plumb.bob.DNA_MAP[1], 
-                                plumb.bob.DNA_SCORE,
+                                ambivert.align.DNA_MAP[0],
+                                ambivert.align.DNA_MAP[1], 
+                                ambivert.align.DNA_SCORE,
                                 -7, -1 #gap open, gap extend
                                 )
                 score = alignment[0].score
-                plumb.bob.alignment_free(alignment)
+                ambivert.align.alignment_free(alignment)
                 if score > best_score:
                     best_score = score
                     best_hit = ref_key
@@ -444,15 +444,15 @@ class AmpliconData(object):
                     seq1 = self.merged[merged_key][trim_primers:-trim_primers]
                 else:
                     seq1 = self.merged[merged_key]
-                alignment =  plumb.bob.global_align(bytes(seq1, 'ascii'), len(seq1),
+                alignment =  ambivert.align.global_align(bytes(seq1, 'ascii'), len(seq1),
                                 bytes(self.reference_sequences[ref_key].upper(),'ascii'), len(self.reference_sequences[ref_key]),
-                                plumb.bob.DNA_MAP[0],
-                                plumb.bob.DNA_MAP[1], 
-                                plumb.bob.DNA_SCORE,
+                                ambivert.align.DNA_MAP[0],
+                                ambivert.align.DNA_MAP[1], 
+                                ambivert.align.DNA_SCORE,
                                 -7, -1 #gap open, gap extend
                                 )
                 score = int(alignment[0].score)
-                plumb.bob.alignment_free(alignment)
+                ambivert.align.alignment_free(alignment)
                 if score > best_score:
                     best_score = score
                     best_hit = ref_key

@@ -1,0 +1,108 @@
+#ifndef ALIGN_H_INCLUDED
+#define ALIGN_H_INCLUDED
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+#include "helpers.h"
+
+typedef enum { A_GAP = 0, B_GAP = 1, MATCH = 2 } FragType;
+
+typedef struct AlignFrag {
+  struct AlignFrag *next;
+  FragType type;
+  int sa_start, sb_start, hsp_len;
+} AlignFrag;
+
+typedef struct Alignment {
+  AlignFrag *align_frag;
+  int frag_count;
+  int score;
+} Alignment;
+
+int align_frag_count(AlignFrag *f);
+void align_frag_free(AlignFrag *f);
+void alignment_free(Alignment *alignment);
+Alignment *alignment_new(AlignFrag *align_frag, int score);
+
+typedef Alignment *(RawAlignFunc)(const unsigned char *, int, const unsigned char *, int, int, int *, int, int);
+typedef Alignment *(AlignFunc)(const char *, int, const char *, int, int, const unsigned char *, int *_matrix, int, int);
+
+Alignment *align_raw(const unsigned char *sa,
+                     int sa_len,
+                     const unsigned char *sb,
+                     int sb_len,
+                     int alpha_len,
+                     int *score_matrix,
+                     int gap_open,
+                     int gap_extend);
+
+Alignment *align(const char *seqa,
+                 int sa_len,
+                 const char *seqb,
+                 int sb_len,
+                 int alpha_len,
+                 const unsigned char *map,
+                 int *score_matrix,
+                 int gap_open,
+                 int gap_extend);
+
+Alignment *local_align_raw(const unsigned char *sa,
+                           int sa_len,
+                           const unsigned char *sb,
+                           int sb_len,
+                           int alpha_len,
+                           int *score_matrix,
+                           int gap_open,
+                           int gap_extend);
+
+Alignment *local_align(const char *seqa,
+                       int sa_len,
+                       const char *seqb,
+                       int sb_len,
+                       int alpha_len,
+                       const unsigned char *map,
+                       int *score_matrix,
+                       int gap_open,
+                       int gap_extend);
+
+Alignment *global_align_raw(const unsigned char *sa,
+                            int sa_len,
+                            const unsigned char *sb,
+                            int sb_len,
+                            int alpha_len,
+                            int *score_matrix,
+                            int gap_open,
+                            int gap_extend);
+
+Alignment *global_align(const char *seqa,
+                        int sa_len,
+                        const char *seqb,
+                        int sb_len,
+                        int alpha_len,
+                        const unsigned char *map,
+                        int *score_matrix,
+                        int gap_open,
+                        int gap_extend);
+
+Alignment *glocal_align_raw(const unsigned char *sa,
+                            int sa_len,
+                            const unsigned char *sb,
+                            int sb_len,
+                            int alpha_len,
+                            int *score_matrix,
+                            int gap_open,
+                            int gap_extend);
+
+Alignment *glocal_align(const char *seqa,
+                        int sa_len,
+                        const char *seqb,
+                        int sb_len,
+                        int alpha_len,
+                        const unsigned char *map,
+                        int *score_matrix,
+                        int gap_open,
+                        int gap_extend);
+
+#endif
