@@ -1,0 +1,16 @@
+language: python
+python:
+  - "3.3"
+  - "3.4"
+  - "pypy3"
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install:
+  - pip3 install .
+before_script:
+  - pip3 install python-coveralls
+  - pip3 install coverage
+# command to run tests, e.g. python setup.py test
+script:
+  - coverage run --source ambivert.ambivert -m ambivert.tests.test_ambivert
+after_success:
+  - coveralls
