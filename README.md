@@ -9,6 +9,9 @@ Experimental Alpha Release of AmBiVErT
 This program is designed for the processing of amplicon based resequencing data
 generated on second generation sequencing platforms (eg Illumina HiSeq/MiSeq).
 
+AmBiVErT was designed for use in pathology applications but is useful in a
+variety of amplicon sequencing settings - including CRISPR target site sequencing.
+
 The approach used is to batch reads derived from each amplicon together in a
 clustering step prior to aligning the sequence to a reference genome.
 
