@@ -11,6 +11,8 @@ before_script:
   - pip3 install coverage
 # command to run tests, e.g. python setup.py test
 script:
-  - coverage run --source ambivert.ambivert -m ambivert.tests.test_ambivert
-after_success:
-  - coveralls
+  - python3 -m ambivert.tests.test_ambivert
+#Coverage is currently failing to run so only doing standard tests until debugged
+#  - coverage run --source ambivert.ambivert -m ambivert.tests.test_ambivert
+#after_success:
+#  - coveralls
