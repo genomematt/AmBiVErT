@@ -20,13 +20,18 @@ except:
 
 
 setup(
-    name='AmBiVErT',
+    name='ambivert',
     version='0.5b1',
     author='Matthew Wakefield',
     author_email='matthew.wakefield@unimelb.edu.au',
+    install_requires = [
+      'setuptools >= 1.1.6',
+    ],
     packages=['ambivert',
+              'ambivert.align',
               'ambivert.tests',
               ],
+    zip_safe = False,
     ext_modules = [
       Library(
         'ambivert.align.align_c',
