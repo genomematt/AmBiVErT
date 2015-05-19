@@ -9,6 +9,7 @@ install:
 before_script:
   - pip3 install python-coveralls
   - pip3 install coverage
+  - gcc --shared -o .ambivert/align/libalign_c.so build/*/lib/align/*.o
 # command to run tests, e.g. python setup.py test
 script:
   - python3 -m ambivert.tests.test_ambivert
