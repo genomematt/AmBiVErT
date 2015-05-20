@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+import sys, types
+#be assertive that we want a shared library on linux
+try:
+  import dl
+except ImportError:
+  sys.modules['dl'] = types.ModuleType('dl')
+  sys.modules['dl'].RTLD_NOW = None
 
 from setuptools import setup
 
