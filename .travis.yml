@@ -6,8 +6,6 @@ python:
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
   - pip3 install .
-  - python3 setup.py build
-  - gcc --shared -o .ambivert/align/libalign_c.so build/*/lib/align/*.o
 before_script:
   - pip3 install python-coveralls
   - pip3 install coverage
