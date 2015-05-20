@@ -34,7 +34,7 @@ if hasattr(sys, 'pypy_version_info'):
 else:
     align_c = cdll.LoadLibrary(
       new_compiler().library_filename('align_c',
-                                      lib_type = 'shared' if sys.platform == 'darwin' else 'dylib', #different subclasses need different flags
+                                      lib_type = 'shared',
                                       output_dir = os.path.split(__file__)[0]))
 
 A_GAP = 0
