@@ -27,6 +27,27 @@ Steps:
 Created by Matthew Wakefield and Graham Taylor.
 Copyright (c) 2013-2015  Matthew Wakefield and The University of Melbourne. All rights reserved.
 
+Installation
+============
+
+AmBiVErT uses a C extension for accellerating the alignment steps.  Unfortunately this complicates the install process.
+To install on Mac OS 10.10 with homebrew
+	
+    brew install python3
+    pip3 install --upgrade pip
+    pip3 install --upgrade setuptools
+    pip3 install git+https://github.com/genomematt/AmBiVErT.git
+    python3 -m ambivert.tests.test_ambivert
+
+Installation on Ubuntu 14.04 and construction of a Docker container and binary wheel distributions are ongoing.
+Our policy is to support use on the latest MacOS, latest LTS Ubuntu and a Docker container.
+
+	
+
+
+Usage
+=====
+
     $ ambivert --help
     usage: ambivert [-h] [-f FORWARD] [-r REVERSE] [-m MANIFEST] [--fasta FASTA]
                     [--output OUTPUT] [--countfile COUNTFILE]
