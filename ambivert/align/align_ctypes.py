@@ -38,11 +38,18 @@ else:
                                           lib_type = 'shared',
                                           output_dir = os.path.split(__file__)[0]))
     except OSError:
-        align_c = cdll.LoadLibrary(
-          new_compiler().library_filename('align_c.' + 'cpython-{major}{minor}m'.format(major=sys.version_info[0],
+        try:
+          align_c = cdll.LoadLibrary(
+            new_compiler().library_filename('align_c.' + 'cpython-{major}{minor}m'.format(major=sys.version_info[0],
                                                                                         minor=sys.version_info[1]),
                                           lib_type = 'shared',
                                           output_dir = os.path.split(__file__)[0]))
+        except OSError as e:
+            e.args += ('Contents of directory where shared library should be is {0}'.format(os.listdir()))
+            raise
+          
+          
+      
 
 A_GAP = 0
 B_GAP = 1
