@@ -45,7 +45,7 @@ else:
                                           lib_type = 'shared',
                                           output_dir = os.path.split(__file__)[0]))
         except OSError as e:
-            e.args += ('Contents of directory where shared library should be is {0}'.format(os.listdir()),)
+            e.args += ('Contents of directory where shared library should be is {0}'.format(os.listdir(os.path.split(__file__)[0])),)
             raise
           
           
