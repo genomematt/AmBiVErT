@@ -32,10 +32,17 @@ if hasattr(sys, 'pypy_version_info'):
                                       lib_type = 'shared',
                                       output_dir = os.path.split(__file__)[0]))
 else:
-    align_c = cdll.LoadLibrary(
-      new_compiler().library_filename('align_c',
-                                      lib_type = 'shared',
-                                      output_dir = os.path.split(__file__)[0]))
+    try:
+        align_c = cdll.LoadLibrary(
+          new_compiler().library_filename('align_c',
+                                          lib_type = 'shared',
+                                          output_dir = os.path.split(__file__)[0]))
+    except OSError:
+        align_c = cdll.LoadLibrary(
+          new_compiler().library_filename('align_c.' + 'cpython-{major}{minor}m'.format(major=sys.version_info[0],
+                                                                                        minor=sys.version_info[1]),
+                                          lib_type = 'shared',
+                                          output_dir = os.path.split(__file__)[0]))
 
 A_GAP = 0
 B_GAP = 1
