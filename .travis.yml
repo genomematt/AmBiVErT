@@ -16,7 +16,7 @@ before_script:
   - pip3 install python-coveralls
 # command to run tests, e.g. python setup.py test
 script:
-  - ls /home/travis/build/genomematt/AmBiVErT/ambivert/align/
+  - ls /home/travis/build/genomematt/AmBiVErT/ambivert/align/ 1>&2
   - python3 -m ambivert.tests.test_ambivert
 #Coverage is currently failing to run so only doing standard tests until debugged
 #  - coverage run --source ambivert.ambivert -m ambivert.tests.test_ambivert
