@@ -39,7 +39,8 @@ To install on Mac OS 10.10 with homebrew
     pip3 install git+https://github.com/genomematt/AmBiVErT.git
     python3 -m ambivert.tests.test_ambivert
 
-Installation on Ubuntu 14.04 and construction of a Docker container and binary wheel distributions are ongoing.
+Installation is known to work on Ubuntu 14.04 & 12.04 and CentOS 5.  A Dockerfile is included in the distribution and an image is available (genomematt/ambivert).  Some issues may exist with some python virtual environments due to modifications required to avoid a setuptools bug (issue #385).
+
 Our policy is to support use on the latest MacOS, latest LTS Ubuntu and a Docker container.
 
 	
