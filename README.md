@@ -3,9 +3,6 @@
 AmBiVErT
 ========
 
-Experimental Alpha Release of AmBiVErT
---------------------------------------
-
 This program is designed for the processing of amplicon based resequencing data
 generated on second generation sequencing platforms (eg Illumina HiSeq/MiSeq).
 
@@ -30,7 +27,7 @@ Copyright (c) 2013-2015  Matthew Wakefield and The University of Melbourne. All 
 Installation
 ============
 
-AmBiVErT uses a C extension for accelerating the alignment steps.  Unfortunately this complicates the install process.
+AmBiVErT uses a C extension for accelerating the alignment steps.  Unfortunately this can complicate the install process.
 To install on Mac OS 10.10 with homebrew
 	
     brew install python3
