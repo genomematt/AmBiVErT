@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/11450/genomematt/AmBiVErT.svg)](http://dx.doi.org/10.5281/zenodo.17501)
+[![DOI](https://zenodo.org/badge/11450/genomematt/AmBiVErT.svg)](https://zenodo.org/badge/latestdoi/11450/genomematt/AmBiVErT)
 
 AmBiVErT
 ========
