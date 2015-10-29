@@ -189,4 +189,4 @@ primer sequences suitable for use by a trimming program (eg Nesoni clip)
 
 Citing AmBiVErT
 =================
-Currently AmBiVErT is unpublished, but this repository does have a DOI identifier for each release you can use to cite the code.  The DOI for the current release is http://dx.doi.org/10.5281/zenodo.17501
+Currently AmBiVErT is unpublished, but this repository does have a DOI identifier for each release you can use to cite the code.  The DOI for the current release is http://dx.doi.org/10.5281/zenodo.32885
