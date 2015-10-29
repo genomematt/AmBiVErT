@@ -1,24 +1,12 @@
-language: python
-# force non container infrastructure for now
+# Due to a bug when building in the python2.x virtual env the Travis uses
+# (even for python 3) we do this in the docker container
 sudo: required
-python:
-  - "3.3"
-  - "3.4"
-  - "pypy3"
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+
+services:
+  - docker
 before_install:
-  - pip3 install --upgrade pip
-  - pip3 install --upgrade setuptools
-install:
-  - pip3 install .
-before_script:
-  - pip3 install coverage
-  - pip3 install python-coveralls
-# command to run tests, e.g. python setup.py test
+  - docker build -t genomematt/ambivert .
 script:
-  - ls /home/travis/build/genomematt/AmBiVErT/ambivert/align/ 1>&2
-  - python3 -m ambivert.tests.test_ambivert
-#Coverage is currently failing to run so only doing standard tests until debugged
-#  - coverage run --source ambivert.ambivert -m ambivert.tests.test_ambivert
-#after_success:
-#  - coveralls
+  # as ambivert --test runs inline we give it a valid --version task
+  # so as to get a zero exit status
+  - docker run -i genomematt/ambivert ambivert --test --version
