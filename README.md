@@ -28,9 +28,14 @@ Installation
 ============
 
 AmBiVErT uses a C extension for accelerating the alignment steps.  Unfortunately this can complicate the install process.
-To install on Mac OS 10.10 with homebrew
+
+A wheel distribution is available on the Python Package Index and on MacOS 10.11 with Python 3.5 you can install with
+
+    pip3 install ambivert
+
+To install from source on Mac OS 10.10 or 10.11 with homebrew
 	
-    brew install python3
+    brew install --upgrade python3
     pip3 install --upgrade pip
     pip3 install --upgrade setuptools
     pip3 install git+https://github.com/genomematt/AmBiVErT.git
@@ -39,6 +44,7 @@ To install on Mac OS 10.10 with homebrew
 Installation is known to work on Ubuntu 14.04 & 12.04 and CentOS 5.  A Dockerfile is included in the distribution and an image is available (genomematt/ambivert).  Some issues may exist with some python virtual environments due to modifications required to avoid a setuptools bug (issue #385).
 
 Our policy is to support use on the latest MacOS, latest LTS Ubuntu and a Docker container.
+
 
 	
 
