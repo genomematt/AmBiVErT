@@ -1,6 +1,7 @@
 # Due to a bug when building in the python2.x virtual env the Travis uses
 # (even for python 3) we do this in the docker container
 sudo: required
+dist: trusty
 
 services:
   - docker
