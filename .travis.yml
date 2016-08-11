@@ -11,6 +11,11 @@ matrix:
       dist: trusty
       services: docker
       env: USE_PYTHON_VERSION=docker
+    - os: linux
+      sudo: required
+      dist: trusty
+      python: 3.5
+      env: USE_PYTHON_VERSION=py35
     - os: osx
       osx_image: xcode8
       language: generic
