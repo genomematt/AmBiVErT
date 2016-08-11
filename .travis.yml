@@ -18,7 +18,7 @@ matrix:
 
 install:
   - if [[ "$USE_PYTHON_VERSION" == "docker" ]]; then docker build -t genomematt/ambivert . ; fi
-  - if [[ "$USE_PYTHON_VERSION" != "docker" ]]; then ./.travis/install.sh ; fi
+  - if [[ "$USE_PYTHON_VERSION" != "docker" ]]; then ./.travis/install.sh ; echo "install.sh has run"; fi
 
 script:
   # as ambivert --test runs inline we give it a valid --version task
