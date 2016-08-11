@@ -8,7 +8,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
 else
 
-    sudo apt-get install python3.5
+    sudo apt-get install python3 python3-pip python3-dev
 
 fi
 
