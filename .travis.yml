@@ -1,13 +1,18 @@
 # Due to a bug when building in the python2.x virtual env the Travis uses
 # (even for python 3) we do this in the docker container
-sudo: required
-dist: trusty
+language: python
 
-services:
-  - docker
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      dist: trusty
+      services: docker
+
 before_install:
-  - docker build -t genomematt/ambivert .
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker build -t genomematt/ambivert . ; fi
+  
 script:
   # as ambivert --test runs inline we give it a valid --version task
   # so as to get a zero exit status
-  - docker run -i genomematt/ambivert ambivert --test --version
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run -i genomematt/ambivert ambivert --test --version ; fi
