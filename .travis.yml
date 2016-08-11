@@ -1,13 +1,32 @@
 # Due to a bug when building in the python2.x virtual env the Travis uses
 # (even for python 3) we do this in the docker container
-sudo: required
-dist: trusty
+language: python
 
-services:
-  - docker
-before_install:
-  - docker build -t genomematt/ambivert .
+matrix:
+  allow_failures:
+    - os: osx
+  include:
+    - os: linux
+      sudo: required
+      dist: trusty
+      services: docker
+      env: USE_PYTHON_VERSION=docker
+    - os: linux
+      sudo: required
+      dist: trusty
+      language: generic
+      env: USE_PYTHON_VERSION=py35
+    - os: osx
+      osx_image: xcode8
+      language: generic
+      env: USE_PYTHON_VERSION=py35
+
+install:
+  - if [[ "$USE_PYTHON_VERSION" == "docker" ]]; then docker build -t genomematt/ambivert . ; fi
+  - if [[ "$USE_PYTHON_VERSION" != "docker" ]]; then bash ./.travis/install.sh ; echo "install.sh has run"; fi
+
 script:
   # as ambivert --test runs inline we give it a valid --version task
   # so as to get a zero exit status
-  - docker run -i genomematt/ambivert ambivert --test --version
+  - if [[ "$USE_PYTHON_VERSION" == "docker" ]]; then docker run -i genomematt/ambivert ambivert --test --version ; fi
+  - if [[ "$USE_PYTHON_VERSION" != "docker" ]]; then ambivert --test --version ; fi
