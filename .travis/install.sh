@@ -6,9 +6,13 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
     brew install python3
 
+else
+
+    sudo apt-get install python3.5
+
 fi
 
-python --version
+python3 --version
 pip3 --version
 
 pip3 install .
