@@ -3,16 +3,22 @@
 language: python
 
 matrix:
+  allow_failures:
+    - os: osx
   include:
     - os: linux
       sudo: required
       dist: trusty
       services: docker
+      env: USE_PYTHON_VERSION=docker
+    - os: osx
+      osx_image: xcode7.2
+      env: USE_PYTHON_VERSION=py35
 
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker build -t genomematt/ambivert . ; fi
-  
+  - if [[ "$USE_PYTHON_VERSION" == "docker" ]]; then docker build -t genomematt/ambivert . ; fi
+
 script:
   # as ambivert --test runs inline we give it a valid --version task
   # so as to get a zero exit status
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run -i genomematt/ambivert ambivert --test --version ; fi
+  - if [[ "$USE_PYTHON_VERSION" == "docker" ]]; then docker run -i genomematt/ambivert ambivert --test --version ; fi
