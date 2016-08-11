@@ -13,6 +13,7 @@ matrix:
       env: USE_PYTHON_VERSION=docker
     - os: osx
       osx_image: xcode7.2
+      language: generic
       env: USE_PYTHON_VERSION=py35
 
 before_install:
