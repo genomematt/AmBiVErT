@@ -21,35 +21,19 @@ __author__ = "Toby Sargeant"
 __copyright__ = "Copyright 2013-2015, Toby Sargeant and The University of Melbourne"
 __credits__ = ["Toby Sargeant","Matthew Wakefield",]
 __license__ = "GPLv3"
-__version__ = "0.5b1"
+__version__ = "0.5.1"
 __maintainer__ = "Matthew Wakefield"
 __email__ = "matthew.wakefield@unimelb.edu.au"
 __status__ = "Development"
 
-if hasattr(sys, 'pypy_version_info'):
-    align_c = cdll.LoadLibrary(
-      new_compiler().library_filename('align_c.' + 'pypy-{major}{minor}'.format(major=sys.pypy_version_info[0], minor=sys.pypy_version_info[1]),
-                                      lib_type = 'shared',
-                                      output_dir = os.path.split(__file__)[0]))
-else:
-    try:
-        align_c = cdll.LoadLibrary(
-          new_compiler().library_filename('align_c',
-                                          lib_type = 'shared',
-                                          output_dir = os.path.split(__file__)[0]))
-    except OSError:
-        try:
-          align_c = cdll.LoadLibrary(
-            new_compiler().library_filename('align_c.' + 'cpython-{major}{minor}m'.format(major=sys.version_info[0],
-                                                                                        minor=sys.version_info[1]),
-                                          lib_type = 'shared',
-                                          output_dir = os.path.split(__file__)[0]))
-        except OSError as e:
-            e.args += ('Contents of directory where shared library should be is {0}'.format(os.listdir(os.path.split(__file__)[0])),)
-            raise
-          
-          
-      
+
+try:
+    so_filename = [f for f in os.listdir(os.path.split(__file__)[0]) if 'align_c.' in f][0]
+    align_c = cdll.LoadLibrary(os.path.join(os.path.split(__file__)[0],so_filename))
+except OSError as e:
+    e.args += ('Contents of directory where shared library should be is {0}'.format(os.listdir(os.path.split(__file__)[0])),)
+    raise
+
 
 A_GAP = 0
 B_GAP = 1
