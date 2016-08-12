@@ -28,7 +28,7 @@ except:
 
 setup(
     name='ambivert',
-    version='0.5b1',
+    version='0.5.1',
     author='Matthew Wakefield',
     author_email='matthew.wakefield@unimelb.edu.au',
     install_requires = [
