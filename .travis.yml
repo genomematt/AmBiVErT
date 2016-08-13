@@ -1,4 +1,8 @@
-language: python
+env:
+  global:
+    - "FTP_USER=user"
+    - "FTP_PASSWORD=password"
+
 matrix:
   allow_failures:
   - os: osx
@@ -43,3 +47,7 @@ deploy:
     #tags: true
     distributions: sdist bdist_wheel
     repo: genomematt/ambivert
+
+after_success:
+- printenv
+- if [ "$TRAVIS_BRANCH" == "master" ] ; then tail $HOME/.pypirc ; pip3 list ; fi 
