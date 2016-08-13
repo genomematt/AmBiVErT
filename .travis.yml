@@ -43,4 +43,3 @@ deploy:
     #tags: true
     distributions: sdist bdist_wheel
     repo: genomematt/ambivert
-    server: https://testpypi.python.org/pypi
