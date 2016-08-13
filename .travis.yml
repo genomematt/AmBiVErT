@@ -1,7 +1,4 @@
-env:
-  global:
-    - "FTP_USER=user"
-    - "FTP_PASSWORD=password"
+language: generic
 
 matrix:
   allow_failures:
@@ -29,26 +26,14 @@ matrix:
     osx_image: beta-xcode6.2
     language: generic
     env: USE_PYTHON_VERSION=py35
+
 install:
 - if [[ "$USE_PYTHON_VERSION" == "docker" ]]; then docker build -t genomematt/ambivert
   . ; fi
 - if [[ "$USE_PYTHON_VERSION" != "docker" ]]; then bash ./.travis/install.sh ; echo
   "install.sh has run"; fi
+
 script:
 - if [[ "$USE_PYTHON_VERSION" == "docker" ]]; then docker run -i genomematt/ambivert
   ambivert --test --version ; fi
 - if [[ "$USE_PYTHON_VERSION" != "docker" ]]; then ambivert --test --version ; fi
-deploy:
-  provider: pypi
-  user: genomematt
-  password:
-    secure: e12jY01cE5r6qurrIm5kQg1/n77z0X12rpaF5VMnhkAgQ0lnDM9iubYnb/uwvbQ+Mgm4+MNeM0q0WKeJuL9lgith48scVSGt6jSh/qQoROyRpZ8Y9j/A5HibPN9RI0o7x9/6yO7cm3o+OGW+OgGGownu+gf7bQVVMk84ZIHh2PU=
-  on:
-    #tags: true
-    distributions: sdist bdist_wheel
-    repo: genomematt/ambivert
-
-after_success:
-- echo -e '[distutils]\nindex-servers=pypi\n\n[pypi]\nrepository: https://pypi.python.org/pypi\nusername: genomematt\npassword: '$TRAVIS_BRANCH > $HOME/.pypirc
-- if [ "$TRAVIS_BRANCH" == "master" ] ; then cat $HOME/.pypirc ; fi 
-# if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_TAG" ]; then python3 setup.py register; python3 setup.py sdist bdist_wheel upload ; fi 
