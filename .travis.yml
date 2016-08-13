@@ -49,7 +49,6 @@ deploy:
     repo: genomematt/ambivert
 
 after_success:
-- echo -e '[distutils]\nindex-servers=pypi\n\n[pypi]\nrepository: https://pypi.python.org/pypi\nusername: genomematt\npassword: ' > $HOME/.pypirc
-- echo -e $TRAVIS_BRANCH >> $HOME/.pypirc
+- echo -e '[distutils]\nindex-servers=pypi\n\n[pypi]\nrepository: https://pypi.python.org/pypi\nusername: genomematt\npassword: '$TRAVIS_BRANCH > $HOME/.pypirc
 - if [ "$TRAVIS_BRANCH" == "master" ] ; then cat $HOME/.pypirc ; fi 
 # if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_TAG" ]; then python3 setup.py register; python3 setup.py sdist bdist_wheel upload ; fi 
