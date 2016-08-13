@@ -62,7 +62,7 @@ setup(
                  For calling variants in amplicon based sequencing experiments',
     long_description=open('README.txt').read(),
     classifiers=[
-          'Development Status :: 5 - Production/Stable'
+          'Development Status :: 5 - Production/Stable',
           'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
           'Operating System :: POSIX',
           'Programming Language :: Python :: 3.3',
