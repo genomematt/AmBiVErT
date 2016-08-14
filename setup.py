@@ -51,6 +51,7 @@ setup(
     license='GPLv3',
     entry_points={
         'console_scripts': ['ambivert = ambivert.ambivert:main',
+                            'ambivert_format_insilicopcr = ambivert.insilicoPCR_to_amplicons:main',
                             'ambivert_truseq_manifest = ambivert.truseq_manifest:main',
                             'ambivert_simulate_variants = ambivert.simulate_variants:main',
                             'ambivert_insert_variants = ambivert.insert_variants:main',
