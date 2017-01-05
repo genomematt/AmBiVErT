@@ -14,10 +14,20 @@ matrix:
     dist: trusty
     language: generic
     env: USE_PYTHON_VERSION=py34
+  - os: linux
+    sudo: required
+    dist: trusty
+    language: generic
+    env: USE_PYTHON_VERSION=py35
+  - os: linux
+    sudo: required
+    dist: trusty
+    language: generic
+    env: USE_PYTHON_VERSION=py36
   - os: osx
     osx_image: xcode8
     language: generic
-    env: USE_PYTHON_VERSION=py35
+    env: USE_PYTHON_VERSION=py36
   - os: osx
     osx_image: xcode7
     language: generic
