@@ -15,6 +15,10 @@ matrix:
     language: generic
     env: USE_PYTHON_VERSION=py34
   - os: osx
+    osx_image: xcode8.3
+    language:generic
+    env: USE_PYTHON_VERSION=py36
+  - os: osx
     osx_image: xcode8
     language: generic
     env: USE_PYTHON_VERSION=py36
