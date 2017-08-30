@@ -14,7 +14,7 @@ Copyright (c) 2013-2015  Matthew Wakefield and The University of Melbourne. All 
 
 """
 #from __future__ import print_function, division, unicode_literals
-import sys, os
+import sys, os, warnings
 import argparse
 from ambivert.sequence_utilities import *
 from collections import namedtuple
@@ -41,24 +41,28 @@ def parse_truseq_manifest(inputfile):
     
     def parse_probes(infile):
         probes = []
+        line = infile.readline().strip('\n').split('\t')
         column_names = ['Target Region Name', 'Target Region ID', 'Target ID', 'Species', 'Build ID', 'Chromosome', 'Start Position', 'End Position',
                         'Submitted Target Region Strand', 'ULSO Sequence', 'ULSO Genomic Hits', 'DLSO Sequence', 'DLSO Genomic Hits', 'Probe Strand',
                         'Designer', 'Design Score', 'Expected Amplifed Region Size', 'SNP Masking', 'Labels']
+        if line != column_names:
+            column_names = line
+            warnings.warn('Using observed column names') 
         ProbeRecord = namedtuple('TargetRecord', [ x.replace(' ','_') for x in column_names])
-        line = infile.readline().strip('\n').split('\t')
-        assert line == column_names
         while line[0] != '[Targets]':
             line = infile.readline().strip('\n').split('\t')
-            if len(line) == 19 and line[0] != '[Targets]':
+            if len(line) >= 10 and line[0] != '[Targets]':
                 probes.append(ProbeRecord._make(line))
         return probes
     
     def parse_targets(infile):
         targets = []
-        column_names = ['TargetA', 'TargetB', 'Target Number', 'Chromosome', 'Start Position', 'End Position', 'Probe Strand', 'Sequence', 'Species', 'Build ID']
-        TargetRecord = namedtuple('TargetRecord', [ x.replace(' ','_') for x in column_names])
         line = infile.readline().strip('\n').split('\t')
-        assert line[:10] == column_names #ignore extra columns that may have been added by excel
+        column_names = ['TargetA', 'TargetB', 'Target Number', 'Chromosome', 'Start Position', 'End Position', 'Probe Strand', 'Sequence', 'Species', 'Build ID']
+        if line != column_names:
+            column_names = line
+            warnings.warn('Using observed column names') 
+        TargetRecord = namedtuple('TargetRecord', [ x.replace(' ','_') for x in column_names])
         if len(line) > 10:
             print('WARNING Extra columns in mainifest file being ignored:',line[10:],file=sys.stderr)
         line = infile.readline().strip('\n').split('\t')[:10]
