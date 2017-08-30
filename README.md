@@ -23,18 +23,19 @@ Steps:
 
 
 Created by Matthew Wakefield and Graham Taylor.
-Copyright (c) 2013-2015  Matthew Wakefield and The University of Melbourne. All rights reserved.
+Copyright (c) 2013-2017  Matthew Wakefield and The University of Melbourne. All rights reserved.
 
 Installation
 ============
 
 AmBiVErT uses a C extension for accelerating the alignment steps.  Unfortunately this can complicate the install process.
 
-A wheel distribution is available on the Python Package Index and on MacOS 10.11 with Python 3.5 you can install with
+A wheel distribution is available on the Python Package Index for MacOS 10.11 with Python 3.5 and MacOS 10.12 with Python 3.6.
+If you are using these versions installation is simply acchieved with:
 
     pip3 install ambivert
 
-To install from source on Mac OS 10.10 or 10.11 with homebrew
+To install from source on Mac OS 10.10 - 10.12 with homebrew
 	
     brew install --upgrade python3
     pip3 install --upgrade pip
@@ -42,7 +43,7 @@ To install from source on Mac OS 10.10 or 10.11 with homebrew
     pip3 install git+https://github.com/genomematt/AmBiVErT.git
     python3 -m ambivert.tests.test_ambivert
 
-Installation is known to work on Ubuntu 14.04 & 12.04 and CentOS 5.  A Dockerfile is included in the distribution and an image is available (genomematt/ambivert).  Some issues may exist with some python virtual environments due to modifications required to avoid a setuptools bug (issue #385).
+Installation from source is known to work on Ubuntu 14.04 & 12.04 and CentOS 5.  A Dockerfile is included in the distribution and an image is available (genomematt/ambivert).  Some issues may exist with some python virtual environments due to modifications required to avoid a setuptools bug (issue #385).
 
 Our policy is to support use on the latest MacOS, latest LTS Ubuntu and a Docker container.
 
