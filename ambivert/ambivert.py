@@ -1129,10 +1129,12 @@ def process_commandline_args(): #pragma no cover
     if args.test:
         import unittest
         import ambivert.tests.test_ambivert
+        import ambivert.tests.test_call_variants
         logging.info('Running test suite to confirm correct functionality')
         logging.disable(logging.CRITICAL)
         loader = unittest.TestLoader()
         tests = loader.loadTestsFromModule(ambivert.tests.test_ambivert)
+        tests = loader.loadTestsFromModule(ambivert.tests.test_call_variants)
         ambivert_test_output=io.StringIO()
         runner = unittest.TextTestRunner(ambivert_test_output)
         result = runner.run(tests)

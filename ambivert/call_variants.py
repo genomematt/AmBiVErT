@@ -138,7 +138,7 @@ def call_variants(variant_amplicon, reference, chromosome, ref_start=1, **kw):
     for variant in caller(variant_amplicon, reference, **kw):
         if variant[0] == 'X':
             #snv
-            assert variant_amplicon[variant[1]] == variant[3]
+            #assert variant_amplicon[variant[1]] == variant[3]
             start = ref_start+variant[2]-1 #subtract 1 as adding two one based coordinates
             vcf_start = start
             end = start

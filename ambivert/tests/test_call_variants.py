@@ -48,6 +48,7 @@ class test_call_variants(unittest.TestCase):
         self.assertEqual(list(call_variants.caller('AAAAA','AAGCA')),[('X', 2, 3, 'A'), ('X', 3, 4, 'A')])
         self.assertEqual(list(call_variants.caller('AAAAA','AA-CA')),[('I', 2, 3, 'A'), ('X', 3, 3, 'A')])
         self.assertEqual(list(call_variants.caller('AA-AA','AAACA')),[('D', 2, 3, 'A'), ('X', 3, 4, 'A')])
+        self.assertEqual(list(call_variants.caller('AA-TAAA','AAAT-CA')),[('D', 2, 3, 'A'), ('I', 4, 5, 'A'), ('X', 5, 5, 'A')])
         self.assertEqual(list(call_variants.caller('GAAAA','gAAGA')),[('X', 3, 4, 'A')])
         self.assertEqual(list(call_variants.caller('GAAAA','gAA-A')),[('I', 3, 4, 'A')])
         self.assertEqual(list(call_variants.caller('GAA-A','gAAAA')),[('D', 3, 4, 'A')])
