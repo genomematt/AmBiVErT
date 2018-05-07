@@ -5,6 +5,7 @@
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
     brew install python3
+    brew upgrade python
     pip3 install .
 
 else
