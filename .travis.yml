@@ -19,10 +19,10 @@ matrix:
     language: generic
     env: USE_PYTHON_VERSION=py37
   - os: linux
+    env: USE_PYTHON_VERSION=py37
+    python: 3.7
     sudo: required
     dist: xenial
-    language: generic
-    env: USE_PYTHON_VERSION=py37
   - os: osx
     osx_image: xcode8.3
     language: generic
