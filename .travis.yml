@@ -15,7 +15,7 @@ matrix:
     language: generic
     env: USE_PYTHON_VERSION=docker
   - os: osx
-    osx_image: xcode9.3
+    osx_image: xcode9.4
     language: generic
     env: USE_PYTHON_VERSION=py37
   - os: linux
