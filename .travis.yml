@@ -3,6 +3,17 @@ language: generic
 matrix:
   allow_failures:
   - os: osx
+  include:
+  - os: linux
+    sudo: required
+    dist: trusty
+    services: docker
+    env: USE_PYTHON_VERSION=docker
+  - os: linux
+    sudo: required
+    dist: xenial
+    language: generic
+    env: USE_PYTHON_VERSION=docker
   - os: osx
     osx_image: xcode9.3
     language: generic
@@ -12,17 +23,6 @@ matrix:
     dist: xenial
     language: generic
     env: USE_PYTHON_VERSION=py37
-  include:
-  - os: linux
-    sudo: required
-    dist: trusty
-    services: docker
-    env: USE_PYTHON_VERSION=docker
-  - os: linux
-    sudo: required
-    dist: trusty
-    language: generic
-    env: USE_PYTHON_VERSION=py34
   - os: osx
     osx_image: xcode8.3
     language: generic
