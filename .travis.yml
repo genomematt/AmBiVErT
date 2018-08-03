@@ -11,9 +11,19 @@ matrix:
     env: USE_PYTHON_VERSION=docker
   - os: linux
     sudo: required
-    dist: trusty
+    dist: xenial
     language: generic
-    env: USE_PYTHON_VERSION=py34
+    env: USE_PYTHON_VERSION=docker
+  - os: osx
+    osx_image: xcode9.4
+    language: generic
+    env: USE_PYTHON_VERSION=py37
+  - os: linux
+    env: USE_PYTHON_VERSION=py37
+    language: python
+    python: 3.7
+    sudo: required
+    dist: xenial
   - os: osx
     osx_image: xcode8.3
     language: generic
