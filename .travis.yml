@@ -24,6 +24,12 @@ matrix:
     python: 3.7
     sudo: required
     dist: xenial
+  - os: linux
+    env: USE_PYTHON_VERSION=py38
+    language: python
+    python: 3.8
+    sudo: required
+    dist: xenial
   - os: osx
     osx_image: xcode8.3
     language: generic
