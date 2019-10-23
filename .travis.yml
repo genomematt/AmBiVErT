@@ -14,32 +14,44 @@ matrix:
     dist: xenial
     language: generic
     env: USE_PYTHON_VERSION=docker
-  - os: osx
-    osx_image: xcode9.4
-    language: generic
-    env: USE_PYTHON_VERSION=py37
   - os: linux
     env: USE_PYTHON_VERSION=py37
     language: python
     python: 3.7
     sudo: required
     dist: xenial
+  - os: linux
+    env: USE_PYTHON_VERSION=py38
+    language: python
+    python: 3.8
+    sudo: required
+    dist: xenial
   - os: osx
-    osx_image: xcode8.3
+    osx_image: xcode9.4
     language: generic
     env: USE_PYTHON_VERSION=py36
   - os: osx
-    osx_image: xcode8
+    osx_image: xcode9.4
     language: generic
-    env: USE_PYTHON_VERSION=py36
+    env: USE_PYTHON_VERSION=py37
   - os: osx
-    osx_image: xcode7
+    osx_image: xcode9.4
     language: generic
-    env: USE_PYTHON_VERSION=py36
+    env: USE_PYTHON_VERSION=py38
   - os: osx
-    osx_image: beta-xcode6.2
+    osx_image: xcode10.3 #macOS 10.14.4
     language: generic
-    env: USE_PYTHON_VERSION=py36
+    env: USE_PYTHON_VERSION=py38
+  - os: osx
+    osx_image: xcode11.2 #macOS 10.14
+    language: generic
+    env: USE_PYTHON_VERSION=py38
+  - os: osx
+    osx_image: xcode10.1 #macOS 10.13
+    language: generic
+    env: USE_PYTHON_VERSION=py38
+
+
 
 install:
 - if [[ "$USE_PYTHON_VERSION" == "docker" ]]; then docker build -t genomematt/ambivert

@@ -11,6 +11,10 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 elif [[ ($USE_PYTHON_VERSION == 'py37') && ($TRAVIS_OS_NAME == 'linux') ]]; then
 
     pip3.7 install .
+
+elif [[ ($USE_PYTHON_VERSION == 'py38') && ($TRAVIS_OS_NAME == 'linux') ]]; then
+
+    pip3.8 install .    
     
 else
 
