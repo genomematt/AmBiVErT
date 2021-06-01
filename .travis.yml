@@ -27,27 +27,7 @@ matrix:
     sudo: required
     dist: xenial
   - os: osx
-    osx_image: xcode9.4
-    language: generic
-    env: USE_PYTHON_VERSION=py36
-  - os: osx
-    osx_image: xcode9.4
-    language: generic
-    env: USE_PYTHON_VERSION=py37
-  - os: osx
-    osx_image: xcode9.4
-    language: generic
-    env: USE_PYTHON_VERSION=py38
-  - os: osx
-    osx_image: xcode10.3 #macOS 10.14.4
-    language: generic
-    env: USE_PYTHON_VERSION=py38
-  - os: osx
     osx_image: xcode11.2 #macOS 10.14
-    language: generic
-    env: USE_PYTHON_VERSION=py38
-  - os: osx
-    osx_image: xcode10.1 #macOS 10.13
     language: generic
     env: USE_PYTHON_VERSION=py38
 
