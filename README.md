@@ -1,5 +1,5 @@
 [![DOI](https://zenodo.org/badge/11450/genomematt/AmBiVErT.svg)](https://zenodo.org/badge/latestdoi/11450/genomematt/AmBiVErT)
-[![CI Status](https://travis-ci.org/genomematt/AmBiVErT.svg?branch=master)](https://travis-ci.org/genomematt/AmBiVErT)
+[![CI Status](https://travis-ci.com/genomematt/AmBiVErT.svg?branch=master)](https://travis-ci.com/genomematt/AmBiVErT)
 
 AmBiVErT
 ========
