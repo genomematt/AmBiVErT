@@ -1,1 +1,2 @@
 recursive-include ambivert/tests/data *
+recursive-include lib *.h
